@@ -6,6 +6,7 @@
 
 * RenderAPI 接口定义
 * Source 接口实现
+ * source\Common 通用实现，每一个DLL共用的代码放在这里
  * source\DX9API 标准渲染实现，用dx9实现
  * source\FixedAPI 固定管线渲染实现，用dx9兼容模式实现
  * source\NullAPI 空的接口实现，用来保证无作用的运行
