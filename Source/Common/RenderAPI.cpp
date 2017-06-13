@@ -4,7 +4,7 @@
 
 namespace RenderAPI
 {
-	static Logger* s_currentLogger = NULL;
+	static Logger* s_currentLogger = GetDefaultLogger();
 
 	Logger* GetDefaultLogger()
 	{
@@ -27,8 +27,6 @@ namespace RenderAPI
 			s_currentLogger = logger;
 		}
 	}
-
-
 
 	Logger::~Logger() { }
 

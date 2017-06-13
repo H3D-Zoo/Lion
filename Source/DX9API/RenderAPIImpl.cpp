@@ -7,8 +7,6 @@
 
 namespace RenderAPI
 {
-	static Logger* s_currentLogger = NULL;
-
 	bool Initialize()
 	{
 		return true;
