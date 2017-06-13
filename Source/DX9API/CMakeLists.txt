@@ -4,6 +4,7 @@ set(THIS_TARGET DX9API)
 set(DIR_COMMON ../Common)
 
 include_directories(
+	../DXSDK/Include/
 	${DIR_COMMON}/
 )
 
@@ -19,28 +20,30 @@ set(RENDERAPI_INCLUDE_FILES
 
 set(RENDERAPI_IMPL_INCLUDE_FILES
 	./RenderAPIImpl.h
-	 ./Device.h
-	 ./Context.h
-	 ./SwapChain.h
-	 ./RenderTarget.h
-	 ./DepthStencil.h
-	 ./VertexBuffer.h
-	 ./IndexBuffer.h
-	 ./Texture2D.h
-	 ./FXEffect.h
+	./DX9Include.h
+	./Device.h
+	./Context.h
+	./SwapChain.h
+	./RenderTarget.h
+	./DepthStencil.h
+	./VertexBuffer.h
+	./IndexBuffer.h
+	./Texture2D.h
+	./FXEffect.h
 )
 
 set(RENDERAPI_IMPL_SOURCE_FILES
-	 ./RenderAPIImpl.cpp
-	 ./Device.cpp
-	 ./Context.cpp
-	 ./SwapChain.cpp
-	 ./RenderTarget.cpp
-	 ./DepthStencil.cpp
-	 ./VertexBuffer.cpp
-	 ./IndexBuffer.cpp
-	 ./Texture2D.cpp
-	 ./FXEffect.cpp
+	./RenderAPIImpl.cpp
+	./DX9Include.cpp
+	./Device.cpp
+	./Context.cpp
+	./SwapChain.cpp
+	./RenderTarget.cpp
+	./DepthStencil.cpp
+	./VertexBuffer.cpp
+	./IndexBuffer.cpp
+	./Texture2D.cpp
+	./FXEffect.cpp
 )
 
 source_group(include FILES ${DIR_INTERFACE})
