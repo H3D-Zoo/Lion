@@ -15,5 +15,7 @@ elseif(MSVC_VERSION EQUAL 1900)
 	set(MSVC_VERSION_STR "vs2015")
 endif()
 
+
 add_subdirectory(Source/DX9API DX9API)
 add_subdirectory(Source/NullAPI NullAPI)
+add_subdirectory(Win32TestBed Win32TestBed)
