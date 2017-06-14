@@ -45,7 +45,7 @@ namespace RenderAPI
 		, backbufferWidth(0)
 		, backbufferHeight(0)
 		, backbufferFormat(BACKBUFFER_XRGB8)
-		, zbufferFormat(ZBUFFER_Auto)
+		, zbufferFormat(ZBUFFER_D24S8)
 		, aaMode(AA_Disable)
 	{ }
 

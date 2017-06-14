@@ -5,12 +5,10 @@
 
 namespace
 {
-
 	RenderAPI::ZBufferFormat s_ZFormats[4] =
 	{
 		RenderAPI::ZBUFFER_D24S8,
 		RenderAPI::ZBUFFER_D24X8,
-		RenderAPI::ZBUFFER_D32,
 		RenderAPI::ZBUFFER_D16
 	};
 }

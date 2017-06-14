@@ -50,22 +50,19 @@ namespace RenderAPI
 
 	enum ZBufferFormat
 	{
-		ZBUFFER_Disable = 0,
-		ZBUFFER_Auto = 1,
-		ZBUFFER_D24S8 = 2,
-		ZBUFFER_D24X8 = 3,
-		ZBUFFER_D32 = 4,
-		ZBUFFER_D16 = 5,
+		ZBUFFER_D24S8 = 0,
+		ZBUFFER_D24X8 = 1,
+		ZBUFFER_D16 = 2,
 	};
 
 	enum AAMode
 	{
-		AA_Disable = 1 << 0,
-		AA_X2 = 1 << 1,
-		AA_X4 = 1 << 2,
-		AA_X6 = 1 << 3,
-		AA_X8 = 1 << 4,
-		AA_X10 = 1 << 5,
+		AA_Disable = 0,
+		AA_X2 = 1 << 0,
+		AA_X4 = 1 << 1,
+		AA_X6 = 1 << 2,
+		AA_X8 = 1 << 3,
+		AA_X10 = 1 << 4,
 	};
 
 	// 如果 backbufferWidth 和 backbufferHeight 同时被设为 0，将会使用 hWindow 默认的大小作为 backbuffer 的大小
