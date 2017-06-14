@@ -1,26 +1,6 @@
 #include "DX9Include.h"
 #include <string>
 
-namespace
-{
-	const int enumRTFormatCount = 4;
-	D3DFORMAT s_enumRTFormat[enumRTFormatCount] =
-	{
-		D3DFMT_A8R8G8B8,
-		D3DFMT_X8R8G8B8,
-		D3DFMT_A1R5G5B5,
-		D3DFMT_X1R5G5B5,
-	};
-
-	const int enumDSFormatCount = 3;
-	D3DFORMAT s_enumDSFormat[enumDSFormatCount] =
-	{
-		D3DFMT_D24S8,
-		D3DFMT_D24X8,
-		D3DFMT_D16,
-	};
-}
-
 D3D9DLL::D3D9DLL()
 	: m_hDLL(NULL)
 	, m_d3d9ExPtr(NULL)
@@ -104,7 +84,7 @@ void D3D9DLL::Deinit()
 		m_d3d9ExPtr = NULL;
 		m_d3d9Ptr = NULL;
 	}
-	else
+	else if (m_d3d9Ptr != NULL)
 	{
 		m_d3d9Ptr->Release();
 		m_d3d9Ptr = NULL;
@@ -118,31 +98,21 @@ bool D3D9DLL::IsSupportD3D9EX()
 	return m_d3d9ExPtr != NULL;
 }
 
-bool D3D9DLL::EnumBestFormats(D3DFORMAT & renderTarget, D3DFORMAT depthStencil) const
+bool D3D9DLL::CheckFormatValidate(D3DFORMAT & renderTarget, D3DFORMAT depthStencil) const
 {
 	D3DDISPLAYMODE d3ddm;
 	m_d3d9Ptr->GetAdapterDisplayMode(D3DADAPTER_DEFAULT, &d3ddm);
-	//CheckPoint();
-
 
 	if (!CheckBackBufferFormat(renderTarget, d3ddm.Format))
 	{
-		renderTarget = D3DFMT_X1R5G5B5;
-		if (!CheckBackBufferFormat(renderTarget, d3ddm.Format))
-		{
-			//warning:
-			return false;
-		}
+		//warning:
+		return false;
 	}
 
 	if (!CheckDepthStencilFormat(depthStencil, d3ddm.Format))
 	{
-		depthStencil = D3DFMT_D16;
-		if (!CheckDepthStencilFormat(depthStencil, d3ddm.Format))
-		{
-			//warning:
-			return false;
-		}
+		//warning:
+		return false;
 	}
 	return true;
 }

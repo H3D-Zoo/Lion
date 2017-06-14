@@ -20,7 +20,7 @@ public:
 
 	bool IsSupportD3D9EX();
 
-	bool EnumBestFormats(D3DFORMAT& renderTarget, D3DFORMAT depthStencil) const;
+	bool CheckFormatValidate(D3DFORMAT & renderTarget, D3DFORMAT depthStencil) const;
 
 	IDirect3DDevice9* CreateDevice(HWND hWindow, unsigned int width, unsigned int height, bool isFullscreen, bool vsync, D3DFORMAT rtFormat, D3DFORMAT dsFormat, D3DMULTISAMPLE_TYPE mulsample);
 
