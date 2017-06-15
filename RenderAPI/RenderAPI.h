@@ -18,7 +18,7 @@ namespace RenderAPI
 	class Logger
 	{
 	public:
-		virtual ~Logger();
+		virtual ~Logger() { }
 
 		virtual void LogError(const char*) = 0;
 
@@ -68,7 +68,14 @@ namespace RenderAPI
 	// 如果 backbufferWidth 和 backbufferHeight 同时被设为 0，将会使用 hWindow 默认的大小作为 backbuffer 的大小
 	struct SwapChainDesc
 	{
-		SwapChainDesc();
+		SwapChainDesc()
+			: hWindow(0)
+			, backbufferWidth(0)
+			, backbufferHeight(0)
+			, backbufferFormat(BACKBUFFER_XRGB8)
+			, zbufferFormat(ZBUFFER_D24S8)
+			, aaMode(AA_Disable)
+		{ }
 
 		void* hWindow;
 		unsigned int backbufferWidth;
@@ -82,7 +89,11 @@ namespace RenderAPI
 	class Context;
 	struct CreationResult
 	{
-		CreationResult();
+		CreationResult()
+			: Success(false)
+			, DevicePtr(0)
+			, ContextPtr(0) { }
+
 		bool Success;
 		Device* DevicePtr;
 		Context* ContextPtr;
@@ -102,8 +113,8 @@ namespace RenderAPI
 		virtual void Release() = 0;
 
 	protected:
-		RObject();
-		virtual ~RObject();
+		RObject() { }
+		virtual ~RObject() { }
 
 	private:
 		RObject(const RObject&);
@@ -137,7 +148,13 @@ namespace RenderAPI
 
 	struct VertexElement
 	{
-		VertexElement();
+		VertexElement()
+			: SemanticName(SEMANTIC_POSITION)
+			, SemanticIndex(0)
+			, StreamIndex(0)
+			, AlignOffset(0xFFFFFFFF)
+			, Format(INPUT_Float4)
+		{ }
 
 		Semantic SemanticName;
 		unsigned int SemanticIndex;
@@ -228,7 +245,17 @@ namespace RenderAPI
 
 	struct BlendState
 	{
-		BlendState();
+		BlendState()
+			: IsEnable(false)
+			, IsAlphaSeperate(false)
+			, ColorSrcAlpha(BLEND_One)
+			, ColorDstAlpha(BLEND_Zero)
+			, AlphaSrcAlpha(BLEND_One)
+			, AlphaDstAlpha(BLEND_Zero)
+			, ColorOp(BLEND_OP_Add)
+			, AlphaOp(BLEND_OP_Add)
+		{	}
+
 
 		bool IsEnable;
 		bool IsAlphaSeperate;
@@ -254,7 +281,11 @@ namespace RenderAPI
 
 	struct AlphaTestingState
 	{
-		AlphaTestingState();
+		AlphaTestingState()
+			: IsEnable(false)
+			, Reference(0)
+			, Function(COMPARE_LessEqual)
+		{	}
 
 		bool IsEnable;
 		unsigned char Reference;
@@ -263,7 +294,11 @@ namespace RenderAPI
 
 	struct DepthTestingState
 	{
-		DepthTestingState();
+		DepthTestingState()
+			: IsEnable(false)
+			, Reference(1.0f)
+			, Function(COMPARE_LessEqual)
+		{	}
 
 		bool IsEnable;
 		float Reference;
@@ -284,7 +319,12 @@ namespace RenderAPI
 
 	struct StencilOps
 	{
-		StencilOps();
+		StencilOps()
+			: Function(COMPARE_Always)
+			, SFail(STENCIL_Keep)
+			, SPassZFail(STENCIL_Keep)
+			, AllPass(STENCIL_Keep)
+		{	}
 
 		CompareMethod Function;
 		StencilOp SFail;
@@ -294,7 +334,13 @@ namespace RenderAPI
 
 	struct StencilTestingState
 	{
-		StencilTestingState();
+		StencilTestingState()
+			: IsEnable(false)
+			, TwoSide(false)
+			, Reference(0)
+			, TestMask(0xFFFFFFFF)
+			, WriteMask(0xFFFFFFFF)
+		{	}
 
 		bool IsEnable;
 		bool TwoSide; // 启用这个选项，需要将 CullMode 设为 None
@@ -332,7 +378,15 @@ namespace RenderAPI
 
 	struct TextureBlendingState
 	{
-		TextureBlendingState();
+		TextureBlendingState()
+			: ColorOp(TEXOP_Disable)
+			, AlphaOp(TEXOP_Disable)
+			, ColorArg0(TEXARG_Texture)
+			, ColorArg1(TEXARG_Current)
+			, AlphaArg0(TEXARG_Texture)
+			, AlphaArg1(TEXARG_Current)
+			, TextureFactor(0xFFFFFFFF)
+		{	}
 
 		TextureOp  ColorOp;
 		TextureOp  AlphaOp;
@@ -369,7 +423,13 @@ namespace RenderAPI
 
 	struct TextureSampler
 	{
-		TextureSampler();
+		TextureSampler()
+			: Filter(FILTER_MinP_MagP_MipX)
+			, AddressU(TEX_ADDRESS_Clamp)
+			, AddressV(TEX_ADDRESS_Clamp)
+			, BorderColor(0x00000000)
+		{	}
+
 		SamplerFilter Filter;
 		TextureAddress AddressU;
 		TextureAddress AddressV;
@@ -398,7 +458,13 @@ namespace RenderAPI
 
 	struct ScissorState
 	{
-		ScissorState();
+		ScissorState()
+			: IsEnable(false)
+			, Left(0)
+			, Right(0)
+			, Top(0)
+			, Bottom(0)
+		{	}
 
 		bool IsEnable;
 		long Left;
@@ -409,7 +475,14 @@ namespace RenderAPI
 
 	struct Viewport
 	{
-		Viewport();
+		Viewport()
+			: Left(0)
+			, Top(0)
+			, Width(0)
+			, Height(0)
+			, MinZ(0.0f)
+			, MaxZ(1.0f)
+		{ }
 
 		unsigned int Left;
 		unsigned int Top;
@@ -421,7 +494,11 @@ namespace RenderAPI
 
 	struct VertexBufferInfo
 	{
-		VertexBufferInfo();
+		VertexBufferInfo()
+			: BufferPtr(0)
+			, Stride(0)
+			, Offset(0)
+		{ }
 
 		VertexBuffer* BufferPtr;
 		unsigned int Stride;
@@ -430,7 +507,11 @@ namespace RenderAPI
 
 	struct MappedResource
 	{
-		MappedResource();
+		MappedResource()
+			: Success(false)
+			, DataPtr(0)
+			, LinePitch(0)
+		{ }
 
 		bool Success;
 		void* DataPtr;

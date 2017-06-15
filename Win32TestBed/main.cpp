@@ -8,7 +8,7 @@ std::string s_WindowTitle = "Win32 render API testbed";
 std::string s_WindowClassName = "Win32_RenderAPI_TestBed";
 
 ATOM                MyRegisterClass(HINSTANCE hInstance);
-BOOL                InitInstance(HINSTANCE, int);
+BOOL                InitInstance(HINSTANCE, int, APITestBed&);
 LRESULT CALLBACK    WndProc(HWND, UINT, WPARAM, LPARAM);
 
 int APIENTRY WinMain(_In_ HINSTANCE hInstance,
@@ -22,21 +22,11 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance,
 	MyRegisterClass(hInstance);
 
 	// 执行应用程序初始化: 
-	if (!InitInstance(hInstance, nCmdShow))
-	{
-		return FALSE;
-	}
-
 	APITestBed testbed;
-	if (testbed.Init())
-	{
-		SetWindowLongPtrA(hWnd, GWLP_USERDATA, (LONG)&testbed);
-	}
-	else
+	if (!InitInstance(hInstance, nCmdShow, testbed))
 	{
 		return FALSE;
 	}
-
 
 	MSG msg;
 	while (true)
@@ -78,7 +68,7 @@ ATOM MyRegisterClass(HINSTANCE hInstance)
 	return RegisterClassExA(&wcex);
 }
 
-BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
+BOOL InitInstance(HINSTANCE hInstance, int nCmdShow, APITestBed& testbed)
 {
 	hInst = hInstance; // 将实例句柄存储在全局变量中
 
@@ -92,6 +82,16 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 
 	if (!hWnd)
 	{
+		return FALSE;
+	}
+
+	if (testbed.Init(hWnd, 0, 0))
+	{
+		SetWindowLongPtrA(hWnd, GWLP_USERDATA, (LONG)&testbed);
+	}
+	else
+	{
+		testbed.Deinit();
 		return FALSE;
 	}
 
