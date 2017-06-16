@@ -57,7 +57,7 @@ bool D3D9DLL::Init()
 		}
 		else
 		{
-			m_d3d9Ptr = m_d3d9Ptr;
+			m_d3d9Ptr = m_d3d9ExPtr;
 			//LogInfo(ENGINE_INIT, OutPut_File, "成功创建d3d9Ex对象.");
 		}
 	}

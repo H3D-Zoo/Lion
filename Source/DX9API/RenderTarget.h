@@ -2,6 +2,7 @@
 
 #include "../../RenderAPI/RenderAPI.h"
 #include "RenderAPIImpl.h"
+#include "DX9Include.h"
 
 class RenderTarget : public RenderAPI::RenderTarget
 {
@@ -16,9 +17,11 @@ public:
 
 	virtual void Release();
 
-	void AddRef(); 
-	
+	void AddRef();
+
 	void Resize(unsigned int width, unsigned int height);
+
+	IDirect3DSurface9* GetD3DSurface() const { return NULL; }
 
 private:
 	RefCount m_refCount;

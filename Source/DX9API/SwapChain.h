@@ -3,12 +3,15 @@
 #include "../../RenderAPI/RenderAPI.h"
 #include "RenderAPIImpl.h"
 #include "RenderTarget.h"
+#include "DX9Include.h"
 
 
 class SwapChain : public RenderAPI::SwapChain
 {
 public:
-	SwapChain(const RenderAPI::SwapChainDesc & swapChainDesc, bool fullscreen);
+	SwapChain(IDirect3DDevice9* device, const RenderAPI::SwapChainDesc & swapChainDesc, bool fullscreen);
+
+	~SwapChain();
 
 	virtual RenderAPI::RenderTarget* GetRenderTarget() const;
 
@@ -32,4 +35,5 @@ private:
 	RefCount m_refCount;
 	bool m_isFullscreen;
 	mutable ::RenderTarget m_renderTarget;
+	IDirect3DDevice9* m_pDevice;
 };

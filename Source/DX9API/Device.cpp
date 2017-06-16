@@ -7,21 +7,35 @@
 #include "RenderTarget.h"
 #include "DepthStencil.h"
 
-Device::Device(const RenderAPI::SwapChainDesc & desc, bool isFullscreen, bool useVerticalSync)
-	: m_deafualtSwapChain(desc, isFullscreen)
+Device::Device(IDirect3DDevice9* device, const RenderAPI::SwapChainDesc & desc, bool isFullscreen, bool useVerticalSync)
+	: m_defaultSwapChain(device, desc, isFullscreen)
+	, m_defaultDepthStencil(desc.zbufferFormat, desc.backbufferWidth, desc.backbufferHeight)
+	, m_pDevice(device)
 {
 
+}
+
+Device::~Device()
+{
+	m_pDevice->Release();
+	m_pDevice = NULL;
 }
 
 RenderAPI::SwapChain * Device::GetDefaultSwapChain() const
 {
-	m_deafualtSwapChain.AddRef();
-	return &m_deafualtSwapChain;
+	m_defaultSwapChain.AddRef();
+	return &m_defaultSwapChain;
+}
+
+RenderAPI::DepthStencil * Device::GetDefaultDepthStencil() const
+{
+	m_defaultDepthStencil.AddRef();
+	return &m_defaultDepthStencil;
 }
 
 RenderAPI::SwapChain * Device::CreateAdditionalSwapChain(const RenderAPI::SwapChainDesc & swapChainDesc)
 {
-	return new ::SwapChain(swapChainDesc, false);
+	return new ::SwapChain(m_pDevice,  swapChainDesc, false);
 }
 
 RenderAPI::VertexBuffer* Device::CreateVertexBuffer(RenderAPI::ResourceUsage usage, unsigned int vertexCount, unsigned int vertexSize, RenderAPI::Semantic * semantics, unsigned int semanticCount, void * initialData)

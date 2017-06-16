@@ -69,13 +69,25 @@ namespace RenderAPI
 
 			if (devicePtr != NULL)
 			{
+				SwapChainDesc newDesc = desc;
+				if (desc.backbufferWidth == 0 || desc.backbufferHeight == 0)
+				{
+					RECT rect;
+					::GetClientRect((HWND)desc.hWindow, &rect);
+					newDesc.backbufferWidth = rect.right - rect.left;
+					newDesc.backbufferWidth = rect.bottom - rect.top;
+				}
+
 				result.Success = true;
-				result.DevicePtr = new ::Device(desc, isFullscreen, useVerticalSync);
-				result.ContextPtr = new ::Context();
-
-				//ÁÙÊ±releaseµô£¬ÏÈÈ¥Ğ´²âÊÔÓÃÀı¡£
-				devicePtr->Release();
-
+				LONG count = devicePtr->AddRef();
+				result.DevicePtr = new ::Device(devicePtr, newDesc, isFullscreen, useVerticalSync);
+				RenderAPI::SwapChain* swapChain = result.DevicePtr->GetDefaultSwapChain();
+				RenderAPI::RenderTarget* rt = swapChain->GetRenderTarget();
+				RenderAPI::DepthStencil* ds = result.DevicePtr->GetDefaultDepthStencil();
+				result.ContextPtr = new ::Context(devicePtr, rt, ds);
+				rt->Release();
+				ds->Release();
+				swapChain->Release();
 			}
 		}
 		return result;

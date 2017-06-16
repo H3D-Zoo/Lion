@@ -1,6 +1,6 @@
 #include "testbed.h"
 
-#define DLLName "NullAPI.dll"
+#define DLLName "DX9API.dll"
 
 bool APITestBed::Init(HWND hWindow, unsigned int backBufferWidth, unsigned int backBufferHeight)
 {
@@ -81,8 +81,10 @@ void APITestBed::Deinit()
 
 void APITestBed::Update()
 {
-	m_pContext->ClearRenderTarget(m_defaultSwapChain->GetRenderTarget(), 0xFF00FF00);
+	auto rt = m_defaultSwapChain->GetRenderTarget();
+	m_pContext->ClearRenderTarget(rt, 0xFF00FF00);
 	m_defaultSwapChain->Present();
+	rt->Release();
 }
 
 void APITestBed::OnResize(unsigned int width, unsigned int height)

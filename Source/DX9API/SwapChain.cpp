@@ -1,10 +1,16 @@
 #include "SwapChain.h"
 
-SwapChain::SwapChain(const RenderAPI::SwapChainDesc & swapChainDesc, bool fullscreen)
+SwapChain::SwapChain(IDirect3DDevice9* device, const RenderAPI::SwapChainDesc & swapChainDesc, bool fullscreen)
 	: m_isFullscreen(fullscreen)
 	, m_renderTarget(swapChainDesc.backbufferFormat, swapChainDesc.backbufferWidth, swapChainDesc.backbufferHeight)
+	, m_pDevice(device)
 {
+	m_pDevice->AddRef();
+}
 
+SwapChain::~SwapChain()
+{
+	m_pDevice->Release();
 }
 
 RenderAPI::RenderTarget* SwapChain::GetRenderTarget() const
@@ -48,7 +54,7 @@ bool SwapChain::IsFullscreen() const
 
 void SwapChain::Present()
 {
-
+	m_pDevice->Present(NULL, NULL, NULL, NULL);
 }
 
 void SwapChain::Release()

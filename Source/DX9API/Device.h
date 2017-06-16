@@ -2,13 +2,19 @@
 
 #include "../../RenderAPI/RenderAPI.h"
 #include "SwapChain.h"
+#include "DepthStencil.h"
+#include "DX9Include.h"
 
 class Device : public RenderAPI::Device
 {
 public:
-	Device(const RenderAPI::SwapChainDesc& desc, bool isFullscreen, bool useVerticalSync);
+	Device(IDirect3DDevice9* device, const RenderAPI::SwapChainDesc& desc, bool isFullscreen, bool useVerticalSync);
+
+	~Device();
 
 	virtual RenderAPI::SwapChain* GetDefaultSwapChain() const;
+
+	virtual RenderAPI::DepthStencil* GetDefaultDepthStencil() const;
 
 	virtual RenderAPI::SwapChain* CreateAdditionalSwapChain(const RenderAPI::SwapChainDesc&);
 
@@ -27,5 +33,7 @@ public:
 	virtual void Release();
 
 private:
-	mutable ::SwapChain m_deafualtSwapChain;
+	mutable ::SwapChain m_defaultSwapChain;
+	mutable ::DepthStencil m_defaultDepthStencil;
+	IDirect3DDevice9* m_pDevice;
 };

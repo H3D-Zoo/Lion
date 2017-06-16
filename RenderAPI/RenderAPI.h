@@ -99,7 +99,7 @@ namespace RenderAPI
 		Context* ContextPtr;
 	};
 
-	CreationResult CreateDeviceAndContext(const SwapChainDesc& desc, bool isFullscreen, bool useVerticalSync);
+	CreationResult CreateDeviceAndContext(SwapChainDesc& desc, bool isFullscreen, bool useVerticalSync);
 
 	/*
 		用户渲染接口
@@ -204,6 +204,8 @@ namespace RenderAPI
 	{
 	public:
 		virtual SwapChain* GetDefaultSwapChain() const = 0;
+
+		virtual RenderAPI::DepthStencil* GetDefaultDepthStencil() const = 0;
 
 		virtual SwapChain* CreateAdditionalSwapChain(const SwapChainDesc&) = 0;
 

@@ -8,15 +8,22 @@
 #include "DepthStencil.h"
 
 Device::Device(const RenderAPI::SwapChainDesc & desc, bool isFullscreen, bool useVerticalSync)
-	: m_deafualtSwapChain(desc, isFullscreen)
+	: m_defaultSwapChain(desc, isFullscreen)
+	, m_defaultDepthStencil(desc.zbufferFormat, desc.backbufferWidth, desc.backbufferHeight)
 {
 
 }
 
 RenderAPI::SwapChain * Device::GetDefaultSwapChain() const
 {
-	m_deafualtSwapChain.AddRef();
-	return &m_deafualtSwapChain;
+	m_defaultSwapChain.AddRef();
+	return &m_defaultSwapChain;
+}
+
+RenderAPI::DepthStencil* Device::GetDefaultDepthStencil() const
+{
+	m_defaultDepthStencil.AddRef();
+	return &m_defaultDepthStencil;
 }
 
 RenderAPI::SwapChain * Device::CreateAdditionalSwapChain(const RenderAPI::SwapChainDesc & swapChainDesc)

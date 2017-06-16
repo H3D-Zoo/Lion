@@ -1,10 +1,34 @@
 #pragma once
 
 #include "../../RenderAPI/RenderAPI.h"
+#include <vector>
+#include "DX9Include.h"
+
+
+class BackBufferManager
+{
+public:
+	BackBufferManager(IDirect3DDevice9* device, RenderAPI::RenderTarget* defRT, RenderAPI::DepthStencil* defDS);
+
+	~BackBufferManager();
+
+	void SetRenderTarget(unsigned int index, RenderAPI::RenderTarget* rt);
+
+	void SetDepthStencil(RenderAPI::DepthStencil* rt);
+
+private:
+	IDirect3DDevice9* m_pDevice;
+	std::vector<IDirect3DSurface9*> m_pCurrentRTs;
+	IDirect3DSurface9* m_pCurrentDS;
+};
 
 class Context :public RenderAPI::Context
 {
 public:
+	Context(IDirect3DDevice9* device, RenderAPI::RenderTarget* defRT, RenderAPI::DepthStencil* defDS);
+
+	~Context();
+
 	virtual void ClearRenderTarget(RenderAPI::RenderTarget* rt, unsigned int color);
 
 	virtual void ClearDepthStencil(RenderAPI::DepthStencil* ds, float z, unsigned int stencil);
@@ -56,4 +80,8 @@ public:
 	virtual void ResetDevice();
 
 	virtual void Release();
+
+private:
+	IDirect3DDevice9* m_pDevice;
+	BackBufferManager m_backBufferManager;
 };
