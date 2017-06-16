@@ -26,6 +26,11 @@ unsigned int VertexBuffer::GetVertexCount() const
 	return m_vertexCount;
 }
 
+unsigned int VertexBuffer::GetVertexStride() const
+{
+	return m_vertexStride;
+}
+
 unsigned int VertexBuffer::GetLength() const
 {
 	return m_bufferLength;

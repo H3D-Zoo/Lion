@@ -3,6 +3,7 @@
 VertexBuffer::VertexBuffer(RenderAPI::ResourceUsage usage, unsigned int vertexCount, unsigned int vertexSize, RenderAPI::Semantic * semantics, unsigned int semanticCount, void * initialData)
 	: m_usage(usage)
 	, m_vertexCount(vertexCount)
+	, m_vertexStride(vertexSize)
 	, m_bufferLength(vertexCount * vertexSize)
 	, m_semantics(semantics, semantics + semanticCount)
 {
@@ -11,6 +12,7 @@ VertexBuffer::VertexBuffer(RenderAPI::ResourceUsage usage, unsigned int vertexCo
 VertexBuffer::VertexBuffer(RenderAPI::ResourceUsage usage, unsigned int vertexCount, unsigned int vertexSize, RenderAPI::Semantic * semantics, unsigned int semanticCount)
 	: m_usage(usage)
 	, m_vertexCount(vertexCount)
+	, m_vertexStride(vertexSize)
 	, m_bufferLength(vertexCount * vertexSize)
 	, m_semantics(semantics, semantics + semanticCount)
 {
@@ -24,6 +26,11 @@ RenderAPI::ResourceUsage VertexBuffer::GetUsage() const
 unsigned int VertexBuffer::GetVertexCount() const
 {
 	return m_vertexCount;
+}
+
+unsigned int VertexBuffer::GetVertexStride() const
+{
+	return m_vertexStride;
 }
 
 unsigned int VertexBuffer::GetLength() const

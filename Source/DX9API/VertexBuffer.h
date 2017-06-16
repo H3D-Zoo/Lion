@@ -1,7 +1,7 @@
 #pragma once
 #include "../../RenderAPI/RenderAPI.h"
-
 #include <vector>
+#include "DX9Include.h"
 
 class VertexBuffer : public RenderAPI::VertexBuffer
 {
@@ -14,6 +14,8 @@ public:
 
 	virtual unsigned int GetVertexCount() const;
 
+	virtual unsigned int GetVertexStride() const;
+
 	virtual unsigned int GetLength() const;
 
 	virtual const RenderAPI::Semantic* GetSemanticPtr() const;
@@ -22,9 +24,12 @@ public:
 
 	virtual void Release();
 
+	IDirect3DVertexBuffer9* GetBufferPtr() { return NULL; }
+
 private:
 	RenderAPI::ResourceUsage m_usage;
 	unsigned int m_vertexCount;
+	unsigned int m_vertexStride;
 	unsigned int m_bufferLength;
 	const std::vector<RenderAPI::Semantic> m_semantics;
 };

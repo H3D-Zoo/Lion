@@ -100,12 +100,12 @@ void Context::SetDepthBias(float bias)
 
 }
 
-void Context::Draw(RenderAPI::Primitive primitive, unsigned int startIndex, unsigned int baseVertex, unsigned int primitiveCount)
+void Context::Draw(RenderAPI::Primitive primitive, unsigned int startIndex, unsigned int primitiveCount)
 {
 
 }
 
-void Context::DrawIndexed(RenderAPI::Primitive primitive, unsigned int indexCount, unsigned int startIndex, unsigned int baseVertex, unsigned int primitiveCount)
+void Context::DrawIndexed(RenderAPI::Primitive primitive, unsigned int baseVertex, unsigned int startIndex, unsigned int primitiveCount)
 {
 
 }

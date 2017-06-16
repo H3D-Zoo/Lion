@@ -456,6 +456,9 @@ namespace RenderAPI
 	{
 		PRIMITIVE_TriangleList = 0,
 		PRIMITIVE_TriangleStrip = 1,
+		PRIMITIVE_TriangleFan = 2,
+		PRIMITIVE_LineList = 3,
+		PRIMITIVE_LineStrip = 4,
 	};
 
 	struct ScissorState
@@ -493,7 +496,7 @@ namespace RenderAPI
 		float MinZ;
 		float MaxZ;
 	};
-
+	
 	struct VertexBufferInfo
 	{
 		VertexBufferInfo()
@@ -563,9 +566,9 @@ namespace RenderAPI
 
 		virtual void SetDepthBias(float bias) = 0;
 
-		virtual void Draw(Primitive primitive, unsigned int startIndex, unsigned int baseVertex, unsigned int primitiveCount) = 0;
+		virtual void Draw(Primitive primitive, unsigned int startIndex, unsigned int primitiveCount) = 0;
 
-		virtual void DrawIndexed(Primitive primitive, unsigned int indexCount, unsigned int startIndex, unsigned int baseVertex, unsigned int primitiveCount) = 0;
+		virtual void DrawIndexed(RenderAPI::Primitive primitive, unsigned int baseVertex, unsigned int startIndex, unsigned int primitiveCount) = 0;
 
 		virtual void GenerateMipmaps(Texture2D* texture) = 0;
 
@@ -580,6 +583,8 @@ namespace RenderAPI
 		virtual ResourceUsage GetUsage() const = 0;
 
 		virtual unsigned int GetVertexCount() const = 0;
+
+		virtual unsigned int GetVertexStride() const = 0;
 
 		virtual unsigned int GetLength() const = 0;
 

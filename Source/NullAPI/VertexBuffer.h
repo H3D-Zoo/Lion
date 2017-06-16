@@ -14,6 +14,8 @@ public:
 
 	virtual unsigned int GetVertexCount() const;
 
+	virtual unsigned int GetVertexStride() const;
+
 	virtual unsigned int GetLength() const;
 
 	virtual const RenderAPI::Semantic* GetSemanticPtr() const;
@@ -25,6 +27,7 @@ public:
 private:
 	RenderAPI::ResourceUsage m_usage;
 	unsigned int m_vertexCount;
+	unsigned int m_vertexStride;
 	unsigned int m_bufferLength;
 	const std::vector<RenderAPI::Semantic> m_semantics;
 };

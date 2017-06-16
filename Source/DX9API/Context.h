@@ -69,9 +69,9 @@ public:
 
 	virtual void SetDepthBias(float bias);
 
-	virtual void Draw(RenderAPI::Primitive primitive, unsigned int startIndex, unsigned int baseVertex, unsigned int primitiveCount);
+	virtual void Draw(RenderAPI::Primitive primitive, unsigned int startIndex, unsigned int primitiveCount);
 
-	virtual void DrawIndexed(RenderAPI::Primitive primitive, unsigned int indexCount, unsigned int startIndex, unsigned int baseVertex, unsigned int primitiveCount);
+	virtual void DrawIndexed(RenderAPI::Primitive primitive, unsigned int baseVertex, unsigned int startIndex, unsigned int primitiveCount);
 
 	virtual void GenerateMipmaps(RenderAPI::Texture2D* texture);
 
@@ -84,4 +84,5 @@ public:
 private:
 	IDirect3DDevice9* m_pDevice;
 	BackBufferManager m_backBufferManager;
+	unsigned int m_vertexBufferCount;
 };
