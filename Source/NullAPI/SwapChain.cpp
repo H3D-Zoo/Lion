@@ -1,16 +1,22 @@
 #include "SwapChain.h"
 
-SwapChain::SwapChain(const RenderAPI::SwapChainDesc & swapChainDesc, bool fullscreen)
-	: m_isFullscreen(fullscreen)
-	, m_renderTarget(swapChainDesc.backbufferFormat, swapChainDesc.backbufferWidth, swapChainDesc.backbufferHeight)
+SwapChain::SwapChain(const RenderAPI::SwapChainDesc & swapChainDesc)
+	: m_renderTarget(swapChainDesc.backbufferFormat, swapChainDesc.backbufferWidth, swapChainDesc.backbufferHeight, false)
+	, m_depthStencil(swapChainDesc.zbufferFormat, swapChainDesc.backbufferWidth, swapChainDesc.backbufferHeight, false)
 {
 
 }
 
-RenderAPI::RenderTarget* SwapChain::GetRenderTarget() const
+RenderAPI::RenderTarget* SwapChain::GetRenderTarget()
 {
 	m_renderTarget.AddRef();
 	return &m_renderTarget;
+}
+
+RenderAPI::DepthStencil * SwapChain::GetDepthStencil()
+{
+	m_depthStencil.AddRef();
+	return &m_depthStencil;
 }
 
 unsigned int SwapChain::GetWidth() const
@@ -34,16 +40,6 @@ bool SwapChain::OnResize(unsigned int width, unsigned int height)
 	{
 		return false;
 	}
-}
-
-void SwapChain::SetFullscreen(bool fullscreen)
-{
-	m_isFullscreen = fullscreen;
-}
-
-bool SwapChain::IsFullscreen() const
-{
-	return m_isFullscreen;
 }
 
 void SwapChain::Present()

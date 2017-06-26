@@ -7,8 +7,6 @@
 
 namespace RenderAPI
 {
-	static Logger* s_currentLogger = NULL;
-
 	bool Initialize()
 	{
 		return true;
@@ -25,6 +23,11 @@ namespace RenderAPI
 		result.DevicePtr = new ::Device(desc, isFullscreen, useVerticalSync);
 		result.ContextPtr = new ::Context();
 		return result;
+	}
+
+	bool CompileFXEffectFromFile(const char* sourceFXFile, const char* compiledFXFile)
+	{
+		return true;
 	}
 }
 

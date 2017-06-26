@@ -18,11 +18,11 @@ namespace RenderAPI
 	class Logger
 	{
 	public:
-		virtual ~Logger();
+		virtual ~Logger() { }
 
 		virtual void LogError(const char*) = 0;
 
-		virtual void LogWarning(const char*) = 0;
+		virtual void LogWarning(const char*) = 0; 
 
 		virtual void LogDebug(const char*) = 0;
 
@@ -50,28 +50,32 @@ namespace RenderAPI
 
 	enum ZBufferFormat
 	{
-		ZBUFFER_Disable = 0,
-		ZBUFFER_Auto = 1,
-		ZBUFFER_D24S8 = 2,
-		ZBUFFER_D24X8 = 3,
-		ZBUFFER_D32 = 4,
-		ZBUFFER_D16 = 5,
+		ZBUFFER_D24S8 = 0,
+		ZBUFFER_D24X8 = 1,
+		ZBUFFER_D16 = 2,
 	};
 
 	enum AAMode
 	{
-		AA_Disable = 1 << 0,
-		AA_X2 = 1 << 1,
-		AA_X4 = 1 << 2,
-		AA_X6 = 1 << 3,
-		AA_X8 = 1 << 4,
-		AA_X10 = 1 << 5,
+		AA_Disable = 0,
+		AA_X2 = 1 << 0,
+		AA_X4 = 1 << 1,
+		AA_X6 = 1 << 2,
+		AA_X8 = 1 << 3,
+		AA_X10 = 1 << 4,
 	};
 
 	// 如果 backbufferWidth 和 backbufferHeight 同时被设为 0，将会使用 hWindow 默认的大小作为 backbuffer 的大小
 	struct SwapChainDesc
 	{
-		SwapChainDesc();
+		SwapChainDesc()
+			: hWindow(0)
+			, backbufferWidth(0)
+			, backbufferHeight(0)
+			, backbufferFormat(BACKBUFFER_XRGB8)
+			, zbufferFormat(ZBUFFER_D24S8)
+			, aaMode(AA_Disable)
+		{ }
 
 		void* hWindow;
 		unsigned int backbufferWidth;
@@ -85,13 +89,17 @@ namespace RenderAPI
 	class Context;
 	struct CreationResult
 	{
-		CreationResult();
+		CreationResult()
+			: Success(false)
+			, DevicePtr(0)
+			, ContextPtr(0) { }
+
 		bool Success;
 		Device* DevicePtr;
 		Context* ContextPtr;
 	};
 
-	CreationResult CreateDeviceAndContext(const SwapChainDesc& desc, bool isFullscreen, bool useVerticalSync);
+	CreationResult CreateDeviceAndContext(SwapChainDesc& desc, bool isFullscreen, bool useVerticalSync);
 
 	/*
 		用户渲染接口
@@ -105,8 +113,8 @@ namespace RenderAPI
 		virtual void Release() = 0;
 
 	protected:
-		RObject();
-		virtual ~RObject();
+		RObject() { }
+		virtual ~RObject() { }
 
 	private:
 		RObject(const RObject&);
@@ -118,16 +126,30 @@ namespace RenderAPI
 	*/
 	enum ResourceUsage
 	{
-		RES_USAGE_Default = 0,
-		RES_USAGE_Dynamic = 1,
-		RES_USAGE_Immuable = 2,
+		RESUSAGE_Default = 0,
+		RESUSAGE_Dynamic = 1,
+		RESUSAGE_Immuable = 2,
+	};
+
+	enum LockOption
+	{
+		LOCK_Normal = 0,
+		LOCK_Discard = 1,
+		LOCK_ReadOnly = 2,
 	};
 
 	enum InputFormat
 	{
-		INPUT_Float2 = 0,
-		INPUT_Float3 = 1,
-		INPUT_Float4 = 2,
+		INPUT_Float1 = 0,
+		INPUT_Float2 = 1,
+		INPUT_Float3 = 2,
+		INPUT_Float4 = 3,
+		INPUT_Color4 = 4,
+		INPUT_UByte4 = 5,
+		INPUT_Short2 = 6,
+		INPUT_Short4 = 7,
+		INPUT_UShort2 = 8,
+		INPUT_UShort4 = 9,
 	};
 
 	enum Semantic
@@ -140,7 +162,13 @@ namespace RenderAPI
 
 	struct VertexElement
 	{
-		VertexElement();
+		VertexElement()
+			: SemanticName(SEMANTIC_POSITION)
+			, SemanticIndex(0)
+			, StreamIndex(0)
+			, AlignOffset(0xFFFFFFFF)
+			, Format(INPUT_Float4)
+		{ }
 
 		Semantic SemanticName;
 		unsigned int SemanticIndex;
@@ -171,13 +199,6 @@ namespace RenderAPI
 		INDEX_Int32 = 1,
 	};
 
-	enum TextureBinding
-	{
-		BINDING_ShaderResource = 1 << 0,
-		BINDING_RenderTraget = 1 << 1,
-		BINDING_DepthStencil = 1 << 2,
-	};
-
 	class SwapChain;
 	class VertexBuffer;
 	class IndexBuffer;
@@ -189,15 +210,16 @@ namespace RenderAPI
 	class Device : public RObject
 	{
 	public:
-		virtual SwapChain* GetDefaultSwapChain() const = 0;
+		// 这个 RenderTarget 不再使用的时候要调用 Release
+		virtual SwapChain* GetDefaultSwapChain() = 0;
 
 		virtual SwapChain* CreateAdditionalSwapChain(const SwapChainDesc&) = 0;
 
-		virtual VertexBuffer* CreateVertexBuffer(ResourceUsage usage, unsigned int vertexCount, unsigned int vertexSize, Semantic* semantics, unsigned int semanticCount, void* initialData) = 0;
+		virtual VertexBuffer* CreateVertexBuffer(ResourceUsage usage, unsigned int vertexCount, unsigned int vertexSize, VertexElement* elements, unsigned int elementCount, void* initialData) = 0;
 
 		virtual IndexBuffer* CreateIndexBuffer(ResourceUsage usage, IndexFormat format, unsigned int indexCount, void* initialData) = 0;
 
-		virtual Texture2D* CreateTexture2D(ResourceUsage usage, TextureFormat format, TextureBinding binding, unsigned int width, unsigned int height, void* initialData) = 0;
+		virtual Texture2D* CreateTexture2D(ResourceUsage usage, TextureFormat format, unsigned int width, unsigned int height, void* initialData, int dataLinePitch, int dataHeight) = 0;
 
 		virtual FXEffect* CreateFXEffectFromFile(const char* effectFilePath) = 0;
 
@@ -213,14 +235,14 @@ namespace RenderAPI
 	{
 		BLEND_Zero = 0,
 		BLEND_One = 1,
-		BLEND_SourceColor = 2,
-		BLEND_SourceAlpha = 3,
-		BLEND_DestColor = 4,
-		BLEND_DestAlpha = 5,
-		BLEND_InverseSourceColor = 6,
-		BLEND_InverseSourceAlpha = 7,
-		BLEND_InverseDestColor = 8,
-		BLEND_InverseDestAlpha = 9,
+		BLEND_SrcColor = 2,
+		BLEND_SrcAlpha = 3,
+		BLEND_DstColor = 4,
+		BLEND_DstAlpha = 5,
+		BLEND_InvSrcColor = 6,
+		BLEND_InvSrcAlpha = 7,
+		BLEND_InvDstColor = 8,
+		BLEND_InvDstAlpha = 9,
 	};
 
 	enum BlendOperator
@@ -231,14 +253,24 @@ namespace RenderAPI
 
 	struct BlendState
 	{
-		BlendState();
+		BlendState()
+			: IsEnable(false)
+			, IsAlphaSeperate(false)
+			, ColorSrc(BLEND_One)
+			, ColorDst(BLEND_Zero)
+			, AlphaSrc(BLEND_One)
+			, AlphaDst(BLEND_Zero)
+			, ColorOp(BLEND_OP_Add)
+			, AlphaOp(BLEND_OP_Add)
+		{	}
+
 
 		bool IsEnable;
 		bool IsAlphaSeperate;
-		BlendFactor ColorSrcAlpha;
-		BlendFactor ColorDstAlpha;
-		BlendFactor AlphaSrcAlpha;
-		BlendFactor AlphaDstAlpha;
+		BlendFactor ColorSrc;
+		BlendFactor ColorDst;
+		BlendFactor AlphaSrc;
+		BlendFactor AlphaDst;
 		BlendOperator ColorOp;
 		BlendOperator AlphaOp;
 	};
@@ -257,7 +289,11 @@ namespace RenderAPI
 
 	struct AlphaTestingState
 	{
-		AlphaTestingState();
+		AlphaTestingState()
+			: IsEnable(false)
+			, Reference(0)
+			, Function(COMPARE_LessEqual)
+		{	}
 
 		bool IsEnable;
 		unsigned char Reference;
@@ -266,10 +302,12 @@ namespace RenderAPI
 
 	struct DepthTestingState
 	{
-		DepthTestingState();
+		DepthTestingState()
+			: IsEnable(false)
+			, Function(COMPARE_LessEqual)
+		{	}
 
 		bool IsEnable;
-		float Reference;
 		CompareMethod Function;
 	};
 
@@ -287,7 +325,12 @@ namespace RenderAPI
 
 	struct StencilOps
 	{
-		StencilOps();
+		StencilOps()
+			: Function(COMPARE_Always)
+			, SFail(STENCIL_Keep)
+			, SPassZFail(STENCIL_Keep)
+			, AllPass(STENCIL_Keep)
+		{	}
 
 		CompareMethod Function;
 		StencilOp SFail;
@@ -297,7 +340,13 @@ namespace RenderAPI
 
 	struct StencilTestingState
 	{
-		StencilTestingState();
+		StencilTestingState()
+			: IsEnable(false)
+			, TwoSide(false)
+			, Reference(0)
+			, TestMask(0xFFFFFFFF)
+			, WriteMask(0xFFFFFFFF)
+		{	}
 
 		bool IsEnable;
 		bool TwoSide; // 启用这个选项，需要将 CullMode 设为 None
@@ -319,10 +368,11 @@ namespace RenderAPI
 		TEXOP_Add = 6,
 		TEXOP_AddSigned = 7,
 		TEXOP_AddSigned2x = 8,
-		TEXOP_AddSigned4x = 9,
-		TEXOP_Sub = 10,
-		TEXOP_AddSmooth = 11, // Screen
-		TEXOP_Lerp = 12
+		TEXOP_Sub = 9,
+		TEXOP_AddSmooth = 10, // Screen
+		TEXOP_DotProduct3 = 11,
+		TEXOP_MultiplyAdd = 12,
+		TEXOP_Lerp = 13
 	};
 
 	enum TextureArg
@@ -335,7 +385,14 @@ namespace RenderAPI
 
 	struct TextureBlendingState
 	{
-		TextureBlendingState();
+		TextureBlendingState()
+			: ColorOp(TEXOP_Disable)
+			, AlphaOp(TEXOP_Disable)
+			, ColorArg0(TEXARG_Texture)
+			, ColorArg1(TEXARG_Current)
+			, AlphaArg0(TEXARG_Texture)
+			, AlphaArg1(TEXARG_Current)
+		{	}
 
 		TextureOp  ColorOp;
 		TextureOp  AlphaOp;
@@ -343,7 +400,6 @@ namespace RenderAPI
 		TextureArg ColorArg1;
 		TextureArg AlphaArg0;
 		TextureArg AlphaArg1;
-		unsigned int TextureFactor;
 	};
 
 	enum SamplerFilter
@@ -368,11 +424,18 @@ namespace RenderAPI
 		TEX_ADDRESS_Repeat = 0,
 		TEX_ADDRESS_Clamp = 1,
 		TEX_ADDRESS_Mirror = 2,
+		TEX_ADDRESS_Border = 2,
 	};
 
 	struct TextureSampler
 	{
-		TextureSampler();
+		TextureSampler()
+			: Filter(FILTER_MinP_MagP_MipX)
+			, AddressU(TEX_ADDRESS_Clamp)
+			, AddressV(TEX_ADDRESS_Clamp)
+			, BorderColor(0x00000000)
+		{	}
+
 		SamplerFilter Filter;
 		TextureAddress AddressU;
 		TextureAddress AddressV;
@@ -389,19 +452,36 @@ namespace RenderAPI
 	enum CullMode
 	{
 		CULL_None = 0,
-		CULL_ClockWise = 1,
-		CULL_CounterClockWise = 2,
+		CULL_CW = 1,
+		CULL_CCW = 2,
 	};
 
 	enum Primitive
 	{
 		PRIMITIVE_TriangleList = 0,
 		PRIMITIVE_TriangleStrip = 1,
+		PRIMITIVE_TriangleFan = 2,
+		PRIMITIVE_LineList = 3,
+		PRIMITIVE_LineStrip = 4,
+	};
+
+	enum DeviceState
+	{
+		DEVICE_OK = 0,
+		DEVICE_Lost = 1,
+		DEVICE_WaitReset = 2,
+		DEVICE_Error = 3,
 	};
 
 	struct ScissorState
 	{
-		ScissorState();
+		ScissorState()
+			: IsEnable(false)
+			, Left(0)
+			, Right(0)
+			, Top(0)
+			, Bottom(0)
+		{	}
 
 		bool IsEnable;
 		long Left;
@@ -412,7 +492,14 @@ namespace RenderAPI
 
 	struct Viewport
 	{
-		Viewport();
+		Viewport()
+			: Left(0)
+			, Top(0)
+			, Width(0)
+			, Height(0)
+			, MinZ(0.0f)
+			, MaxZ(1.0f)
+		{ }
 
 		unsigned int Left;
 		unsigned int Top;
@@ -424,7 +511,11 @@ namespace RenderAPI
 
 	struct VertexBufferInfo
 	{
-		VertexBufferInfo();
+		VertexBufferInfo()
+			: BufferPtr(0)
+			, Stride(0)
+			, Offset(0)
+		{ }
 
 		VertexBuffer* BufferPtr;
 		unsigned int Stride;
@@ -433,7 +524,11 @@ namespace RenderAPI
 
 	struct MappedResource
 	{
-		MappedResource();
+		MappedResource()
+			: Success(false)
+			, DataPtr(0)
+			, LinePitch(0)
+		{ }
 
 		bool Success;
 		void* DataPtr;
@@ -451,13 +546,11 @@ namespace RenderAPI
 
 		virtual void SetRenderTarget(unsigned int index, RenderTarget* renderTarget) = 0;
 
-		virtual void SetRenderTarget(DepthStencil* depthStencil) = 0;
+		virtual void SetDepthStencil(DepthStencil* depthStencil) = 0;
 
 		virtual void SetVertexBuffers(unsigned int startSlot, VertexBufferInfo* buffers, unsigned int bufferCount) = 0;
 
 		virtual void SetIndexBuffer(IndexBuffer* buffer, unsigned int offset) = 0;
-
-		virtual void SetEffect(FXEffect*) = 0;
 
 		virtual void SetTextures(unsigned int startSlot, Texture2D** textures, unsigned int resCount) = 0;
 
@@ -471,9 +564,9 @@ namespace RenderAPI
 
 		virtual void SetDepthWriting(bool enable) = 0;
 
-		virtual void SetTextureBlendingState(unsigned int startSlot, const TextureBlendingState** samplers, unsigned int count) = 0;
+		virtual void SetTextureBlendingState(unsigned int startSlot, const TextureBlendingState* states, unsigned int count) = 0;
 
-		virtual void SetTextureSampler(unsigned int startSlot, const TextureSampler** samplers, unsigned int count) = 0;
+		virtual void SetTextureSampler(unsigned int startSlot, const TextureSampler* samplers, unsigned int count) = 0;
 
 		virtual void SetScissorState(const ScissorState& state) = 0;
 
@@ -483,15 +576,15 @@ namespace RenderAPI
 
 		virtual void SetDepthBias(float bias) = 0;
 
-		virtual void Draw(Primitive primitive, unsigned int startIndex, unsigned int baseVertex, unsigned int primitiveCount) = 0;
+		virtual void SetTextureFactor(unsigned int factor) = 0;
 
-		virtual void DrawIndexed(Primitive primitive, unsigned int indexCount, unsigned int startIndex, unsigned int baseVertex, unsigned int primitiveCount) = 0;
+		virtual void Draw(Primitive primitive, unsigned int startIndex, unsigned int primitiveCount) = 0;
 
-		virtual void GenerateMipmaps(Texture2D* texture) = 0;
+		virtual void DrawIndexed(RenderAPI::Primitive primitive, unsigned int baseVertex, unsigned int startIndex, unsigned int primitiveCount) = 0;
 
-		virtual void CheckDeviceLost() = 0;
+		virtual DeviceState CheckDeviceLost() = 0;
 
-		virtual void ResetDevice() = 0;
+		virtual bool ResetDevice() = 0;
 	};
 
 	class VertexBuffer : public RObject
@@ -501,11 +594,19 @@ namespace RenderAPI
 
 		virtual unsigned int GetVertexCount() const = 0;
 
+		virtual unsigned int GetVertexStride() const = 0;
+
 		virtual unsigned int GetLength() const = 0;
 
-		virtual const Semantic* GetSemanticPtr() const = 0;
+		virtual const VertexElement* GetElementPtr() const = 0;
 
-		virtual unsigned int GetSemanticCount() const = 0;
+		virtual unsigned int GetElementCount() const = 0;
+
+		virtual void* Lock(unsigned int offset, unsigned int lockLength, LockOption lockOption) = 0;
+
+		virtual void* DiscardLock() = 0;
+
+		virtual void Unlock() = 0;
 	};
 
 	class IndexBuffer : public RObject
@@ -518,6 +619,12 @@ namespace RenderAPI
 		virtual unsigned int GetIndexCount() const = 0;
 
 		virtual unsigned int GetLength() const = 0;
+
+		virtual void* Lock(unsigned int offset, unsigned int lockLength, LockOption lockOption) = 0;
+
+		virtual void* DiscardLock() = 0;
+
+		virtual void Unlock() = 0;
 	};
 
 	class Texture2D : public RObject
@@ -529,15 +636,9 @@ namespace RenderAPI
 
 		virtual unsigned int GetHeight() const = 0;
 
-		virtual bool IsRenderTarget() const = 0;
+		virtual MappedResource LockRect(unsigned int layer, LockOption lockOption) = 0;
 
-		//请不要调用这个对象的Release
-		virtual RenderTarget* GetRenderTarget() const = 0;
-
-		virtual bool IsDepthStencil() const = 0;
-
-		//请不要调用这个对象的Release
-		virtual DepthStencil* GetDepthStencil() const = 0;
+		virtual void UnlockRect(unsigned int layer) = 0;
 	};
 
 	class RenderTarget : public RObject
@@ -548,6 +649,10 @@ namespace RenderAPI
 		virtual unsigned int GetWidth() const = 0;
 
 		virtual unsigned int GetHeight() const = 0;
+
+		virtual bool IsTexture2D() const = 0;
+
+		virtual Texture2D* GetTexturePtr() = 0;
 	};
 
 	class DepthStencil : public RObject
@@ -558,18 +663,52 @@ namespace RenderAPI
 		virtual unsigned int GetWidth() const = 0;
 
 		virtual unsigned int GetHeight() const = 0;
+
+		virtual bool IsTexture2D() const = 0;
+
+		virtual Texture2D* GetTexturePtr() = 0;
 	};
 
 	class FXEffect : public RObject
 	{
+	public:
+		virtual unsigned int Begin() = 0;
 
+		virtual void End() = 0;
+
+		virtual bool BeginPass(unsigned int passIndex) = 0;
+
+		virtual void EndPass() = 0;
+
+		virtual void SetTechniqueByName(const char* name) = 0;
+
+		virtual bool SetMatrix(const char* paramName, const float* matrix) = 0;
+
+		virtual bool SetMatrixInArray(const char* paramName, const float* data, unsigned int index) = 0;
+
+		virtual bool SetMatrixArray(const char* paramName, const float* data, unsigned int count) = 0;
+
+		virtual bool SetValue(const char* paramName, const void* pData, unsigned int sizeinByte) = 0;
+
+		virtual bool SetValueInArray(const char* paramName, const void* pData, unsigned int sizeinByte, unsigned int index) = 0;
+
+		virtual bool SetFloat(const char* paramName, float val) = 0;
+
+		virtual bool SetInt(const char* paramName, int data) = 0;
+
+		virtual bool SetTexture(const char*  paramName, RenderAPI::Texture2D* texture) = 0;
+
+		virtual void CommitChange() = 0;
 	};
 
 	class SwapChain : public RObject
 	{
 	public:
 		// 这个 RenderTarget 不再使用的时候要调用 Release
-		virtual RenderTarget* GetRenderTarget() const = 0;
+		virtual RenderTarget* GetRenderTarget() = 0;
+
+		// 这个 RenderTarget 不再使用的时候要调用 Release
+		virtual DepthStencil* GetDepthStencil() = 0;
 
 		virtual unsigned int GetWidth() const = 0;
 
@@ -577,11 +716,8 @@ namespace RenderAPI
 
 		virtual bool OnResize(unsigned int width, unsigned int height) = 0;
 
-		// 只有 默认Swapchain才能设置全屏模式
-		virtual void SetFullscreen(bool fullscreen) = 0;
-
-		virtual bool IsFullscreen() const = 0;
-
 		virtual void Present() = 0;
 	};
+
+	bool CompileFXEffectFromFile(const char* sourceFXFile, const char* compiledFXFile);
 }

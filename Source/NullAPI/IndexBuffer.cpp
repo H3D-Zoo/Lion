@@ -17,15 +17,6 @@ IndexBuffer::IndexBuffer(RenderAPI::ResourceUsage usage, RenderAPI::IndexFormat 
 	m_bufferLength = s_IndexLength[format] * m_indexCount;
 }
 
-IndexBuffer::IndexBuffer(RenderAPI::ResourceUsage usage, RenderAPI::IndexFormat format, unsigned int count, void* initialData)
-	: m_usage(usage)
-	, m_indexFormat(format)
-	, m_indexCount(count)
-{
-	m_bufferLength = s_IndexLength[format] * m_indexCount;
-}
-
-
 RenderAPI::ResourceUsage IndexBuffer::GetUsage() const
 {
 	return m_usage;
@@ -44,6 +35,21 @@ unsigned int IndexBuffer::GetIndexCount() const
 unsigned int IndexBuffer::GetLength() const
 {
 	return m_bufferLength;
+}
+
+void * IndexBuffer::Lock(unsigned int offset, unsigned int lockLength, RenderAPI::LockOption lockOption)
+{
+	return NULL;
+}
+
+void * IndexBuffer::DiscardLock()
+{
+	return NULL;
+}
+
+inline void IndexBuffer::Unlock()
+{
+
 }
 
 void IndexBuffer::Release()

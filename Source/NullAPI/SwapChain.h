@@ -3,24 +3,23 @@
 #include "../../RenderAPI/RenderAPI.h"
 #include "RenderAPIImpl.h"
 #include "RenderTarget.h"
+#include "DepthStencil.h"
 
 
 class SwapChain : public RenderAPI::SwapChain
 {
 public:
-	SwapChain(const RenderAPI::SwapChainDesc & swapChainDesc, bool fullscreen);
+	SwapChain(const RenderAPI::SwapChainDesc & swapChainDesc);
 
-	virtual RenderAPI::RenderTarget* GetRenderTarget() const;
+	virtual RenderAPI::RenderTarget* GetRenderTarget();
+
+	virtual RenderAPI::DepthStencil* GetDepthStencil();
 
 	virtual unsigned int GetWidth() const;
 
 	virtual unsigned int GetHeight() const;
 
 	virtual bool OnResize(unsigned int width, unsigned int height);
-
-	virtual void SetFullscreen(bool fullscreen);
-
-	virtual bool IsFullscreen() const;
 
 	virtual void Present();
 
@@ -30,6 +29,6 @@ public:
 
 private:
 	RefCount m_refCount;
-	bool m_isFullscreen;
-	mutable ::RenderTarget m_renderTarget;
+	::RenderTarget m_renderTarget;
+	::DepthStencil m_depthStencil;
 };

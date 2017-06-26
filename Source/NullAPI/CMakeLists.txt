@@ -11,6 +11,7 @@ set(RENDERAPI_SOURCE_FILES_COMMON
 	${DIR_COMMON}/Logger.h
 	${DIR_COMMON}/Logger.cpp
 	${DIR_COMMON}/RenderAPI.cpp
+	${DIR_COMMON}/RenderAPIExport.def
 )
 
 set(RENDERAPI_INCLUDE_FILES

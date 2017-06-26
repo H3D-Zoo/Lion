@@ -20,7 +20,7 @@ void Context::SetRenderTarget(unsigned int index, RenderAPI::RenderTarget* rende
 
 }
 
-void Context::SetRenderTarget(RenderAPI::DepthStencil* depthStencil)
+void Context::SetDepthStencil(RenderAPI::DepthStencil* depthStencil)
 {
 
 }
@@ -31,11 +31,6 @@ void Context::SetVertexBuffers(unsigned int startSlot, RenderAPI::VertexBufferIn
 }
 
 void Context::SetIndexBuffer(RenderAPI::IndexBuffer* buffer, unsigned int offset)
-{
-
-}
-
-void Context::SetEffect(RenderAPI::FXEffect*)
 {
 
 }
@@ -70,12 +65,12 @@ void Context::SetDepthWriting(bool enable)
 
 }
 
-void Context::SetTextureBlendingState(unsigned int startSlot, const RenderAPI::TextureBlendingState** samplers, unsigned int count)
+void Context::SetTextureBlendingState(unsigned int startSlot, const RenderAPI::TextureBlendingState* states, unsigned int count)
 {
 
 }
 
-void Context::SetTextureSampler(unsigned int startSlot, const RenderAPI::TextureSampler** samplers, unsigned int count)
+void Context::SetTextureSampler(unsigned int startSlot, const RenderAPI::TextureSampler* samplers, unsigned int count)
 {
 
 }
@@ -100,29 +95,29 @@ void Context::SetDepthBias(float bias)
 
 }
 
-void Context::Draw(RenderAPI::Primitive primitive, unsigned int startIndex, unsigned int baseVertex, unsigned int primitiveCount)
+void Context::SetTextureFactor(unsigned int factor)
 {
 
 }
 
-void Context::DrawIndexed(RenderAPI::Primitive primitive, unsigned int indexCount, unsigned int startIndex, unsigned int baseVertex, unsigned int primitiveCount)
+void Context::Draw(RenderAPI::Primitive primitive, unsigned int startIndex, unsigned int primitiveCount)
 {
 
 }
 
-void Context::GenerateMipmaps(RenderAPI::Texture2D* texture)
+void Context::DrawIndexed(RenderAPI::Primitive primitive, unsigned int baseVertex, unsigned int startIndex, unsigned int primitiveCount)
 {
 
 }
 
-void Context::CheckDeviceLost()
+RenderAPI::DeviceState Context::CheckDeviceLost()
 {
-
+	return RenderAPI::DEVICE_OK;
 }
 
-void Context::ResetDevice()
+bool Context::ResetDevice()
 {
-
+	return true;
 }
 
 void Context::Release()

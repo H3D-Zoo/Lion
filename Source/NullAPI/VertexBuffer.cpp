@@ -1,20 +1,14 @@
 #include "VertexBuffer.h"
 
-VertexBuffer::VertexBuffer(RenderAPI::ResourceUsage usage, unsigned int vertexCount, unsigned int vertexSize, RenderAPI::Semantic * semantics, unsigned int semanticCount, void * initialData)
+VertexBuffer::VertexBuffer(RenderAPI::ResourceUsage usage, unsigned int vertexCount, unsigned int vertexSize, RenderAPI::VertexElement* elements, unsigned int elementCount)
 	: m_usage(usage)
 	, m_vertexCount(vertexCount)
 	, m_bufferLength(vertexCount * vertexSize)
-	, m_semantics(semantics, semantics + semanticCount)
+	, m_vertexElements(elements, elements + elementCount)
 {
+
 }
 
-VertexBuffer::VertexBuffer(RenderAPI::ResourceUsage usage, unsigned int vertexCount, unsigned int vertexSize, RenderAPI::Semantic * semantics, unsigned int semanticCount)
-	: m_usage(usage)
-	, m_vertexCount(vertexCount)
-	, m_bufferLength(vertexCount * vertexSize)
-	, m_semantics(semantics, semantics + semanticCount)
-{
-}
 
 RenderAPI::ResourceUsage VertexBuffer::GetUsage() const
 {
@@ -26,19 +20,39 @@ unsigned int VertexBuffer::GetVertexCount() const
 	return m_vertexCount;
 }
 
+unsigned int VertexBuffer::GetVertexStride() const
+{
+	return m_vertexStride;
+}
+
 unsigned int VertexBuffer::GetLength() const
 {
 	return m_bufferLength;
 }
 
-const RenderAPI::Semantic * VertexBuffer::GetSemanticPtr() const
+const RenderAPI::VertexElement * VertexBuffer::GetElementPtr() const
 {
-	return &(m_semantics[0]);
+	return &(m_vertexElements[0]);
 }
 
-unsigned int VertexBuffer::GetSemanticCount() const
+unsigned int VertexBuffer::GetElementCount() const
 {
-	return m_semantics.size();
+	return m_vertexElements.size();
+}
+
+void* VertexBuffer::Lock(unsigned int offset, unsigned int lockLength, RenderAPI::LockOption lockOption)
+{
+	return NULL;
+}
+
+void* VertexBuffer::DiscardLock()
+{
+	return NULL;
+}
+
+void VertexBuffer::Unlock()
+{
+
 }
 
 void VertexBuffer::Release()
