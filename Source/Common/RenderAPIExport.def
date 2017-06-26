@@ -5,3 +5,5 @@ EXPORTS
 	GetCurrentLogger		@4
 	SetCurrentLogger		@5
 	CreateDeviceAndContext	@6
+	CompileFXEffectFromFile	@7
+	

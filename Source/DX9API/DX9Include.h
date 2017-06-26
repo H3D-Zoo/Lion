@@ -4,6 +4,7 @@
 #include <d3d9.h>
 #include <d3dx9.h>
 #include <ddraw.h>
+#include <d3dx9effect.h>
 
 typedef int (WINAPI *LPD3DPERF_BeginEvent)(D3DCOLOR col, LPCWSTR wszName);
 typedef int (WINAPI *LPD3DPERF_EndEvent)(void);
@@ -24,6 +25,8 @@ public:
 
 	IDirect3DDevice9* CreateDevice(HWND hWindow, unsigned int width, unsigned int height, bool isFullscreen, bool vsync, D3DFORMAT rtFormat, D3DFORMAT dsFormat, D3DMULTISAMPLE_TYPE mulsample);
 
+	D3DPRESENT_PARAMETERS MakeCreationParam(HWND hWindow, unsigned int width, unsigned int height, bool isFullscreen, bool vsync, D3DFORMAT rtFormat, D3DFORMAT dsFormat, D3DMULTISAMPLE_TYPE mulsample);
+
 private:
 	bool CheckBackBufferFormat(D3DFORMAT checkFormat, D3DFORMAT adapterFormat) const;
 
@@ -42,4 +45,10 @@ public:
 	LPD3DPERF_BeginEvent D3DPerfBeginEvent;
 	LPD3DPERF_EndEvent   D3DPerfEndEvent;
 	LPD3DPERF_SetMarker  D3DPerfSetMarker;
+};
+
+class EffectInclude : public ID3DXInclude
+{
+	HRESULT STDMETHODCALLTYPE Open(D3DXINCLUDE_TYPE IncludeType, LPCSTR pFileName, LPCVOID pParentData, LPCVOID *ppData, UINT *pBytes);
+	HRESULT STDMETHODCALLTYPE Close(LPCVOID pData);
 };

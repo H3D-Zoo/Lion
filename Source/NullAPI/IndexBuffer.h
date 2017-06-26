@@ -8,8 +8,6 @@ class IndexBuffer : public RenderAPI::IndexBuffer
 public:
 	IndexBuffer(RenderAPI::ResourceUsage usage, RenderAPI::IndexFormat format, unsigned int count);
 
-	IndexBuffer(RenderAPI::ResourceUsage usage, RenderAPI::IndexFormat format, unsigned int count, void* initialData);
-
 	virtual RenderAPI::ResourceUsage GetUsage() const;
 
 	virtual RenderAPI::IndexFormat GetFormat() const;
@@ -17,6 +15,12 @@ public:
 	virtual unsigned int GetIndexCount() const;
 
 	virtual unsigned int GetLength() const;
+
+	virtual void* Lock(unsigned int offset, unsigned int lockLength, RenderAPI::LockOption lockOption);
+
+	virtual void* DiscardLock();
+
+	virtual void Unlock();
 
 	virtual void Release();
 private:

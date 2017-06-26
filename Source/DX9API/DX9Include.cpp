@@ -1,5 +1,6 @@
 #include "DX9Include.h"
 #include <string>
+#include "RenderAPIImpl.h"
 
 D3D9DLL::D3D9DLL()
 	: m_hDLL(NULL)
@@ -161,13 +162,8 @@ bool D3D9DLL::CheckDeviceMultiSampleType(D3DFORMAT rtFormat, D3DFORMAT dsFormat,
 	return true;
 }
 
-IDirect3DDevice9 * D3D9DLL::CreateDevice(HWND hWindow, unsigned int width, unsigned int height, bool isFullscreen, bool vsync, D3DFORMAT rtFormat, D3DFORMAT dsFormat, D3DMULTISAMPLE_TYPE mulsample)
+D3DPRESENT_PARAMETERS D3D9DLL::MakeCreationParam(HWND hWindow, unsigned int width, unsigned int height, bool isFullscreen, bool vsync, D3DFORMAT rtFormat, D3DFORMAT dsFormat, D3DMULTISAMPLE_TYPE mulsample)
 {
-	//by sssa2000 20110120
-	DWORD MT = D3DCREATE_MULTITHREADED | D3DCREATE_FPU_PRESERVE;
-	DWORD hardwareBehaviorFlag = D3DCREATE_HARDWARE_VERTEXPROCESSING | MT;
-	DWORD softwareBehaviorFlag = D3DCREATE_SOFTWARE_VERTEXPROCESSING | MT;
-
 	D3DPRESENT_PARAMETERS d3dpp;
 	ZeroMemory(&d3dpp, sizeof(d3dpp));
 	d3dpp.hDeviceWindow = hWindow;
@@ -176,6 +172,41 @@ IDirect3DDevice9 * D3D9DLL::CreateDevice(HWND hWindow, unsigned int width, unsig
 	d3dpp.Windowed = !isFullscreen;
 	d3dpp.SwapEffect = D3DSWAPEFFECT_DISCARD;
 	d3dpp.BackBufferFormat = rtFormat;
+	d3dpp.BackBufferCount = 1;
+	d3dpp.EnableAutoDepthStencil = TRUE;
+	d3dpp.AutoDepthStencilFormat = dsFormat;
+	d3dpp.PresentationInterval = vsync ? D3DPRESENT_INTERVAL_ONE : D3DPRESENT_INTERVAL_IMMEDIATE;
+	d3dpp.MultiSampleType = mulsample;
+	d3dpp.MultiSampleQuality = 0;
+
+	if (CheckDeviceMultiSampleType(rtFormat, dsFormat, isFullscreen, mulsample))
+	{
+		d3dpp.Flags &= ~D3DPRESENTFLAG_LOCKABLE_BACKBUFFER;
+	}
+	else
+	{
+		d3dpp.MultiSampleType = D3DMULTISAMPLE_NONE;
+	}
+
+	return d3dpp;
+}
+
+IDirect3DDevice9 * D3D9DLL::CreateDevice(HWND hWindow, unsigned int width, unsigned int height, bool isFullscreen, bool vsync, D3DFORMAT rtFormat, D3DFORMAT dsFormat, D3DMULTISAMPLE_TYPE mulsample)
+{
+	//by sssa2000 20110120
+	DWORD MT = D3DCREATE_MULTITHREADED | D3DCREATE_FPU_PRESERVE;
+	DWORD hardwareBehaviorFlag = D3DCREATE_HARDWARE_VERTEXPROCESSING | MT;
+	DWORD softwareBehaviorFlag = D3DCREATE_SOFTWARE_VERTEXPROCESSING | MT;
+
+	D3DPRESENT_PARAMETERS d3dpp = MakeCreationParam(hWindow, width, height, isFullscreen, vsync, rtFormat, dsFormat, mulsample);
+	ZeroMemory(&d3dpp, sizeof(d3dpp));
+	d3dpp.hDeviceWindow = hWindow;
+	d3dpp.BackBufferWidth = width;
+	d3dpp.BackBufferHeight = height;
+	d3dpp.Windowed = !isFullscreen;
+	d3dpp.SwapEffect = D3DSWAPEFFECT_DISCARD;
+	d3dpp.BackBufferFormat = rtFormat;
+	d3dpp.BackBufferCount = 1;
 	d3dpp.EnableAutoDepthStencil = TRUE;
 	d3dpp.AutoDepthStencilFormat = dsFormat;
 	d3dpp.PresentationInterval = vsync ? D3DPRESENT_INTERVAL_ONE : D3DPRESENT_INTERVAL_IMMEDIATE;
@@ -222,4 +253,61 @@ IDirect3DDevice9 * D3D9DLL::CreateDevice(HWND hWindow, unsigned int width, unsig
 		}
 		return devicePtr;
 	}
+}
+
+HRESULT STDMETHODCALLTYPE EffectInclude::Open(D3DXINCLUDE_TYPE, LPCSTR pFileName, LPCVOID /*pParentData*/, LPCVOID *ppData, UINT *pBytes)
+{
+	if (!IsLocalFileExist(pFileName))
+	{
+		return E_INVALIDARG;
+	}
+
+	HANDLE hFile = CreateFileA(pFileName,		// file to open
+		GENERIC_READ,							// open for reading
+		FILE_SHARE_READ,						// share for reading
+		NULL,									// default security
+		OPEN_EXISTING,							// existing file only
+		FILE_ATTRIBUTE_NORMAL,					// normal file
+		NULL);									// no attr. template
+
+	if (hFile != INVALID_HANDLE_VALUE)
+	{
+		DWORD FileSize = 0;
+		FileSize = GetFileSize(hFile, 0);
+		//分配空间
+		char* pFileBuffer = new char[FileSize];
+		DWORD readByte = 0;
+		BOOL readRes = ReadFile(hFile, &(pFileBuffer[0]), FileSize, &readByte, 0);
+		if (!readRes)
+		{
+			int errCode = GetLastError();
+			//LogErrorWithDesc("Read Include File 失败%s. pFileName=%s;dest_filename=%s;%d=", pFileName, dest_filename.c_str(), errcode);
+			*ppData = 0;
+			CloseHandle(hFile);
+			return S_FALSE;
+		}
+		else
+		{
+			*ppData = pFileBuffer;
+			*pBytes = readByte;
+			CloseHandle(hFile);
+			return S_OK;
+		}
+	}
+	else
+	{
+		*ppData = NULL;
+		*pBytes = 0;
+		//char buff[MAX_PATH];
+		//GetCurrentDirectoryA(MAX_PATH, buff);
+		//g_Log.OutPutConsole(true,"无法打开Fx Include文件%s.\n当前目录:%s",pFileName,buff);
+		//LogErrorWithDesc("无法打开Fx 文件dest_filename=%s.\n当前目录:%s ;pFileName=%s", dest_filename.c_str(), buff, pFileName);
+		return S_FALSE;
+	}
+}
+
+HRESULT STDMETHODCALLTYPE EffectInclude::Close(LPCVOID pData)
+{
+	delete[] pData;
+	return S_OK;
 }

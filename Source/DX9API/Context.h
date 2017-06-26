@@ -2,8 +2,11 @@
 
 #include "../../RenderAPI/RenderAPI.h"
 #include <vector>
+#include <map>
+#include "EffectStateManager.hpp"
 #include "DX9Include.h"
 
+class APIContext;
 
 class BackBufferManager
 {
@@ -16,16 +19,27 @@ public:
 
 	void SetDepthStencil(RenderAPI::DepthStencil* rt);
 
+	void SetTemporaryRT0(RenderAPI::RenderTarget* rt);
+
+	void SetTemporaryDS(RenderAPI::DepthStencil* rt);
+
+	void ResetRT0();
+
+	void ResetDS();
+
 private:
 	IDirect3DDevice9* m_pDevice;
 	std::vector<IDirect3DSurface9*> m_pCurrentRTs;
 	IDirect3DSurface9* m_pCurrentDS;
+	IDirect3DSurface9* m_pLastRT0;
+	IDirect3DSurface9* m_pLastDS;
+
 };
 
 class Context :public RenderAPI::Context
 {
 public:
-	Context(IDirect3DDevice9* device, RenderAPI::RenderTarget* defRT, RenderAPI::DepthStencil* defDS);
+	Context(APIContext* pAPIContext, IDirect3DDevice9* device, RenderAPI::RenderTarget* defRT, RenderAPI::DepthStencil* defDS);
 
 	~Context();
 
@@ -37,13 +51,11 @@ public:
 
 	virtual void SetRenderTarget(unsigned int index, RenderAPI::RenderTarget* renderTarget);
 
-	virtual void SetRenderTarget(RenderAPI::DepthStencil* depthStencil);
+	virtual void SetDepthStencil(RenderAPI::DepthStencil* depthStencil);
 
 	virtual void SetVertexBuffers(unsigned int startSlot, RenderAPI::VertexBufferInfo* buffers, unsigned int bufferCount);
 
 	virtual void SetIndexBuffer(RenderAPI::IndexBuffer* buffer, unsigned int offset);
-
-	virtual void SetEffect(RenderAPI::FXEffect*);
 
 	virtual void SetTextures(unsigned int startSlot, RenderAPI::Texture2D** textures, unsigned int resCount);
 
@@ -57,9 +69,9 @@ public:
 
 	virtual void SetDepthWriting(bool enable);
 
-	virtual void SetTextureBlendingState(unsigned int startSlot, const RenderAPI::TextureBlendingState** samplers, unsigned int count);
+	virtual void SetTextureBlendingState(unsigned int startSlot, const RenderAPI::TextureBlendingState* states, unsigned int count);
 
-	virtual void SetTextureSampler(unsigned int startSlot, const RenderAPI::TextureSampler** samplers, unsigned int count);
+	virtual void SetTextureSampler(unsigned int startSlot, const RenderAPI::TextureSampler* samplers, unsigned int count);
 
 	virtual void SetScissorState(const RenderAPI::ScissorState& state);
 
@@ -69,20 +81,42 @@ public:
 
 	virtual void SetDepthBias(float bias);
 
+	virtual void SetTextureFactor(unsigned int factor);
+
 	virtual void Draw(RenderAPI::Primitive primitive, unsigned int startIndex, unsigned int primitiveCount);
 
 	virtual void DrawIndexed(RenderAPI::Primitive primitive, unsigned int baseVertex, unsigned int startIndex, unsigned int primitiveCount);
 
-	virtual void GenerateMipmaps(RenderAPI::Texture2D* texture);
+	virtual RenderAPI::DeviceState CheckDeviceLost();
 
-	virtual void CheckDeviceLost();
-
-	virtual void ResetDevice();
+	virtual bool ResetDevice();
 
 	virtual void Release();
 
+	ID3DXEffectStateManager* GetStateManager();
+
 private:
+	void SetVertexElements(int index, const RenderAPI::VertexElement* s, int count);
+	void RebuildDecalration();
+
+	APIContext* m_pAPIContext;
+	FXStateManager m_fxStateManager;
 	IDirect3DDevice9* m_pDevice;
 	BackBufferManager m_backBufferManager;
 	unsigned int m_vertexBufferCount;
+	unsigned int m_indexBufferOffset;
+
+	struct VertexDecl
+	{
+		int Count;
+		std::vector<RenderAPI::VertexElement> Elements;
+		bool Set(const RenderAPI::VertexElement* s, int count);
+	};
+
+	bool m_vertexDeclChanged;
+	std::vector<VertexDecl> m_vertexDeclCache;
+	std::vector<D3DVERTEXELEMENT9> m_d3dDeclaration;
+	IDirect3DVertexDeclaration9* m_pVertexDeclaraion;
+	typedef std::map<std::vector<D3DVERTEXELEMENT9>, IDirect3DVertexDeclaration9*> VertexDecalrationPool;
+	VertexDecalrationPool m_vertexDeclarationPool;
 };

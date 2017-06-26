@@ -13,13 +13,11 @@ public:
 
 	virtual void SetRenderTarget(unsigned int index, RenderAPI::RenderTarget* renderTarget);
 
-	virtual void SetRenderTarget(RenderAPI::DepthStencil* depthStencil);
+	virtual void SetDepthStencil(RenderAPI::DepthStencil* depthStencil);
 
 	virtual void SetVertexBuffers(unsigned int startSlot, RenderAPI::VertexBufferInfo* buffers, unsigned int bufferCount);
 
 	virtual void SetIndexBuffer(RenderAPI::IndexBuffer* buffer, unsigned int offset);
-
-	virtual void SetEffect(RenderAPI::FXEffect*);
 
 	virtual void SetTextures(unsigned int startSlot, RenderAPI::Texture2D** textures, unsigned int resCount);
 
@@ -33,9 +31,9 @@ public:
 
 	virtual void SetDepthWriting(bool enable);
 
-	virtual void SetTextureBlendingState(unsigned int startSlot, const RenderAPI::TextureBlendingState** samplers, unsigned int count);
+	virtual void SetTextureBlendingState(unsigned int startSlot, const RenderAPI::TextureBlendingState* states, unsigned int count);
 
-	virtual void SetTextureSampler(unsigned int startSlot, const RenderAPI::TextureSampler** samplers, unsigned int count);
+	virtual void SetTextureSampler(unsigned int startSlot, const RenderAPI::TextureSampler* samplers, unsigned int count);
 
 	virtual void SetScissorState(const RenderAPI::ScissorState& state);
 
@@ -45,15 +43,15 @@ public:
 
 	virtual void SetDepthBias(float bias);
 
+	virtual void SetTextureFactor(unsigned int factor);
+
 	virtual void Draw(RenderAPI::Primitive primitive, unsigned int startIndex, unsigned int primitiveCount);
 
 	virtual void DrawIndexed(RenderAPI::Primitive primitive, unsigned int baseVertex, unsigned int startIndex, unsigned int primitiveCount);
 
-	virtual void GenerateMipmaps(RenderAPI::Texture2D* texture);
+	virtual RenderAPI::DeviceState CheckDeviceLost();
 
-	virtual void CheckDeviceLost();
-
-	virtual void ResetDevice();
+	virtual bool ResetDevice();
 
 	virtual void Release();
 };

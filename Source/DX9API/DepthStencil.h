@@ -1,12 +1,17 @@
 #pragma once
 #include "../../RenderAPI/RenderAPI.h"
 #include "RenderAPIImpl.h"
+#include "Texture2D.h"
 #include "DX9Include.h"
 
 class DepthStencil : public RenderAPI::DepthStencil
 {
 public:
-	DepthStencil(RenderAPI::ZBufferFormat format, unsigned int width, unsigned int height);
+	DepthStencil(IDirect3DSurface9* dsSurface, RenderAPI::ZBufferFormat format, unsigned int width, unsigned int height);
+
+	DepthStencil(IDirect3DTexture9* dsSurface, RenderAPI::ZBufferFormat format, unsigned int width, unsigned int height);
+
+	~DepthStencil();
 
 	virtual RenderAPI::ZBufferFormat GetFormat() const;
 
@@ -14,15 +19,21 @@ public:
 
 	virtual unsigned int GetHeight() const;
 
+	virtual bool IsTexture2D() const;
+
+	virtual RenderAPI::Texture2D* GetTexturePtr();
+
 	virtual void Release();
 
 	void AddRef();
 
-	IDirect3DSurface9* GetD3DSurface() const { return NULL; }
+	IDirect3DSurface9* GetD3DSurface() const;
 
 private:
 	RefCount m_refCount;
 	RenderAPI::ZBufferFormat m_format;
 	unsigned int m_width;
 	unsigned int m_height;
+	IDirect3DSurface9* m_dsSurface;
+	::Texture2D* m_dsTexture;
 };

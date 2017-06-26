@@ -20,6 +20,7 @@ set(RENDERAPI_INCLUDE_FILES
 )
 
 set(RENDERAPI_IMPL_INCLUDE_FILES
+	./APIContext.h
 	./RenderAPIImpl.h
 	./DX9Include.h
 	./Device.h
@@ -34,6 +35,7 @@ set(RENDERAPI_IMPL_INCLUDE_FILES
 )
 
 set(RENDERAPI_IMPL_SOURCE_FILES
+	./APIContext.cpp
 	./RenderAPIImpl.cpp
 	./DX9Include.cpp
 	./Device.cpp
@@ -45,6 +47,7 @@ set(RENDERAPI_IMPL_SOURCE_FILES
 	./IndexBuffer.cpp
 	./Texture2D.cpp
 	./FXEffect.cpp
+	./EffectStateManager.hpp
 )
 
 source_group(include FILES ${DIR_INTERFACE})
@@ -59,4 +62,6 @@ list(APPEND ${THIS_TARGET}_SOURCE_FILES
 	${RENDERAPI_SOURCE_FILES_COMMON}
 )
 
+link_directories(../DXSDK/Lib/x86)
 add_library(${THIS_TARGET} SHARED ${${THIS_TARGET}_SOURCE_FILES})
+target_link_libraries(${THIS_TARGET} d3dx9.lib dxguid.lib)

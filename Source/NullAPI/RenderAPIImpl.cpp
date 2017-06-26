@@ -24,6 +24,11 @@ namespace RenderAPI
 		result.ContextPtr = new ::Context();
 		return result;
 	}
+
+	bool CompileFXEffectFromFile(const char* sourceFXFile, const char* compiledFXFile)
+	{
+		return true;
+	}
 }
 
 RefCount::RefCount() : count(1) { }

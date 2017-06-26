@@ -1,21 +1,20 @@
 #include "VertexBuffer.h"
+#include "RenderAPIImpl.h"
 
-VertexBuffer::VertexBuffer(RenderAPI::ResourceUsage usage, unsigned int vertexCount, unsigned int vertexSize, RenderAPI::Semantic * semantics, unsigned int semanticCount, void * initialData)
+VertexBuffer::VertexBuffer(IDirect3DVertexBuffer9* vertexBuffer, RenderAPI::ResourceUsage usage, unsigned int vertexCount, unsigned int vertexSize, RenderAPI::VertexElement * elements, unsigned int elementCount)
 	: m_usage(usage)
 	, m_vertexCount(vertexCount)
 	, m_vertexStride(vertexSize)
 	, m_bufferLength(vertexCount * vertexSize)
-	, m_semantics(semantics, semantics + semanticCount)
+	, m_vertexElements(elements, elements + elementCount)
+	, m_pVertexBuffer(vertexBuffer)
 {
 }
 
-VertexBuffer::VertexBuffer(RenderAPI::ResourceUsage usage, unsigned int vertexCount, unsigned int vertexSize, RenderAPI::Semantic * semantics, unsigned int semanticCount)
-	: m_usage(usage)
-	, m_vertexCount(vertexCount)
-	, m_vertexStride(vertexSize)
-	, m_bufferLength(vertexCount * vertexSize)
-	, m_semantics(semantics, semantics + semanticCount)
+VertexBuffer::~VertexBuffer()
 {
+	m_pVertexBuffer->Release();
+	m_pVertexBuffer = NULL;
 }
 
 RenderAPI::ResourceUsage VertexBuffer::GetUsage() const
@@ -38,17 +37,48 @@ unsigned int VertexBuffer::GetLength() const
 	return m_bufferLength;
 }
 
-const RenderAPI::Semantic * VertexBuffer::GetSemanticPtr() const
+const RenderAPI::VertexElement * VertexBuffer::GetElementPtr() const
 {
-	return &(m_semantics[0]);
+	return &(m_vertexElements[0]);
 }
 
-unsigned int VertexBuffer::GetSemanticCount() const
+unsigned int VertexBuffer::GetElementCount() const
 {
-	return m_semantics.size();
+	return m_vertexElements.size();
+}
+
+void * VertexBuffer::Lock(unsigned int offset, unsigned int lockLength, RenderAPI::LockOption lockOption)
+{
+	if (m_usage == RenderAPI::RESUSAGE_Immuable)
+		return NULL;
+
+	void* pDataPtr = NULL;
+	if (S_OK == m_pVertexBuffer->Lock(offset, lockLength, &pDataPtr, s_lockOptions[lockOption]))
+	{
+		return pDataPtr;
+	}
+	else
+	{
+		return NULL;
+	}
+}
+
+void* VertexBuffer::DiscardLock()
+{
+	return Lock(0, 0, RenderAPI::LOCK_Discard);
+}
+
+void VertexBuffer::Unlock()
+{
+	m_pVertexBuffer->Unlock();
 }
 
 void VertexBuffer::Release()
 {
 	delete this;
+}
+
+IDirect3DVertexBuffer9 * VertexBuffer::GetBufferPtr()
+{
+	return m_pVertexBuffer;
 }

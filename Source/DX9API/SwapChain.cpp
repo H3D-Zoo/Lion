@@ -1,39 +1,59 @@
 #include "SwapChain.h"
 
-SwapChain::SwapChain(IDirect3DDevice9* device, const RenderAPI::SwapChainDesc & swapChainDesc, bool fullscreen)
-	: m_isFullscreen(fullscreen)
-	, m_renderTarget(swapChainDesc.backbufferFormat, swapChainDesc.backbufferWidth, swapChainDesc.backbufferHeight)
-	, m_pDevice(device)
+SwapChain::SwapChain(IDirect3DSwapChain9* swapChain, const RenderAPI::SwapChainDesc & swapChainDesc)
+	: m_pRenderTarget(NULL)
+	, m_pDepthStencil(NULL)
+	, m_pSwapChain(swapChain)
 {
-	m_pDevice->AddRef();
+	InitRenderTarget(swapChain, swapChainDesc.backbufferFormat, swapChainDesc.backbufferWidth, swapChainDesc.backbufferHeight);
+	m_pDepthStencil = new ::DepthStencil((IDirect3DSurface9*)(NULL), swapChainDesc.zbufferFormat, swapChainDesc.backbufferWidth, swapChainDesc.backbufferHeight);
+}
+
+SwapChain::SwapChain(IDirect3DSwapChain9* swapChain, ::DepthStencil* dsSurface, const RenderAPI::SwapChainDesc & swapChainDesc)
+	: m_pRenderTarget(NULL)
+	, m_pDepthStencil(dsSurface)
+	, m_pSwapChain(swapChain)
+{
+	InitRenderTarget(swapChain, swapChainDesc.backbufferFormat, swapChainDesc.backbufferWidth, swapChainDesc.backbufferHeight);
 }
 
 SwapChain::~SwapChain()
 {
-	m_pDevice->Release();
+	m_pDepthStencil->Release();
+	m_pRenderTarget->Release();
+	m_pSwapChain->Release();
+	m_pDepthStencil = NULL;
+	m_pRenderTarget = NULL;
+	m_pSwapChain = NULL;
 }
 
-RenderAPI::RenderTarget* SwapChain::GetRenderTarget() const
+RenderAPI::RenderTarget* SwapChain::GetRenderTarget()
 {
-	m_renderTarget.AddRef();
-	return &m_renderTarget;
+	m_pRenderTarget->AddRef();
+	return m_pRenderTarget;
+}
+
+RenderAPI::DepthStencil* SwapChain::GetDepthStencil()
+{
+	m_pDepthStencil->AddRef();
+	return m_pDepthStencil;
 }
 
 unsigned int SwapChain::GetWidth() const
 {
-	return m_renderTarget.GetWidth();
+	return m_pRenderTarget->GetWidth();
 }
 
 unsigned int SwapChain::GetHeight() const
 {
-	return m_renderTarget.GetHeight();
+	return m_pRenderTarget->GetHeight();
 }
 
 bool SwapChain::OnResize(unsigned int width, unsigned int height)
 {
 	if (width > 0 && height > 0)
 	{
-		m_renderTarget.Resize(width, height);
+		m_pRenderTarget->Resize(width, height);
 		return true;
 	}
 	else
@@ -42,19 +62,9 @@ bool SwapChain::OnResize(unsigned int width, unsigned int height)
 	}
 }
 
-void SwapChain::SetFullscreen(bool fullscreen)
-{
-	m_isFullscreen = fullscreen;
-}
-
-bool SwapChain::IsFullscreen() const
-{
-	return m_isFullscreen;
-}
-
 void SwapChain::Present()
 {
-	m_pDevice->Present(NULL, NULL, NULL, NULL);
+	m_pSwapChain->Present(NULL, NULL, NULL, NULL, NULL);
 }
 
 void SwapChain::Release()
@@ -72,4 +82,11 @@ void SwapChain::Release()
 void SwapChain::AddRef()
 {
 	++m_refCount;
+}
+
+void SwapChain::InitRenderTarget(IDirect3DSwapChain9 * swapChain, RenderAPI::BackBufferFormat format, unsigned int width, unsigned int height)
+{
+	IDirect3DSurface9* pBackBuffer = NULL;
+	m_pSwapChain->GetBackBuffer(0, D3DBACKBUFFER_TYPE_MONO, &pBackBuffer);
+	m_pRenderTarget = new ::RenderTarget(pBackBuffer, format, width, height);
 }

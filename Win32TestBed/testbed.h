@@ -5,15 +5,18 @@
 class APITestBed
 {
 public:
-	bool Init(HWND hWindow, unsigned int backBufferWidth, unsigned int backBufferHeight);
+	bool Init(HWND hWindow, HWND hWindowEditor, unsigned int backBufferWidth, unsigned int backBufferHeight);
 	void Deinit();
 	void Update();
 	void OnResize(unsigned int width, unsigned int height);
+	RenderAPI::SwapChain* GetSubWindowSwapChain() { return m_editorSwapChain; }
+
 private:
 	HMODULE m_hRenderAPIDLL = nullptr;
 	RenderAPI::Device* m_pDevice = nullptr;
 	RenderAPI::Context* m_pContext = nullptr;
 	RenderAPI::SwapChain* m_defaultSwapChain = nullptr;
+	RenderAPI::SwapChain* m_editorSwapChain = nullptr;
 
 	typedef bool(*RenderAPIInit)();
 	typedef void(*RenderAPIDeinit)();

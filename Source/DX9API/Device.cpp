@@ -6,53 +6,135 @@
 #include "FXEffect.h"
 #include "RenderTarget.h"
 #include "DepthStencil.h"
+#include "APIContext.h"
 
-Device::Device(IDirect3DDevice9* device, const RenderAPI::SwapChainDesc & desc, bool isFullscreen, bool useVerticalSync)
-	: m_defaultSwapChain(device, desc, isFullscreen)
-	, m_defaultDepthStencil(desc.zbufferFormat, desc.backbufferWidth, desc.backbufferHeight)
+namespace
+{
+	const int s_d3dUsageCount = 3;
+	unsigned int s_d3dUsage[s_d3dUsageCount] =
+	{
+		D3DUSAGE_WRITEONLY,
+		D3DUSAGE_WRITEONLY | D3DUSAGE_DYNAMIC,
+		D3DUSAGE_WRITEONLY,
+	};
+}
+
+Device::Device(APIContext* pAPIContext, IDirect3DDevice9* device, const RenderAPI::SwapChainDesc & desc, bool isFullscreen, bool useVerticalSync)
+	: m_pAPIContext(pAPIContext)
+	, m_pDefaultSwapChain(NULL)
 	, m_pDevice(device)
 {
-
+	m_pAPIContext->pDevice = this;
+	IDirect3DSwapChain9* pSwapChain = NULL;
+	m_pDevice->GetSwapChain(0, &pSwapChain);
+	m_pDefaultSwapChain = new ::SwapChain(pSwapChain, desc);
 }
 
 Device::~Device()
 {
+	m_pDefaultSwapChain->Release();
 	m_pDevice->Release();
+	m_pAPIContext->Release();
+	m_pDefaultSwapChain = NULL;
 	m_pDevice = NULL;
+	m_pAPIContext = NULL;
 }
 
-RenderAPI::SwapChain * Device::GetDefaultSwapChain() const
+RenderAPI::SwapChain * Device::GetDefaultSwapChain()
 {
-	m_defaultSwapChain.AddRef();
-	return &m_defaultSwapChain;
-}
-
-RenderAPI::DepthStencil * Device::GetDefaultDepthStencil() const
-{
-	m_defaultDepthStencil.AddRef();
-	return &m_defaultDepthStencil;
+	m_pDefaultSwapChain->AddRef();
+	return m_pDefaultSwapChain;
 }
 
 RenderAPI::SwapChain * Device::CreateAdditionalSwapChain(const RenderAPI::SwapChainDesc & swapChainDesc)
 {
-	return new ::SwapChain(m_pDevice,  swapChainDesc, false);
+	IDirect3DSwapChain9* swapChain = NULL;
+	D3DPRESENT_PARAMETERS param;
+	ZeroMemory(&param, sizeof(param));
+
+	D3DFORMAT rtFormat = s_RTFormats[swapChainDesc.backbufferFormat];
+	D3DFORMAT dsFormat = s_DSFormats[swapChainDesc.zbufferFormat];
+	D3DMULTISAMPLE_TYPE mulsample = s_sampleTypes[swapChainDesc.aaMode];
+
+	param.BackBufferWidth = swapChainDesc.backbufferWidth;
+	param.BackBufferHeight = swapChainDesc.backbufferHeight;
+	param.BackBufferFormat = rtFormat;
+	param.BackBufferCount = 1;
+
+	param.MultiSampleType = mulsample;
+	param.MultiSampleQuality = 0;
+
+	param.SwapEffect = D3DSWAPEFFECT_DISCARD;
+	param.hDeviceWindow = (HWND)swapChainDesc.hWindow;
+	param.Windowed = TRUE;
+	param.EnableAutoDepthStencil = TRUE;
+	param.AutoDepthStencilFormat = dsFormat;
+
+	param.PresentationInterval = D3DPRESENT_INTERVAL_IMMEDIATE;
+
+	HRESULT hr = m_pDevice->CreateAdditionalSwapChain(&param, &swapChain);
+	if (hr == S_OK)
+	{
+		RenderAPI::SwapChainDesc newDesc = swapChainDesc;
+		if (swapChainDesc.backbufferWidth == 0 || swapChainDesc.backbufferHeight == 0)
+		{
+			RECT rect;
+			::GetClientRect((HWND)swapChainDesc.hWindow, &rect);
+			newDesc.backbufferWidth = rect.right - rect.left;
+			newDesc.backbufferHeight = rect.bottom - rect.top;
+		}
+
+		::DepthStencil* ds = CreateDepthStencilImplement(newDesc.zbufferFormat, newDesc.backbufferWidth, newDesc.backbufferHeight);
+		if (ds == NULL)
+		{
+			swapChain->Release();
+			return NULL;
+		}
+		else
+		{
+			return new ::SwapChain(swapChain, ds, newDesc);
+		}
+	}
+	else
+	{
+		return NULL;
+	}
 }
 
-RenderAPI::VertexBuffer* Device::CreateVertexBuffer(RenderAPI::ResourceUsage usage, unsigned int vertexCount, unsigned int vertexSize, RenderAPI::Semantic * semantics, unsigned int semanticCount, void * initialData)
+RenderAPI::VertexBuffer* Device::CreateVertexBuffer(RenderAPI::ResourceUsage usage, unsigned int vertexCount, unsigned int vertexSize, RenderAPI::VertexElement * elements, unsigned int elementCount, void * initialData)
 {
-	if (vertexCount == 0 || vertexSize == 0 || semanticCount == 0 || semantics == NULL)
+	if (vertexCount == 0 || vertexSize == 0 || elementCount == 0 || elements == NULL)
 	{
 		return NULL;
 	}
 
-	if (initialData == NULL)
+	bool immuable = usage == RenderAPI::RESUSAGE_Immuable;
+	if (initialData == NULL && immuable)
 	{
-		return new VertexBuffer(usage, vertexCount, vertexSize, semantics, semanticCount);
+		return NULL;
 	}
-	else
+
+	IDirect3DVertexBuffer9* pVertexBuffer = NULL;
+	unsigned int d3dUsage = s_d3dUsage[usage];
+	unsigned int bufferSize = vertexCount * vertexSize;
+	HRESULT hr = m_pDevice->CreateVertexBuffer(bufferSize, d3dUsage, 0, immuable ? D3DPOOL_MANAGED : D3DPOOL_DEFAULT, &pVertexBuffer, NULL);
+	if (hr != S_OK)
 	{
-		return new VertexBuffer(usage, vertexCount, vertexSize, semantics, semanticCount, initialData);
+		return NULL;
 	}
+
+	if (initialData != NULL)
+	{
+		void* dataPtr = NULL;
+		if (S_OK == pVertexBuffer->Lock(0, bufferSize, &dataPtr, D3DLOCK_DISCARD))
+		{
+			memcpy(dataPtr, initialData, bufferSize);
+			pVertexBuffer->Unlock();
+		}
+	}
+
+	return new VertexBuffer(pVertexBuffer, usage, vertexCount, vertexSize, elements, elementCount);
+
 }
 
 RenderAPI::IndexBuffer* Device::CreateIndexBuffer(RenderAPI::ResourceUsage usage, RenderAPI::IndexFormat format, unsigned int indexCount, void * initialData)
@@ -62,70 +144,143 @@ RenderAPI::IndexBuffer* Device::CreateIndexBuffer(RenderAPI::ResourceUsage usage
 		return NULL;
 	}
 
-	if (initialData == NULL)
+	bool immuable = usage == RenderAPI::RESUSAGE_Immuable;
+	if (initialData == NULL && immuable)
 	{
-		return new IndexBuffer(usage, format, indexCount);
-	}
-	else
-	{
-		return new IndexBuffer(usage, format, indexCount, initialData);
+		return NULL;
 	}
 
+	IDirect3DIndexBuffer9* pIndexBuffer = NULL;
+	unsigned int d3dUsage = s_d3dUsage[usage];
+	unsigned int bufferSize = indexCount * s_IndexLengths[format];
+	HRESULT hr = m_pDevice->CreateIndexBuffer(bufferSize, d3dUsage, s_IndexFormats[format], immuable ? D3DPOOL_MANAGED : D3DPOOL_DEFAULT, &pIndexBuffer, NULL);
+
+	if (hr != S_OK)
+	{
+		return NULL;
+	}
+
+	if (initialData != NULL)
+	{
+		void* dataPtr = NULL;
+		if (S_OK == pIndexBuffer->Lock(0, bufferSize, &dataPtr, D3DLOCK_DISCARD))
+		{
+			memcpy(dataPtr, initialData, bufferSize);
+			pIndexBuffer->Unlock();
+		}
+	}
+
+	return new IndexBuffer(pIndexBuffer, usage, format, indexCount);
 }
 
-RenderAPI::Texture2D * Device::CreateTexture2D(RenderAPI::ResourceUsage usage, RenderAPI::TextureFormat format, RenderAPI::TextureBinding binding, unsigned int width, unsigned int height, void * initialData)
+RenderAPI::Texture2D * Device::CreateTexture2D(RenderAPI::ResourceUsage usage, RenderAPI::TextureFormat format, unsigned int width, unsigned int height, void* initialData, int dataLinePitch, int dataHeight)
 {
 	if (width == 0 || height == 0)
 	{
 		return NULL;
 	}
 
-	bool isRT = binding == RenderAPI::BINDING_RenderTraget;
-	bool isDS = binding == RenderAPI::BINDING_DepthStencil;
-
-	if (isRT)
-	{
-		if (format != RenderAPI::TEX_XRGB
-			&& format != RenderAPI::TEX_ARGB)
-		{
-			return NULL;
-		}
-	}
-
-	if (isDS)
-	{
-		if (format != RenderAPI::TEX_D24S8
-			&& format != RenderAPI::TEX_D24X8
-			&& format != RenderAPI::TEX_D32
-			&& format != RenderAPI::TEX_D16)
-		{
-			return NULL;
-		}
-	}
-
+	bool immuable = usage == RenderAPI::RESUSAGE_Immuable;
 	if (initialData == NULL)
 	{
-		return new Texture2D(format, usage, width, height, isRT, isDS);
+		if (immuable)
+		{
+			return NULL;
+		}
 	}
 	else
 	{
-		return new Texture2D(format, usage, width, height, initialData, isRT, isDS);
+		if (dataLinePitch == 0 || dataHeight == 0)
+		{
+			return NULL;
+		}
 	}
+
+
+	IDirect3DTexture9* pTexture = NULL;
+	unsigned int d3dUsage = s_d3dUsage[usage];
+	HRESULT hr = m_pDevice->CreateTexture(width, height, 0, d3dUsage, s_TextureFormats[format], immuable ? D3DPOOL_MANAGED : D3DPOOL_DEFAULT, &pTexture, NULL);
+
+	if (hr != S_OK)
+	{
+		return NULL;
+	}
+
+	if (initialData != NULL)
+	{
+		D3DLOCKED_RECT rect;
+		if (S_OK == pTexture->LockRect(0, &rect, NULL, D3DLOCK_DISCARD))
+		{
+			int linePitch = dataLinePitch > rect.Pitch ? rect.Pitch : dataLinePitch;
+			char* dstPtr = (char*)rect.pBits;
+			char* srcPtr = (char*)initialData;
+			for (int i = 0; i < dataHeight; i++)
+			{
+				memcpy(dstPtr + i * rect.Pitch, srcPtr + i* dataLinePitch, linePitch);
+			}
+			pTexture->UnlockRect(0);
+		}
+	}
+
+	return new Texture2D(pTexture, format, usage, width, height);
 }
 
 RenderAPI::FXEffect * Device::CreateFXEffectFromFile(const char * effectFilePath)
 {
-	return new FXEffect();
+	ID3DXEffect* pEffect = NULL;
+	AutoR<ID3DXBuffer> pErrorBuffer = NULL;
+	EffectInclude includeCallback;
+	DWORD flags = D3DXSHADER_USE_LEGACY_D3DX9_31_DLL; //要想支持ps 1_x 需要使用这个。
+
+
+	HRESULT hr = D3DXCreateEffectFromFileA(m_pDevice, effectFilePath, 0, &includeCallback, flags, 0, &pEffect, &pErrorBuffer);
+	if (SUCCEEDED(hr))
+	{
+		//CacheNames();
+		//pEffect->SetStateManager(pDeviceD3D->GetStateManager());
+		//读fx文件
+		//LogInfo(ENGINE_INIT, OutPut_File, "LoadFxFromDisk:读fxo文件:%s", fxofilename.c_str());
+		pEffect->SetStateManager(m_pAPIContext->pContext->GetStateManager());
+		return new FXEffect(pEffect);
+	}
+	else
+	{
+		// LogError("从磁盘加载fx失败: %s", fxofilename.c_str());
+		//PrintErrorIinfo(pErrorBuffer);
+		return NULL;
+	}
+
 }
 
 RenderAPI::RenderTarget * Device::CreateRenderTarget(RenderAPI::BackBufferFormat format, unsigned int width, unsigned int height)
 {
-	return new RenderTarget(format, width, height);
+	D3DFORMAT rtFormat = s_RTFormats[format];
+	IDirect3DTexture9* pTexture = NULL;
+	HRESULT hr = m_pDevice->CreateTexture(width, height, 1, D3DUSAGE_RENDERTARGET, rtFormat, D3DPOOL_DEFAULT, &pTexture, NULL);
+
+	if (hr != S_OK)
+	{
+		return NULL;
+	}
+
+	return new RenderTarget(pTexture, format, width, height);
 }
 
 RenderAPI::DepthStencil * Device::CreateDepthStencil(RenderAPI::ZBufferFormat format, unsigned int width, unsigned int height)
 {
-	return new DepthStencil(format, width, height);
+	return CreateDepthStencilImplement(format, width, height);
+}
+
+::DepthStencil* Device::CreateDepthStencilImplement(RenderAPI::ZBufferFormat format, unsigned int width, unsigned int height)
+{
+	IDirect3DSurface9* pDSSurface = NULL;
+	HRESULT hr = m_pDevice->CreateDepthStencilSurface(width, height, s_DSFormats[format], D3DMULTISAMPLE_NONE, 0, TRUE, &pDSSurface, NULL);
+	if (hr != S_OK)
+	{
+		return NULL;
+	}
+
+	return new DepthStencil(pDSSurface, format, width, height);
 }
 
 void Device::Release()
