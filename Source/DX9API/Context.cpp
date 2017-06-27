@@ -651,7 +651,6 @@ bool operator != (const RenderAPI::VertexElement& left, const RenderAPI::VertexE
 {
 	return  (left.SemanticName != right.SemanticName ||
 		left.SemanticIndex != right.SemanticIndex ||
-		left.StreamIndex != right.StreamIndex ||
 		left.AlignOffset != right.AlignOffset ||
 		left.Format != right.Format);
 }

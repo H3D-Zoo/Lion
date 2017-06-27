@@ -165,14 +165,12 @@ namespace RenderAPI
 		VertexElement()
 			: SemanticName(SEMANTIC_POSITION)
 			, SemanticIndex(0)
-			, StreamIndex(0)
 			, AlignOffset(0xFFFFFFFF)
 			, Format(INPUT_Float4)
 		{ }
 
 		Semantic SemanticName;
 		unsigned int SemanticIndex;
-		unsigned int StreamIndex;
 		unsigned int AlignOffset;
 		InputFormat Format;
 	};
