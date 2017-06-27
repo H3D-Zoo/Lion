@@ -13,6 +13,7 @@ public:
 
 	::Device* pDevice;
 	::Context* pContext;
+	D3D9DLL* pD3D;
 	D3DPRESENT_PARAMETERS CreationParam;
 
 private:

@@ -171,6 +171,7 @@ namespace RenderAPI
 					isFullscreen, useVerticalSync,
 					rtFormat, dsFormat,
 					mulsample);
+				pAPIContext->pD3D = &s_d3d9Dll;
 				result.DevicePtr = new ::Device(pAPIContext, devicePtr, newDesc, isFullscreen, useVerticalSync);
 				RenderAPI::SwapChain* swapChain = result.DevicePtr->GetDefaultSwapChain();
 				RenderAPI::RenderTarget* rt = swapChain->GetRenderTarget();
