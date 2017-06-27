@@ -47,6 +47,16 @@ void FXEffect::EndPass()
 	m_pEffect->EndPass();
 }
 
+void FXEffect::SetValidateTechnique()
+{
+	D3DXHANDLE hValidateTechnique;
+	m_pEffect->FindNextValidTechnique(NULL, &hValidateTechnique);
+	if (hValidateTechnique != NULL)
+	{
+		m_pEffect->SetTechnique(hValidateTechnique);
+	}
+}
+
 void FXEffect::SetTechniqueByName(const char* name)
 {
 	m_pEffect->SetTechnique(name);

@@ -682,6 +682,8 @@ namespace RenderAPI
 
 		virtual void EndPass() = 0;
 
+		virtual void SetValidateTechnique() = 0;
+
 		virtual void SetTechniqueByName(const char* name) = 0;
 
 		virtual bool SetMatrix(const char* paramName, const float* matrix) = 0;

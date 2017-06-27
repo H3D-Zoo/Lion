@@ -12,6 +12,8 @@ public:
 
 	virtual void EndPass();
 
+	virtual void SetValidateTechnique();
+
 	virtual void SetTechniqueByName(const char* name);
 
 	virtual bool SetMatrix(const char* paramName, const float* matrix);
