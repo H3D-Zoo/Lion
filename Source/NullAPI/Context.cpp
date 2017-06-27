@@ -100,6 +100,16 @@ void Context::SetTextureFactor(unsigned int factor)
 
 }
 
+bool Context::BeginScene()
+{
+	return true;
+}
+
+void Context::EndScene()
+{
+
+}
+
 void Context::Draw(RenderAPI::Primitive primitive, unsigned int startIndex, unsigned int primitiveCount)
 {
 

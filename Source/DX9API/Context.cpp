@@ -425,6 +425,16 @@ void Context::SetTextureFactor(unsigned int factor)
 	m_pDevice->SetRenderState(D3DRS_TEXTUREFACTOR, factor);
 }
 
+bool Context::BeginScene()
+{
+	return S_OK == m_pDevice->BeginScene();
+}
+
+void Context::EndScene()
+{
+	m_pDevice->EndScene();
+}
+
 void Context::Draw(RenderAPI::Primitive primitive, unsigned int startIndex, unsigned int primitiveCount)
 {
 	RebuildDecalration();

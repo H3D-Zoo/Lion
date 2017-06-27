@@ -188,8 +188,8 @@ namespace RenderAPI
 	bool CompileFXEffectFromFile(const char* sourceFXFile, const char* compiledFXFile)
 	{
 		EffectInclude includeCallback;
-		AutoR<ID3DXBuffer> pErrorBuffer = 0;
-		AutoR<ID3DXBuffer> pEffectBuffer = 0;
+		AutoR<ID3DXBuffer> pErrorBuffer = NULL;
+		AutoR<ID3DXBuffer> pEffectBuffer = NULL;
 		ID3DXEffectCompiler* pEffectCompile;
 		DWORD flags = D3DXSHADER_USE_LEGACY_D3DX9_31_DLL; //要想支持ps 1_x 需要使用这个。
 
