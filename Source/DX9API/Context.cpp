@@ -224,7 +224,7 @@ void Context::SetVertexBuffers(unsigned int startSlot, RenderAPI::VertexBufferIn
 		m_pDevice->SetStreamSource(startSlot + i, vertexBufferPtr, buffers[i].Offset, buffers[i].Stride);
 		SetVertexElements(startSlot + i, buffers[i].BufferPtr->GetElementPtr(), buffers[i].BufferPtr->GetElementCount());
 	}
-
+	m_vertexCount = buffers[0].BufferPtr->GetVertexCount();
 }
 
 void Context::SetIndexBuffer(RenderAPI::IndexBuffer* buffer, unsigned int offset)
@@ -444,7 +444,7 @@ void Context::Draw(RenderAPI::Primitive primitive, unsigned int startIndex, unsi
 void Context::DrawIndexed(RenderAPI::Primitive primitive, unsigned int baseVertex, unsigned int startIndex, unsigned int primitiveCount)
 {
 	RebuildDecalration();
-	m_pDevice->DrawIndexedPrimitive(s_primitives[primitive], baseVertex, 0, m_vertexBufferCount, startIndex, primitiveCount);
+	m_pDevice->DrawIndexedPrimitive(s_primitives[primitive], baseVertex, 0, m_vertexCount, startIndex, primitiveCount);
 }
 
 RenderAPI::DeviceState Context::CheckDeviceLost()

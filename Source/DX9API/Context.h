@@ -107,7 +107,7 @@ private:
 	FXStateManager m_fxStateManager;
 	IDirect3DDevice9* m_pDevice;
 	BackBufferManager m_backBufferManager;
-	unsigned int m_vertexBufferCount;
+	unsigned int m_vertexCount;
 	unsigned int m_indexBufferOffset;
 
 	struct VertexDecl
