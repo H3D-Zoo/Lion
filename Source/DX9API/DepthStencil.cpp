@@ -27,15 +27,20 @@ DepthStencil::DepthStencil(IDirect3DTexture9* dsTexture, RenderAPI::ZBufferForma
 	, m_dsSurface(NULL)
 	, m_dsTexture(NULL)
 {
+
 	dsTexture->GetSurfaceLevel(0, &m_dsSurface);
+	m_dsSurface = m_dsSurface;
 	m_dsTexture = new Texture2D(dsTexture, s_dsTexFormats[format], RenderAPI::RESUSAGE_Default, width, height);
 }
 
 
 DepthStencil::~DepthStencil()
 {
-	m_dsSurface->Release();
-	m_dsSurface = NULL;
+	if (m_dsSurface != NULL)
+	{
+		m_dsSurface->Release();
+		m_dsSurface = NULL;
+	}
 	if (m_dsTexture != NULL)
 	{
 		m_dsTexture->Release();
