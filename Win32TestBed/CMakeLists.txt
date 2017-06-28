@@ -14,6 +14,7 @@ set(TESTBED_INCLUDE_FILES
 set(TESTBED_SOURCE_FILES
 	./main.cpp
 	./testbed.cpp
+	./TintColor.fx
 )
 
 source_group(include FILES ${TESTBED_INCLUDE_FILES})

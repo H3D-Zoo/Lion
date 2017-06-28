@@ -21,6 +21,20 @@ bool APITestBed::Init(HWND hWindow, HWND hWindowEditor, unsigned int backBufferW
 
 	CreateMesh();
 	CreateMaterial();
+
+	const int kMatrixLength = sizeof(float) * 16;
+	memset(m_matWorld, 0, kMatrixLength);
+	memset(m_matView, 0, kMatrixLength);
+	memset(m_matProj, 0, kMatrixLength);
+
+	m_matWorld[0] = m_matWorld[5] = m_matWorld[10] = m_matWorld[15] = 1.0f;
+	m_matView[0] = m_matView[5] = m_matView[10] = m_matView[15] = 1.0f;
+	m_matView[11] = 10.0f;
+
+	float zRangeInv = 101.0f / 100.0f;
+	m_matProj[10] = zRangeInv;
+	m_matProj[11] = -zRangeInv;
+	m_matProj[14] = 1.0f;
 	return true;
 }
 
@@ -81,28 +95,39 @@ void APITestBed::Deinit()
 
 void APITestBed::Update()
 {
+	
 	auto rt = m_defaultSwapChain->GetRenderTarget();
+	auto ds = m_defaultSwapChain->GetDepthStencil();
 	m_pContext->SetRenderTarget(0, rt);
+	m_pContext->SetDepthStencil(ds);
+	m_pContext->SetCullMode(RenderAPI::CULL_CCW);
 	if (m_pContext->BeginScene())
 	{
 		m_pContext->ClearRenderTarget(rt, 0xFF00FF00);
+		m_pContext->ClearDepthStencil(ds, 1.0f, 0);
 		DoEffectDraw();
 		m_pContext->EndScene();
 	}
 
 	m_defaultSwapChain->Present();
 	rt->Release();
+	ds->Release();
 
 	auto rtEditor = m_editorSwapChain->GetRenderTarget();
+	auto dsEditor = m_editorSwapChain->GetDepthStencil();
 	m_pContext->SetRenderTarget(0, rtEditor);
+	m_pContext->SetDepthStencil(dsEditor);
+	m_pContext->SetCullMode(RenderAPI::CULL_None);
 	if (m_pContext->BeginScene())
 	{
 		m_pContext->ClearRenderTarget(rtEditor, 0xFFFF0000);
+		m_pContext->ClearDepthStencil(dsEditor, 1.0f, 0);
 		DoEffectDraw();
 		m_pContext->EndScene();
 	}
 	m_editorSwapChain->Present();
 	rtEditor->Release();
+	dsEditor->Release();
 
 	if (m_pContext->CheckDeviceLost() == RenderAPI::DEVICE_Lost)
 	{
@@ -112,6 +137,14 @@ void APITestBed::Update()
 
 void APITestBed::OnResize(unsigned int width, unsigned int height)
 {
+	//build projection matrix;
+	float aspect = width * 1.0f / height;
+	const float PI = 3.1415926f;
+	const float fov = PI  * 0.25f;
+	float nearTop = tanf(fov * 0.5f);
+	float nearRight = nearTop * aspect;
+	m_matProj[0] = 1.0f / nearRight;
+	m_matProj[5] = 1.0f / nearTop;
 	m_defaultSwapChain->OnResize(width, height);
 }
 
@@ -201,40 +234,40 @@ void APITestBed::CreateMesh()
 	std::vector<unsigned short> indices(kIndexCount);
 	int index = 0;
 	//front
-	vertices[index++].position = vertexPositions[4];
-	vertices[index++].position = vertexPositions[7];
-	vertices[index++].position = vertexPositions[6];
-	vertices[index++].position = vertexPositions[5];
-
-	//back	 
+	vertices[index++].position = vertexPositions[0];
 	vertices[index++].position = vertexPositions[1];
 	vertices[index++].position = vertexPositions[2];
 	vertices[index++].position = vertexPositions[3];
-	vertices[index++].position = vertexPositions[0];
+
+	//back
+	vertices[index++].position = vertexPositions[5];
+	vertices[index++].position = vertexPositions[4];
+	vertices[index++].position = vertexPositions[7];
+	vertices[index++].position = vertexPositions[6];
 
 	//left	 
+	vertices[index++].position = vertexPositions[4];
 	vertices[index++].position = vertexPositions[0];
 	vertices[index++].position = vertexPositions[3];
 	vertices[index++].position = vertexPositions[7];
-	vertices[index++].position = vertexPositions[4];
 
 	//right
+	vertices[index++].position = vertexPositions[1];
 	vertices[index++].position = vertexPositions[5];
 	vertices[index++].position = vertexPositions[6];
 	vertices[index++].position = vertexPositions[2];
-	vertices[index++].position = vertexPositions[1];
 
 	//top
-	vertices[index++].position = vertexPositions[7];
 	vertices[index++].position = vertexPositions[3];
 	vertices[index++].position = vertexPositions[2];
 	vertices[index++].position = vertexPositions[6];
+	vertices[index++].position = vertexPositions[7];
 
 	//botton
-	vertices[index++].position = vertexPositions[0];
 	vertices[index++].position = vertexPositions[4];
 	vertices[index++].position = vertexPositions[5];
 	vertices[index++].position = vertexPositions[1];
+	vertices[index++].position = vertexPositions[0];
 
 	std::vector<RenderAPI::VertexElement> elements(2);
 	elements[0].Format = RenderAPI::INPUT_Float3;
@@ -250,12 +283,12 @@ void APITestBed::CreateMesh()
 	{
 
 		indices[index++] = i * 4 + 0;
-		indices[index++] = i * 4 + 1;
 		indices[index++] = i * 4 + 2;
+		indices[index++] = i * 4 + 1;
 
 		indices[index++] = i * 4 + 0;
-		indices[index++] = i * 4 + 2;
 		indices[index++] = i * 4 + 3;
+		indices[index++] = i * 4 + 2;
 	}
 
 	m_pBoxIndexBuffer = m_pDevice->CreateIndexBuffer(RenderAPI::RESUSAGE_Immuable, RenderAPI::INDEX_Int16, kIndexCount, &(indices[0]));
@@ -281,7 +314,10 @@ void APITestBed::DoEffectDraw()
 		{
 			if (!m_pEffect->BeginPass(i))
 				continue;
-
+			m_pEffect->SetMatrix("g_matWorld", m_matWorld);
+			m_pEffect->SetMatrix("g_matView", m_matView);
+			m_pEffect->SetMatrix("g_matProj", m_matProj);
+			m_pEffect->CommitChange();
 			m_pContext->SetVertexBuffers(0, &(m_vertexBufferInfos[0]), m_vertexBufferInfos.size());
 			m_pContext->SetIndexBuffer(m_pBoxIndexBuffer, 0);
 			const int faceCount = 6 * 2;

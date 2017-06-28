@@ -35,4 +35,7 @@ private:
 	RenderAPI::IndexBuffer* m_pBoxIndexBuffer = nullptr;
 	RenderAPI::FXEffect* m_pEffect = nullptr;
 	std::vector<RenderAPI::VertexBufferInfo> m_vertexBufferInfos;
+	float m_matWorld[16];
+	float m_matView[16];
+	float m_matProj[16];
 };
