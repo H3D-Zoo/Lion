@@ -10,8 +10,6 @@
 class SwapChain : public RenderAPI::SwapChain
 {
 public:
-	SwapChain(IDirect3DSwapChain9* swapChain, const RenderAPI::SwapChainDesc & swapChainDesc);
-
 	SwapChain::SwapChain(IDirect3DSwapChain9* swapChain, ::DepthStencil* dsSurface, const RenderAPI::SwapChainDesc & swapChainDesc);
 
 	~SwapChain();

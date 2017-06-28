@@ -36,11 +36,8 @@ DepthStencil::DepthStencil(IDirect3DTexture9* dsTexture, RenderAPI::ZBufferForma
 
 DepthStencil::~DepthStencil()
 {
-	if (m_dsSurface != NULL)
-	{
-		m_dsSurface->Release();
-		m_dsSurface = NULL;
-	}
+	m_dsSurface->Release();
+	m_dsSurface = NULL;
 	if (m_dsTexture != NULL)
 	{
 		m_dsTexture->Release();

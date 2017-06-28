@@ -27,7 +27,10 @@ Device::Device(APIContext* pAPIContext, IDirect3DDevice9* device, const RenderAP
 	m_pAPIContext->pDevice = this;
 	IDirect3DSwapChain9* pSwapChain = NULL;
 	m_pDevice->GetSwapChain(0, &pSwapChain);
-	m_pDefaultSwapChain = new ::SwapChain(pSwapChain, desc);
+	IDirect3DSurface9* pDSSurafce = NULL;
+	m_pDevice->GetDepthStencilSurface(&pDSSurafce);
+	::DepthStencil* pDepthStencil = new DepthStencil(pDSSurafce, desc.zbufferFormat, desc.backbufferWidth, desc.backbufferHeight);
+	m_pDefaultSwapChain = new ::SwapChain(pSwapChain, pDepthStencil, desc);
 }
 
 Device::~Device()
