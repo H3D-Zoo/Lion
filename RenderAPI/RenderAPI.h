@@ -165,14 +165,12 @@ namespace RenderAPI
 		VertexElement()
 			: SemanticName(SEMANTIC_POSITION)
 			, SemanticIndex(0)
-			, StreamIndex(0)
 			, AlignOffset(0xFFFFFFFF)
 			, Format(INPUT_Float4)
 		{ }
 
 		Semantic SemanticName;
 		unsigned int SemanticIndex;
-		unsigned int StreamIndex;
 		unsigned int AlignOffset;
 		InputFormat Format;
 	};
@@ -578,6 +576,10 @@ namespace RenderAPI
 
 		virtual void SetTextureFactor(unsigned int factor) = 0;
 
+		virtual bool BeginScene() = 0;
+
+		virtual void EndScene() = 0;
+
 		virtual void Draw(Primitive primitive, unsigned int startIndex, unsigned int primitiveCount) = 0;
 
 		virtual void DrawIndexed(RenderAPI::Primitive primitive, unsigned int baseVertex, unsigned int startIndex, unsigned int primitiveCount) = 0;
@@ -679,6 +681,8 @@ namespace RenderAPI
 		virtual bool BeginPass(unsigned int passIndex) = 0;
 
 		virtual void EndPass() = 0;
+
+		virtual void SetValidateTechnique() = 0;
 
 		virtual void SetTechniqueByName(const char* name) = 0;
 

@@ -27,6 +27,8 @@ public:
 
 	D3DPRESENT_PARAMETERS MakeCreationParam(HWND hWindow, unsigned int width, unsigned int height, bool isFullscreen, bool vsync, D3DFORMAT rtFormat, D3DFORMAT dsFormat, D3DMULTISAMPLE_TYPE mulsample);
 
+	bool IsSupportManaged();
+
 private:
 	bool CheckBackBufferFormat(D3DFORMAT checkFormat, D3DFORMAT adapterFormat) const;
 

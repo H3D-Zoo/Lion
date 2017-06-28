@@ -27,7 +27,10 @@ Device::Device(APIContext* pAPIContext, IDirect3DDevice9* device, const RenderAP
 	m_pAPIContext->pDevice = this;
 	IDirect3DSwapChain9* pSwapChain = NULL;
 	m_pDevice->GetSwapChain(0, &pSwapChain);
-	m_pDefaultSwapChain = new ::SwapChain(pSwapChain, desc);
+	IDirect3DSurface9* pDSSurafce = NULL;
+	m_pDevice->GetDepthStencilSurface(&pDSSurafce);
+	::DepthStencil* pDepthStencil = new DepthStencil(pDSSurafce, desc.zbufferFormat, desc.backbufferWidth, desc.backbufferHeight);
+	m_pDefaultSwapChain = new ::SwapChain(pSwapChain, pDepthStencil, desc);
 }
 
 Device::~Device()
@@ -117,7 +120,9 @@ RenderAPI::VertexBuffer* Device::CreateVertexBuffer(RenderAPI::ResourceUsage usa
 	IDirect3DVertexBuffer9* pVertexBuffer = NULL;
 	unsigned int d3dUsage = s_d3dUsage[usage];
 	unsigned int bufferSize = vertexCount * vertexSize;
-	HRESULT hr = m_pDevice->CreateVertexBuffer(bufferSize, d3dUsage, 0, immuable ? D3DPOOL_MANAGED : D3DPOOL_DEFAULT, &pVertexBuffer, NULL);
+
+	D3DPOOL pool = (m_pAPIContext->pD3D->IsSupportManaged() && immuable) ? D3DPOOL_MANAGED : D3DPOOL_DEFAULT;
+	HRESULT hr = m_pDevice->CreateVertexBuffer(bufferSize, d3dUsage, 0, pool, &pVertexBuffer, NULL);
 	if (hr != S_OK)
 	{
 		return NULL;
@@ -153,7 +158,8 @@ RenderAPI::IndexBuffer* Device::CreateIndexBuffer(RenderAPI::ResourceUsage usage
 	IDirect3DIndexBuffer9* pIndexBuffer = NULL;
 	unsigned int d3dUsage = s_d3dUsage[usage];
 	unsigned int bufferSize = indexCount * s_IndexLengths[format];
-	HRESULT hr = m_pDevice->CreateIndexBuffer(bufferSize, d3dUsage, s_IndexFormats[format], immuable ? D3DPOOL_MANAGED : D3DPOOL_DEFAULT, &pIndexBuffer, NULL);
+	D3DPOOL pool = (m_pAPIContext->pD3D->IsSupportManaged() && immuable) ? D3DPOOL_MANAGED : D3DPOOL_DEFAULT;
+	HRESULT hr = m_pDevice->CreateIndexBuffer(bufferSize, d3dUsage, s_IndexFormats[format], pool, &pIndexBuffer, NULL);
 
 	if (hr != S_OK)
 	{
@@ -199,7 +205,8 @@ RenderAPI::Texture2D * Device::CreateTexture2D(RenderAPI::ResourceUsage usage, R
 
 	IDirect3DTexture9* pTexture = NULL;
 	unsigned int d3dUsage = s_d3dUsage[usage];
-	HRESULT hr = m_pDevice->CreateTexture(width, height, 0, d3dUsage, s_TextureFormats[format], immuable ? D3DPOOL_MANAGED : D3DPOOL_DEFAULT, &pTexture, NULL);
+	D3DPOOL pool = (m_pAPIContext->pD3D->IsSupportManaged() && immuable) ? D3DPOOL_MANAGED : D3DPOOL_DEFAULT;
+	HRESULT hr = m_pDevice->CreateTexture(width, height, 0, d3dUsage, s_TextureFormats[format], pool, &pTexture, NULL);
 
 	if (hr != S_OK)
 	{

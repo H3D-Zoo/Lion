@@ -83,6 +83,10 @@ public:
 
 	virtual void SetTextureFactor(unsigned int factor);
 
+	virtual bool BeginScene();
+
+	virtual void EndScene();
+
 	virtual void Draw(RenderAPI::Primitive primitive, unsigned int startIndex, unsigned int primitiveCount);
 
 	virtual void DrawIndexed(RenderAPI::Primitive primitive, unsigned int baseVertex, unsigned int startIndex, unsigned int primitiveCount);
@@ -103,7 +107,7 @@ private:
 	FXStateManager m_fxStateManager;
 	IDirect3DDevice9* m_pDevice;
 	BackBufferManager m_backBufferManager;
-	unsigned int m_vertexBufferCount;
+	unsigned int m_vertexCount;
 	unsigned int m_indexBufferOffset;
 
 	struct VertexDecl

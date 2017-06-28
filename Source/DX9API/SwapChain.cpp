@@ -1,14 +1,5 @@
 #include "SwapChain.h"
 
-SwapChain::SwapChain(IDirect3DSwapChain9* swapChain, const RenderAPI::SwapChainDesc & swapChainDesc)
-	: m_pRenderTarget(NULL)
-	, m_pDepthStencil(NULL)
-	, m_pSwapChain(swapChain)
-{
-	InitRenderTarget(swapChain, swapChainDesc.backbufferFormat, swapChainDesc.backbufferWidth, swapChainDesc.backbufferHeight);
-	m_pDepthStencil = new ::DepthStencil((IDirect3DSurface9*)(NULL), swapChainDesc.zbufferFormat, swapChainDesc.backbufferWidth, swapChainDesc.backbufferHeight);
-}
-
 SwapChain::SwapChain(IDirect3DSwapChain9* swapChain, ::DepthStencil* dsSurface, const RenderAPI::SwapChainDesc & swapChainDesc)
 	: m_pRenderTarget(NULL)
 	, m_pDepthStencil(dsSurface)

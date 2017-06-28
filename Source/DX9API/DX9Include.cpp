@@ -191,6 +191,11 @@ D3DPRESENT_PARAMETERS D3D9DLL::MakeCreationParam(HWND hWindow, unsigned int widt
 	return d3dpp;
 }
 
+bool D3D9DLL::IsSupportManaged()
+{
+	return !IsSupportD3D9EX();
+}
+
 IDirect3DDevice9 * D3D9DLL::CreateDevice(HWND hWindow, unsigned int width, unsigned int height, bool isFullscreen, bool vsync, D3DFORMAT rtFormat, D3DFORMAT dsFormat, D3DMULTISAMPLE_TYPE mulsample)
 {
 	//by sssa2000 20110120

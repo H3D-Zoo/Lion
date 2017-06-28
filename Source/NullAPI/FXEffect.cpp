@@ -20,6 +20,11 @@ void FXEffect::EndPass()
 
 }
 
+void FXEffect::SetValidateTechnique()
+{
+
+}
+
 void FXEffect::SetTechniqueByName(const char* name)
 {
 

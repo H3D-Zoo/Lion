@@ -224,7 +224,7 @@ void Context::SetVertexBuffers(unsigned int startSlot, RenderAPI::VertexBufferIn
 		m_pDevice->SetStreamSource(startSlot + i, vertexBufferPtr, buffers[i].Offset, buffers[i].Stride);
 		SetVertexElements(startSlot + i, buffers[i].BufferPtr->GetElementPtr(), buffers[i].BufferPtr->GetElementCount());
 	}
-
+	m_vertexCount = buffers[0].BufferPtr->GetVertexCount();
 }
 
 void Context::SetIndexBuffer(RenderAPI::IndexBuffer* buffer, unsigned int offset)
@@ -425,6 +425,16 @@ void Context::SetTextureFactor(unsigned int factor)
 	m_pDevice->SetRenderState(D3DRS_TEXTUREFACTOR, factor);
 }
 
+bool Context::BeginScene()
+{
+	return S_OK == m_pDevice->BeginScene();
+}
+
+void Context::EndScene()
+{
+	m_pDevice->EndScene();
+}
+
 void Context::Draw(RenderAPI::Primitive primitive, unsigned int startIndex, unsigned int primitiveCount)
 {
 	RebuildDecalration();
@@ -434,7 +444,7 @@ void Context::Draw(RenderAPI::Primitive primitive, unsigned int startIndex, unsi
 void Context::DrawIndexed(RenderAPI::Primitive primitive, unsigned int baseVertex, unsigned int startIndex, unsigned int primitiveCount)
 {
 	RebuildDecalration();
-	m_pDevice->DrawIndexedPrimitive(s_primitives[primitive], baseVertex, 0, m_vertexBufferCount, startIndex, primitiveCount);
+	m_pDevice->DrawIndexedPrimitive(s_primitives[primitive], baseVertex, 0, m_vertexCount, startIndex, primitiveCount);
 }
 
 RenderAPI::DeviceState Context::CheckDeviceLost()
@@ -651,7 +661,6 @@ bool operator != (const RenderAPI::VertexElement& left, const RenderAPI::VertexE
 {
 	return  (left.SemanticName != right.SemanticName ||
 		left.SemanticIndex != right.SemanticIndex ||
-		left.StreamIndex != right.StreamIndex ||
 		left.AlignOffset != right.AlignOffset ||
 		left.Format != right.Format);
 }
