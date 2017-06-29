@@ -28,7 +28,7 @@ V2P VSTintColor(VSInput INP)
 
 float4 PSTintColor(V2P INP) : COLOR0
 {
-	return float4(INP.color.rgb * 0.5f + 0.5f, 1.0f);
+	return float4(INP.color.rgb, 1.0f);
 }
 
 technique TintColor

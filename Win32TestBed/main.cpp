@@ -10,7 +10,6 @@ std::string s_WindowClassName = "Win32_RenderAPI_TestBed";
 std::string s_WindowTitleEditor = "Win32 render API testbed Sub Window";
 std::string s_WindowClassNameEditor = "Win32_RenderAPI_TestBed_Sub_Window";
 
-
 ATOM                MyRegisterClass(HINSTANCE hInstance);
 BOOL                InitInstance(HINSTANCE, int, APITestBed&);
 LRESULT CALLBACK    WndProc(HWND, UINT, WPARAM, LPARAM);

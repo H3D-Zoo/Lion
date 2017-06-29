@@ -22,7 +22,8 @@ private:
 	void CreatePartcleMesh();
 	void CreateMaterial();
 	void FillDynamicParticleVBWithRandomData();
-	void DoEffectDraw();
+	void DrawBox();
+	void DrawParticle();
 
 
 	HMODULE m_hRenderAPIDLL = nullptr;
@@ -44,12 +45,20 @@ private:
 
 	RenderAPI::VertexBuffer* m_pBoxVertexBuffer = nullptr;
 	RenderAPI::IndexBuffer* m_pBoxIndexBuffer = nullptr;
-	RenderAPI::FXEffect* m_pEffect = nullptr;
-	std::vector<RenderAPI::VertexBufferInfo> m_vertexBufferInfos;
 
-	gml::mat44 m_matWorld;
+	RenderAPI::FXEffect* m_pEffectTintColor = nullptr;
+	RenderAPI::FXEffect* m_pEffectParticle = nullptr;
+
+	std::vector<RenderAPI::VertexBufferInfo> m_boxVBInfos;
+	std::vector<RenderAPI::VertexBufferInfo> m_particleVBInfos;
+
+	gml::mat44 m_matWorldParticle;
+	gml::mat44 m_matWorldBox;
 	gml::mat44 m_matView;
 	gml::mat44 m_matProj;
+	gml::mat44 m_matInvView;
 
 	const int kParticleCount = 256;
+	const int kParticleFaceCount = kParticleCount * 2;
+	const int kParticleIndexCount = kParticleFaceCount * 3;
 };
