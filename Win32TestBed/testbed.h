@@ -5,6 +5,7 @@
 
 #include "Math/gmlvector.h"
 #include "Math/gmlmatrix.h"
+#include "particle.h"
 
 class APITestBed
 {
@@ -21,10 +22,9 @@ private:
 	void CreateMesh();
 	void CreatePartcleMesh();
 	void CreateMaterial();
-	void FillDynamicParticleVBWithRandomData();
 	void DrawBox();
 	void DrawParticle();
-
+	void UploadParticlesAndCommitDrawcalls();
 
 	HMODULE m_hRenderAPIDLL = nullptr;
 	RenderAPI::Device* m_pDevice = nullptr;
@@ -51,6 +51,8 @@ private:
 
 	std::vector<RenderAPI::VertexBufferInfo> m_boxVBInfos;
 	std::vector<RenderAPI::VertexBufferInfo> m_particleVBInfos;
+
+	ParticleInstance m_particleInstance;
 
 	gml::mat44 m_matWorldParticle;
 	gml::mat44 m_matWorldBox;

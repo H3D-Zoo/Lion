@@ -14,7 +14,10 @@ set(TESTBED_INCLUDE_FILES
 set(TESTBED_SOURCE_FILES
 	./main.cpp
 	./testbed.cpp
+	./particle.h
+	./particle.cpp
 	./TintColor.fx
+	./Particle.fx
 )
 
 source_group(include FILES ${TESTBED_INCLUDE_FILES})

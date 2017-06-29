@@ -73,6 +73,10 @@ void APITestBed::Deinit()
 
 void APITestBed::Update()
 {
+	static unsigned int lastStamp = timeGetTime();
+	m_particleInstance.Update(timeGetTime() - lastStamp);
+	lastStamp = timeGetTime();
+
 	float timeScale = timeGetTime()  * 0.001f;
 	const float distance = 10;
 	static float rho = 0;
@@ -364,7 +368,6 @@ void APITestBed::CreatePartcleMesh()
 	elements[0].SemanticName = RenderAPI::SEMANTIC_POSITION;
 	elements[0].SemanticIndex = 0;
 	m_pParticleVBD = m_pDevice->CreateVertexBuffer(RenderAPI::RESUSAGE_Dynamic, kParticleVertexCount, sizeof(gml::vec3), &(elements[0]), 1, nullptr);
-	FillDynamicParticleVBWithRandomData();
 
 	m_particleVBInfos.resize(2);
 	m_particleVBInfos[0].BufferPtr = m_pParticleVBD;
@@ -384,30 +387,6 @@ void APITestBed::CreateMaterial()
 }
 
 float RandomRangeF(float  min, float max) { return min + rand() * (max - min) / RAND_MAX; }
-
-void APITestBed::FillDynamicParticleVBWithRandomData()
-{
-	const float kParticleSize = 0.1f;
-	const float range = 1.5f;
-	gml::vec3* vertices = (gml::vec3*)m_pParticleVBD->DiscardLock();
-	if (vertices != nullptr)
-	{
-		for (int i = 0; i < kParticleCount; i++)
-		{
-			gml::vec3& v0 = vertices[i * 4];
-			gml::vec3& v1 = vertices[i * 4 + 1];
-			gml::vec3& v2 = vertices[i * 4 + 2];
-			gml::vec3& v3 = vertices[i * 4 + 3];
-
-			v0.x = RandomRangeF(-range, range);
-			v0.y = RandomRangeF(-range, range);
-			v0.z = RandomRangeF(-range, range);
-			v1 = v2 = v3 = v0;
-		}
-
-		m_pParticleVBD->Unlock();
-	}
-}
 
 void APITestBed::DrawBox()
 {
@@ -447,13 +426,34 @@ void APITestBed::DrawParticle()
 			m_pEffectParticle->SetMatrix("g_matProj", (float*)m_matProj.m);
 			m_pEffectParticle->SetValue("g_cameraX", (float*)m_matInvView.row[0], sizeof(gml::vec4));
 			m_pEffectParticle->SetValue("g_cameraY", (float*)m_matInvView.row[1], sizeof(gml::vec4));
-			m_pEffectParticle->CommitChange();
 			m_pContext->SetVertexBuffers(0, &(m_particleVBInfos[0]), m_particleVBInfos.size());
 			m_pContext->SetIndexBuffer(m_pParticleIB, 0);
-			m_pContext->DrawIndexed(RenderAPI::PRIMITIVE_TriangleList, 0, 0, kParticleFaceCount);
+			m_pEffectParticle->CommitChange();
+			UploadParticlesAndCommitDrawcalls();
 
 			m_pEffectParticle->EndPass();
 		}
 		m_pEffectParticle->End();
 	}
+}
+
+void APITestBed::UploadParticlesAndCommitDrawcalls()
+{
+	int filledCount = 0;
+	int particleCount = m_particleInstance.GetParticleCount();
+	while (filledCount < particleCount)
+	{
+
+		const float kParticleSize = 0.1f;
+		const float range = 1.5f;
+		gml::vec3* vertices = (gml::vec3*)m_pParticleVBD->DiscardLock();
+		if (vertices != nullptr)
+		{
+			filledCount += m_particleInstance.FillVertexBuffer(vertices, filledCount);
+			m_pParticleVBD->Unlock();
+		}
+
+		m_pContext->DrawIndexed(RenderAPI::PRIMITIVE_TriangleList, 0, 0, filledCount * 2);
+	}
+
 }
