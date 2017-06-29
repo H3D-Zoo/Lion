@@ -231,7 +231,7 @@ void Context::SetVertexBuffers(unsigned int startSlot, RenderAPI::VertexBufferIn
 	for (unsigned int i = 0; i < bufferCount; i++)
 	{
 		IDirect3DVertexBuffer9* vertexBufferPtr = ((::VertexBuffer*)buffers[i].BufferPtr)->GetBufferPtr();
-		m_pDevice->SetStreamSource(startSlot + i, vertexBufferPtr, buffers[i].Offset, buffers[i].Stride);
+		HRESULT hr = m_pDevice->SetStreamSource(startSlot + i, vertexBufferPtr, buffers[i].Offset, buffers[i].Stride);
 		SetVertexElements(startSlot + i, buffers[i].BufferPtr->GetElementPtr(), buffers[i].BufferPtr->GetElementCount());
 	}
 	m_vertexCount = buffers[0].BufferPtr->GetVertexCount();
@@ -520,16 +520,16 @@ void Context::RebuildDecalration()
 		m_d3dDeclaration.clear();
 		std::vector<VertexDecl>::iterator itCur = m_vertexDeclCache.begin();
 		std::vector<VertexDecl>::iterator itEnd = m_vertexDeclCache.end();
-		int offset = 0;
+
 		for (int i = 0; itCur != itEnd && i < m_vertexCeclCacheCount; ++itCur, ++i)
 		{
 			D3DVERTEXELEMENT9 element;
 			element.Stream = i;
-
+			int offset = 0;
 			VertexDecl& decl = *itCur;
 			std::vector<RenderAPI::VertexElement>::iterator itCurS = decl.Elements.begin();
 			std::vector<RenderAPI::VertexElement>::iterator itEndS = decl.Elements.end();
-			for (; itCurS != itEndS; ++itCurS)
+			for (int i = 0; itCurS != itEndS && i < decl.Count; ++itCurS, i++)
 			{
 				element.Offset = (itCurS->AlignOffset == 0xFFFFFFFF) ? offset : itCurS->AlignOffset;
 				DeclFormat& fmt = s_declTypes[itCurS->Format];
