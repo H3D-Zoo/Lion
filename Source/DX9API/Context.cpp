@@ -166,13 +166,22 @@ Context::Context(APIContext* pAPIContext, IDirect3DDevice9 * device, RenderAPI::
 	, m_backBufferManager(device, defRT, defDS)
 	, m_fxStateManager(device)
 	, m_vertexDeclChanged(false)
-	, m_pVertexDeclaraion(NULL)
+	, m_pVertexDeclaration(NULL)
 {
 	m_pAPIContext->pContext = this;
 }
 
 Context::~Context()
 {
+	VertexDecalrationPool::iterator itCur = m_vertexDeclarationPool.begin();
+	VertexDecalrationPool::iterator itEnd = m_vertexDeclarationPool.end();
+
+	for (; itCur != itEnd; ++itCur)
+	{
+		itCur->second->Release();
+	}
+	m_vertexDeclarationPool.clear();
+
 	m_pDevice->Release();
 	m_pAPIContext->Release();
 	m_pDevice = NULL;
@@ -218,6 +227,7 @@ void Context::SetDepthStencil(RenderAPI::DepthStencil* depthStencil)
 
 void Context::SetVertexBuffers(unsigned int startSlot, RenderAPI::VertexBufferInfo* buffers, unsigned int bufferCount)
 {
+	m_vertexCeclCacheCount = bufferCount;
 	for (unsigned int i = 0; i < bufferCount; i++)
 	{
 		IDirect3DVertexBuffer9* vertexBufferPtr = ((::VertexBuffer*)buffers[i].BufferPtr)->GetBufferPtr();
@@ -500,28 +510,7 @@ void Context::SetVertexElements(int index, const RenderAPI::VertexElement * s, i
 
 bool operator<(const D3DVERTEXELEMENT9& left, const D3DVERTEXELEMENT9& right)
 {
-	if (left.Stream < right.Stream)
-		return true;
-
-	if (left.Offset < right.Offset)
-		return true;
-
-	if (left.Offset < right.Offset)
-		return true;
-
-	if (left.Type < right.Type)
-		return true;
-
-	if (left.Method < right.Method)
-		return true;
-
-	if (left.Usage < right.Usage)
-		return true;
-
-	if (left.UsageIndex < right.UsageIndex)
-		return true;
-
-	return false;
+	return memcmp(&left, &right, sizeof(D3DVERTEXELEMENT9)) < 0;
 }
 
 void Context::RebuildDecalration()
@@ -532,7 +521,7 @@ void Context::RebuildDecalration()
 		std::vector<VertexDecl>::iterator itCur = m_vertexDeclCache.begin();
 		std::vector<VertexDecl>::iterator itEnd = m_vertexDeclCache.end();
 		int offset = 0;
-		for (int i = 0; itCur != itEnd; ++itCur, ++i)
+		for (int i = 0; itCur != itEnd && i < m_vertexCeclCacheCount; ++itCur, ++i)
 		{
 			D3DVERTEXELEMENT9 element;
 			element.Stream = i;
@@ -542,7 +531,6 @@ void Context::RebuildDecalration()
 			std::vector<RenderAPI::VertexElement>::iterator itEndS = decl.Elements.end();
 			for (; itCurS != itEndS; ++itCurS)
 			{
-
 				element.Offset = (itCurS->AlignOffset == 0xFFFFFFFF) ? offset : itCurS->AlignOffset;
 				DeclFormat& fmt = s_declTypes[itCurS->Format];
 				element.Type = fmt.Type;
@@ -554,12 +542,19 @@ void Context::RebuildDecalration()
 				m_d3dDeclaration.push_back(element);
 			}
 		}
+		m_d3dDeclaration.push_back(D3DDECL_END());
 
 		VertexDecalrationPool::iterator findIter = m_vertexDeclarationPool.find(m_d3dDeclaration);
 		if (findIter != m_vertexDeclarationPool.end())
 		{
-			m_pVertexDeclaraion = findIter->second;
-			m_pDevice->SetVertexDeclaration(m_pVertexDeclaraion);
+			m_pVertexDeclaration = findIter->second;
+			m_pDevice->SetVertexDeclaration(m_pVertexDeclaration);
+		}
+		else
+		{
+			m_pDevice->CreateVertexDeclaration(&(m_d3dDeclaration[0]), &m_pVertexDeclaration);
+			m_pDevice->SetVertexDeclaration(m_pVertexDeclaration);
+			m_vertexDeclarationPool[m_d3dDeclaration] = m_pVertexDeclaration;
 		}
 
 		m_vertexDeclChanged = false;
@@ -667,7 +662,7 @@ bool operator != (const RenderAPI::VertexElement& left, const RenderAPI::VertexE
 
 bool Context::VertexDecl::Set(const RenderAPI::VertexElement * s, int count)
 {
-	if ((int)Elements.size() <= count)
+	if ((int)Elements.size() < count)
 	{
 		Elements.resize(count);
 		memcpy(&(Elements[0]), s, sizeof(RenderAPI::VertexElement) * count);
