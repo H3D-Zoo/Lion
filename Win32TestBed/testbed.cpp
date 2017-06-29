@@ -1,5 +1,5 @@
 #include "testbed.h"
-#include <vector>
+
 #define DLLName "DX9API.dll"
 
 bool APITestBed::Init(HWND hWindow, HWND hWindowEditor, unsigned int backBufferWidth, unsigned int backBufferHeight)
@@ -21,20 +21,14 @@ bool APITestBed::Init(HWND hWindow, HWND hWindowEditor, unsigned int backBufferW
 
 	CreateMesh();
 	CreateMaterial();
+	CreatePartcleMesh();
 
 	const int kMatrixLength = sizeof(float) * 16;
-	memset(m_matWorld, 0, kMatrixLength);
-	memset(m_matView, 0, kMatrixLength);
-	memset(m_matProj, 0, kMatrixLength);
+	m_matWorld.identity();
+	m_matView.identity();
+	m_matProj.identity();
 
-	m_matWorld[0] = m_matWorld[5] = m_matWorld[10] = m_matWorld[15] = 1.0f;
-	m_matView[0] = m_matView[5] = m_matView[10] = m_matView[15] = 1.0f;
-	m_matView[11] = 10.0f;
-
-	float zRangeInv = 101.0f / 100.0f;
-	m_matProj[10] = zRangeInv;
-	m_matProj[11] = -zRangeInv;
-	m_matProj[14] = 1.0f;
+	m_matView = gml::mat44::look_at(gml::vec3(5, 10, -20), gml::vec3::zero(), gml::vec3::up());
 	return true;
 }
 
@@ -43,19 +37,37 @@ void APITestBed::Deinit()
 	if (m_pBoxVertexBuffer)
 	{
 		m_pBoxVertexBuffer->Release();
-		m_pBoxVertexBuffer = NULL;
+		m_pBoxVertexBuffer = nullptr;
 	}
 
 	if (m_pBoxIndexBuffer)
 	{
 		m_pBoxIndexBuffer->Release();
-		m_pBoxIndexBuffer = NULL;
+		m_pBoxIndexBuffer = nullptr;
+	}
+
+	if (m_pParticleVBS)
+	{
+		m_pParticleVBS->Release();
+		m_pParticleVBS = nullptr;
+	}
+
+	if (m_pParticleVBD)
+	{
+		m_pParticleVBD->Release();
+		m_pParticleVBD = nullptr;
+	}
+
+	if (m_pParticleIB)
+	{
+		m_pParticleIB->Release();
+		m_pParticleIB = nullptr;
 	}
 
 	if (m_pEffect)
 	{
 		m_pEffect->Release();
-		m_pEffect = NULL;
+		m_pEffect = nullptr;
 	}
 
 	if (m_editorSwapChain != nullptr)
@@ -95,7 +107,6 @@ void APITestBed::Deinit()
 
 void APITestBed::Update()
 {
-	
 	auto rt = m_defaultSwapChain->GetRenderTarget();
 	auto ds = m_defaultSwapChain->GetDepthStencil();
 	m_pContext->SetRenderTarget(0, rt);
@@ -117,7 +128,7 @@ void APITestBed::Update()
 	auto dsEditor = m_editorSwapChain->GetDepthStencil();
 	m_pContext->SetRenderTarget(0, rtEditor);
 	m_pContext->SetDepthStencil(dsEditor);
-	m_pContext->SetCullMode(RenderAPI::CULL_None);
+	m_pContext->SetCullMode(RenderAPI::CULL_CW);
 	if (m_pContext->BeginScene())
 	{
 		m_pContext->ClearRenderTarget(rtEditor, 0xFFFF0000);
@@ -138,13 +149,7 @@ void APITestBed::Update()
 void APITestBed::OnResize(unsigned int width, unsigned int height)
 {
 	//build projection matrix;
-	float aspect = width * 1.0f / height;
-	const float PI = 3.1415926f;
-	const float fov = PI  * 0.25f;
-	float nearTop = tanf(fov * 0.5f);
-	float nearRight = nearTop * aspect;
-	m_matProj[0] = 1.0f / nearRight;
-	m_matProj[5] = 1.0f / nearTop;
+	m_matProj = gml::mat44::perspective_lh(gml::degree(45), width*1.0f / height, 1.0f, 100.0f);
 	m_defaultSwapChain->OnResize(width, height);
 }
 
@@ -205,17 +210,16 @@ bool APITestBed::CreateDeviceAndContext(HWND hWindow, HWND hWindowEditor, unsign
 	return true;
 }
 
-struct float3 { float x, y, z; };
-struct Vertex
+struct BoxVertex
 {
-	float3 position;
+	gml::vec3 position;
 	unsigned int color = 0xFFFF0000;
 };
 
 void APITestBed::CreateMesh()
 {
 	const float kBoxSize = 1.0f;
-	float3 vertexPositions[] =
+	gml::vec3 vertexPositions[] =
 	{
 		{ -kBoxSize, -kBoxSize , -kBoxSize },
 		{ +kBoxSize, -kBoxSize , -kBoxSize },
@@ -230,7 +234,7 @@ void APITestBed::CreateMesh()
 
 	const int kVertexCount = 24;
 	const int kIndexCount = 36;
-	std::vector<Vertex> vertices(kVertexCount);
+	std::vector<BoxVertex> vertices(kVertexCount);
 	std::vector<unsigned short> indices(kIndexCount);
 	int index = 0;
 	//front
@@ -276,7 +280,7 @@ void APITestBed::CreateMesh()
 	elements[1].Format = RenderAPI::INPUT_Color4;
 	elements[1].SemanticName = RenderAPI::SEMANTIC_COLOR;
 
-	m_pBoxVertexBuffer = m_pDevice->CreateVertexBuffer(RenderAPI::RESUSAGE_Immuable, 24, sizeof(Vertex), &(elements[0]), elements.size(), &(vertices[0]));
+	m_pBoxVertexBuffer = m_pDevice->CreateVertexBuffer(RenderAPI::RESUSAGE_Immuable, 24, sizeof(BoxVertex), &(elements[0]), elements.size(), &(vertices[0]));
 
 	index = 0;
 	for (int i = 0; i < 6; i++)
@@ -299,10 +303,104 @@ void APITestBed::CreateMesh()
 	m_vertexBufferInfos[0].Stride = m_pBoxVertexBuffer->GetVertexStride();
 }
 
+struct ParticleVertexS
+{
+	gml::vec3 offset;
+	gml::vec2 texcoord;
+};
+
+void APITestBed::CreatePartcleMesh()
+{
+	const float kParticleSize = 0.1f;
+	const int kParticleVertexCount = kParticleCount * 4;
+	const int kIndexCount = kParticleCount * 3 * 2;
+	std::vector<ParticleVertexS> expandData(kParticleVertexCount);
+	std::vector<unsigned int> particleIndices(kIndexCount);
+	for (int i = 0; i < kParticleCount; i++)
+	{
+		ParticleVertexS& v0 = expandData[i * 4];
+		ParticleVertexS& v1 = expandData[i * 4 + 1];
+		ParticleVertexS& v2 = expandData[i * 4 + 2];
+		ParticleVertexS& v3 = expandData[i * 4 + 3];
+		unsigned int* face0 = &(particleIndices[i * 6]);
+		unsigned int* face1 = &(particleIndices[i * 6 + 3]);
+
+		v0.offset.x = -kParticleSize;
+		v0.offset.y = -kParticleSize;
+		v0.offset.z = 0;
+		v0.offset.x = 0;
+		v0.offset.y = 0;
+
+		v1.offset.x = +kParticleSize;
+		v1.offset.y = -kParticleSize;
+		v1.offset.z = 0;
+		v1.offset.x = 1;
+		v1.offset.y = 0;
+
+		v1.offset.x = +kParticleSize;
+		v1.offset.y = +kParticleSize;
+		v1.offset.z = 0;
+		v1.offset.x = 1;
+		v1.offset.y = 1;
+
+		v3.offset.x = -kParticleSize;
+		v3.offset.y = +kParticleSize;
+		v3.offset.z = 0;
+		v3.offset.x = 0;
+		v3.offset.y = 1;
+
+		face0[0] = 0;
+		face0[1] = 2;
+		face0[2] = 1;
+
+		face1[0] = 0;
+		face1[1] = 3;
+		face1[2] = 2;
+
+		face0[0] = 0;
+	}
+
+	std::vector<RenderAPI::VertexElement> elements(2);
+	elements[0].Format = RenderAPI::INPUT_Float3;
+	elements[0].SemanticName = RenderAPI::SEMANTIC_TEXCOORD;
+	elements[1].SemanticIndex = 0;
+
+	elements[1].Format = RenderAPI::INPUT_Float2;
+	elements[1].SemanticName = RenderAPI::SEMANTIC_TEXCOORD;
+	elements[1].SemanticIndex = 1;
+
+	m_pParticleVBS = m_pDevice->CreateVertexBuffer(RenderAPI::RESUSAGE_Immuable, expandData.size(), sizeof(ParticleVertexS), &(elements[0]), elements.size(), &(expandData[0]));
+	m_pParticleIB = m_pDevice->CreateIndexBuffer(RenderAPI::RESUSAGE_Immuable, RenderAPI::INDEX_Int16, kIndexCount, &(particleIndices[0]));
+
+
+	elements[0].Format = RenderAPI::INPUT_Float3;
+	elements[0].SemanticName = RenderAPI::SEMANTIC_POSITION;
+	elements[0].SemanticIndex = 0;
+	m_pParticleVBD = m_pDevice->CreateVertexBuffer(RenderAPI::RESUSAGE_Dynamic, expandData.size(), sizeof(gml::vec3), &(elements[0]), 1, nullptr);
+	FillDynamicParticleVBWithRandomData();
+}
+
 void APITestBed::CreateMaterial()
 {
 	m_pEffect = m_pDevice->CreateFXEffectFromFile("TintColor.fx");
 	m_pEffect->SetValidateTechnique();
+}
+
+void APITestBed::FillDynamicParticleVBWithRandomData()
+{
+	gml::vec3* vertices = (gml::vec3*)m_pParticleVBD->DiscardLock();
+	if (vertices != nullptr)
+	{
+		for (int i = 0; i < kParticleCount; i++)
+		{
+			gml::vec3& v0 = vertices[i * 4];
+			gml::vec3& v1 = vertices[i * 4 + 1];
+			gml::vec3& v2 = vertices[i * 4 + 2];
+			gml::vec3& v3 = vertices[i * 4 + 3];
+		}
+
+		m_pParticleVBD->Unlock();
+	}
 }
 
 void APITestBed::DoEffectDraw()
@@ -314,9 +412,9 @@ void APITestBed::DoEffectDraw()
 		{
 			if (!m_pEffect->BeginPass(i))
 				continue;
-			m_pEffect->SetMatrix("g_matWorld", m_matWorld);
-			m_pEffect->SetMatrix("g_matView", m_matView);
-			m_pEffect->SetMatrix("g_matProj", m_matProj);
+			m_pEffect->SetMatrix("g_matWorld", (float*)m_matWorld.m);
+			m_pEffect->SetMatrix("g_matView", (float*)m_matView.m);
+			m_pEffect->SetMatrix("g_matProj", (float*)m_matProj.m);
 			m_pEffect->CommitChange();
 			m_pContext->SetVertexBuffers(0, &(m_vertexBufferInfos[0]), m_vertexBufferInfos.size());
 			m_pContext->SetIndexBuffer(m_pBoxIndexBuffer, 0);

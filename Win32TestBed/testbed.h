@@ -2,6 +2,10 @@
 #include <Windows.h>
 #include <RenderAPI.h>
 #include <vector>
+
+#include "Math/gmlvector.h"
+#include "Math/gmlmatrix.h"
+
 class APITestBed
 {
 public:
@@ -15,8 +19,11 @@ private:
 	bool LoadDLL();
 	bool CreateDeviceAndContext(HWND hWindow, HWND hWindowEditor, unsigned int backBufferWidth, unsigned int backBufferHeight);
 	void CreateMesh();
+	void CreatePartcleMesh();
 	void CreateMaterial();
+	void FillDynamicParticleVBWithRandomData();
 	void DoEffectDraw();
+
 
 	HMODULE m_hRenderAPIDLL = nullptr;
 	RenderAPI::Device* m_pDevice = nullptr;
@@ -31,11 +38,18 @@ private:
 	RenderAPIDeinit m_apiDeinitPtr = nullptr;
 	RenderAPICreate m_apiCreatePtr = nullptr;
 
+	RenderAPI::VertexBuffer* m_pParticleVBS = nullptr;
+	RenderAPI::VertexBuffer* m_pParticleVBD = nullptr;
+	RenderAPI::IndexBuffer* m_pParticleIB = nullptr;
+
 	RenderAPI::VertexBuffer* m_pBoxVertexBuffer = nullptr;
 	RenderAPI::IndexBuffer* m_pBoxIndexBuffer = nullptr;
 	RenderAPI::FXEffect* m_pEffect = nullptr;
 	std::vector<RenderAPI::VertexBufferInfo> m_vertexBufferInfos;
-	float m_matWorld[16];
-	float m_matView[16];
-	float m_matProj[16];
+
+	gml::mat44 m_matWorld;
+	gml::mat44 m_matView;
+	gml::mat44 m_matProj;
+
+	const int kParticleCount = 256;
 };
