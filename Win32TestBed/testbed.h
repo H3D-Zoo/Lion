@@ -2,6 +2,11 @@
 #include <Windows.h>
 #include <RenderAPI.h>
 #include <vector>
+
+#include "Math/gmlvector.h"
+#include "Math/gmlmatrix.h"
+#include "particle.h"
+
 class APITestBed
 {
 public:
@@ -15,8 +20,11 @@ private:
 	bool LoadDLL();
 	bool CreateDeviceAndContext(HWND hWindow, HWND hWindowEditor, unsigned int backBufferWidth, unsigned int backBufferHeight);
 	void CreateMesh();
+	void CreatePartcleMesh();
 	void CreateMaterial();
-	void DoEffectDraw();
+	void DrawBox();
+	void DrawParticle();
+	void UploadParticlesAndCommitDrawcalls();
 
 	HMODULE m_hRenderAPIDLL = nullptr;
 	RenderAPI::Device* m_pDevice = nullptr;
@@ -31,11 +39,28 @@ private:
 	RenderAPIDeinit m_apiDeinitPtr = nullptr;
 	RenderAPICreate m_apiCreatePtr = nullptr;
 
+	RenderAPI::VertexBuffer* m_pParticleVBS = nullptr;
+	RenderAPI::VertexBuffer* m_pParticleVBD = nullptr;
+	RenderAPI::IndexBuffer* m_pParticleIB = nullptr;
+
 	RenderAPI::VertexBuffer* m_pBoxVertexBuffer = nullptr;
 	RenderAPI::IndexBuffer* m_pBoxIndexBuffer = nullptr;
-	RenderAPI::FXEffect* m_pEffect = nullptr;
-	std::vector<RenderAPI::VertexBufferInfo> m_vertexBufferInfos;
-	float m_matWorld[16];
-	float m_matView[16];
-	float m_matProj[16];
+
+	RenderAPI::FXEffect* m_pEffectTintColor = nullptr;
+	RenderAPI::FXEffect* m_pEffectParticle = nullptr;
+
+	std::vector<RenderAPI::VertexBufferInfo> m_boxVBInfos;
+	std::vector<RenderAPI::VertexBufferInfo> m_particleVBInfos;
+
+	ParticleInstance m_particleInstance;
+
+	gml::mat44 m_matWorldParticle;
+	gml::mat44 m_matWorldBox;
+	gml::mat44 m_matView;
+	gml::mat44 m_matProj;
+	gml::mat44 m_matInvView;
+
+	const int kParticleCount = 256;
+	const int kParticleFaceCount = kParticleCount * 2;
+	const int kParticleIndexCount = kParticleFaceCount * 3;
 };

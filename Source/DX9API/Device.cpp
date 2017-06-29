@@ -238,7 +238,7 @@ RenderAPI::FXEffect * Device::CreateFXEffectFromFile(const char * effectFilePath
 	AutoR<ID3DXBuffer> pErrorBuffer = NULL;
 	EffectInclude includeCallback;
 	DWORD flags = D3DXSHADER_USE_LEGACY_D3DX9_31_DLL; //要想支持ps 1_x 需要使用这个。
-
+	 
 
 	HRESULT hr = D3DXCreateEffectFromFileA(m_pDevice, effectFilePath, 0, &includeCallback, flags, 0, &pEffect, &pErrorBuffer);
 	if (SUCCEEDED(hr))
@@ -254,6 +254,7 @@ RenderAPI::FXEffect * Device::CreateFXEffectFromFile(const char * effectFilePath
 	{
 		// LogError("从磁盘加载fx失败: %s", fxofilename.c_str());
 		//PrintErrorIinfo(pErrorBuffer);
+		std::string errorStr = (char*)pErrorBuffer->GetBufferPointer();
 		return NULL;
 	}
 

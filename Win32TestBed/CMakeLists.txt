@@ -14,7 +14,10 @@ set(TESTBED_INCLUDE_FILES
 set(TESTBED_SOURCE_FILES
 	./main.cpp
 	./testbed.cpp
+	./particle.h
+	./particle.cpp
 	./TintColor.fx
+	./Particle.fx
 )
 
 source_group(include FILES ${TESTBED_INCLUDE_FILES})
@@ -27,3 +30,4 @@ list(APPEND ${THIS_TARGET}_SOURCE_FILES
 
 add_executable(${THIS_TARGET} WIN32 ${${THIS_TARGET}_SOURCE_FILES})
 set_target_properties(${THIS_TARGET} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "$(OutDir)")
+target_link_libraries(${THIS_TARGET} winmm.lib)

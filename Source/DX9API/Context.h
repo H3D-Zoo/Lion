@@ -118,9 +118,10 @@ private:
 	};
 
 	bool m_vertexDeclChanged;
+	unsigned int m_vertexCeclCacheCount;
 	std::vector<VertexDecl> m_vertexDeclCache;
 	std::vector<D3DVERTEXELEMENT9> m_d3dDeclaration;
-	IDirect3DVertexDeclaration9* m_pVertexDeclaraion;
+	IDirect3DVertexDeclaration9* m_pVertexDeclaration;
 	typedef std::map<std::vector<D3DVERTEXELEMENT9>, IDirect3DVertexDeclaration9*> VertexDecalrationPool;
 	VertexDecalrationPool m_vertexDeclarationPool;
 };
