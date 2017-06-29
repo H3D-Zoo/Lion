@@ -650,7 +650,7 @@ void BackBufferManager::ResetRT0()
 
 void BackBufferManager::ResetDS()
 {
-	if (m_pLastDS == NULL)
+	if (m_pLastDS != NULL)
 	{
 		m_pCurrentDS = m_pLastDS;
 		m_pDevice->SetDepthStencilSurface(m_pLastDS);
