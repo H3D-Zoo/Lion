@@ -275,7 +275,7 @@ void APITestBed::CreateMesh()
 	elements[1].Format = RenderAPI::INPUT_Color4;
 	elements[1].SemanticName = RenderAPI::SEMANTIC_COLOR;
 
-	m_pBoxVertexBuffer = m_pDevice->CreateVertexBuffer(RenderAPI::RESUSAGE_Immuable, 24, sizeof(BoxVertex), &(elements[0]), elements.size(), &(vertices[0]));
+	m_pBoxVertexBuffer = m_pDevice->CreateVertexBuffer(RenderAPI::RESUSAGE_Default, 24, sizeof(BoxVertex), &(elements[0]), elements.size(), &(vertices[0]));
 
 	index = 0;
 	for (int i = 0; i < 6; i++)
@@ -370,7 +370,11 @@ void APITestBed::CreatePartcleMesh()
 	elements[0].Format = RenderAPI::INPUT_Float3;
 	elements[0].SemanticName = RenderAPI::SEMANTIC_POSITION;
 	elements[0].SemanticIndex = 0;
-	m_pParticleVBD = m_pDevice->CreateVertexBuffer(RenderAPI::RESUSAGE_Dynamic, kParticleVertexCount, sizeof(gml::vec3), &(elements[0]), 1, nullptr);
+
+	elements[1].Format = RenderAPI::INPUT_Color4;
+	elements[1].SemanticName = RenderAPI::SEMANTIC_COLOR;
+	elements[1].SemanticIndex = 0;
+	m_pParticleVBD = m_pDevice->CreateVertexBuffer(RenderAPI::RESUSAGE_Dynamic, kParticleVertexCount, sizeof(ParticleVertex), &(elements[0]), 2, nullptr);
 
 	m_particleVBInfos.resize(2);
 	m_particleVBInfos[0].BufferPtr = m_pParticleVBD;
@@ -399,12 +403,13 @@ void APITestBed::CreateMaterial()
 
 			if (png.format == color_format::bgra32)
 			{
-				texformat = RenderAPI::TEX_XRGB;
+				texformat = RenderAPI::TEX_ARGB;
 			}
 			else if (png.format == color_format::bgr24)
 			{
-				texformat = RenderAPI::TEX_ARGB;
+				texformat = RenderAPI::TEX_XRGB;
 			}
+
 			m_pParticleTexture = m_pDevice->CreateTexture2D(RenderAPI::RESUSAGE_Default, texformat, png.width, png.height, png.buffer, png.line_pitch, png.height);
 			png.destroy();
 		}
@@ -474,7 +479,7 @@ void APITestBed::UploadParticlesAndCommitDrawcalls()
 
 		const float kParticleSize = 0.1f;
 		const float range = 1.5f;
-		gml::vec3* vertices = (gml::vec3*)m_pParticleVBD->DiscardLock();
+		ParticleVertex* vertices = (ParticleVertex*)m_pParticleVBD->DiscardLock();
 		if (vertices != nullptr)
 		{
 			filledCount += m_particleInstance.FillVertexBuffer(vertices, filledCount);

@@ -32,6 +32,7 @@ void ParticleInstance::SpawnParticle()
 	}
 	Particle& particle = m_particles[m_particleCount++];
 
+	particle.color = gml::color3::random();
 	particle.lifeTime = RandomRangeI(800, 1200);
 
 	//box range
@@ -72,7 +73,7 @@ void ParticleInstance::Update(unsigned int elapsedMillionSecond)
 	}
 }
 
-int ParticleInstance::FillVertexBuffer(gml::vec3 * posVBPtr, int offset)
+int ParticleInstance::FillVertexBuffer(ParticleVertex* posVBPtr, int offset)
 {
 	const int kParticleCount = 256;
 	int fillCount = __min(kParticleCount, m_particleCount - offset);
@@ -80,12 +81,13 @@ int ParticleInstance::FillVertexBuffer(gml::vec3 * posVBPtr, int offset)
 	for (int i = 0; i < fillCount; i++)
 	{
 		int vIndex = i * 4;
-		gml::vec3& v0 = posVBPtr[vIndex];
-		gml::vec3& v1 = posVBPtr[vIndex + 1];
-		gml::vec3& v2 = posVBPtr[vIndex + 2];
-		gml::vec3& v3 = posVBPtr[vIndex + 3];
+		ParticleVertex& v0 = posVBPtr[vIndex];
+		ParticleVertex& v1 = posVBPtr[vIndex + 1];
+		ParticleVertex& v2 = posVBPtr[vIndex + 2];
+		ParticleVertex& v3 = posVBPtr[vIndex + 3];
 		Particle& p = m_particles[offset + i];
-		v0 = v1 = v2 = v3 = p.position;
+		v0.color = v1.color = v2.color = v3.color = p.color = p.color;
+		v0.position = v1.position = v2.position = v3.position = p.position;
 	}
 	return fillCount;
 }
