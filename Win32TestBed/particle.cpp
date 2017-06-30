@@ -26,7 +26,7 @@ extern float RandomRangeF(float  min, float max);
 
 void ParticleInstance::SpawnParticle()
 {
-	if (m_particles.size() <= m_particleCount)
+	if (m_particles.size() <= (unsigned int)m_particleCount)
 	{
 		m_particles.push_back(Particle());
 	}

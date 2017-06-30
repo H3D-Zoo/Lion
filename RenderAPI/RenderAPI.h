@@ -179,16 +179,14 @@ namespace RenderAPI
 	{
 		TEX_Unknown = 0,
 		TEX_ARGB = 1,
-		TEX_ABGR = 2,
-		TEX_XRGB = 3,
-		TEX_XBGR = 4,
-		TEX_DXT1 = 5,
-		TEX_DXT3 = 6,
-		TEX_DXT5 = 7,
-		TEX_D24S8 = 8,
-		TEX_D24X8 = 9,
-		TEX_D32 = 10,
-		TEX_D16 = 11,
+		TEX_XRGB = 2,
+		TEX_DXT1 = 3,
+		TEX_DXT3 = 4,
+		TEX_DXT5 = 5,
+		TEX_D24S8 = 6,
+		TEX_D24X8 = 7,
+		TEX_D32 = 8,
+		TEX_D16 = 9,
 	};
 
 	enum IndexFormat

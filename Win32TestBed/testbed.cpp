@@ -1,7 +1,9 @@
 #include "testbed.h"
 #include <timeapi.h>
 #include <time.h>
-#include "Math/gmlcolor.h"
+#include "math/gmlcolor.h"
+#include "image/file_data.h"
+#include "image/img_data.h"
 #define DLLName "DX9API.dll"
 
 bool APITestBed::Init(HWND hWindow, HWND hWindowEditor, unsigned int backBufferWidth, unsigned int backBufferHeight)
@@ -46,6 +48,7 @@ template<class T> void Release(T& pointer)
 
 void APITestBed::Deinit()
 {
+	Release(m_pParticleTexture);
 	Release(m_pBoxVertexBuffer);
 	Release(m_pBoxIndexBuffer);
 	Release(m_pParticleVBS);
@@ -379,11 +382,35 @@ void APITestBed::CreatePartcleMesh()
 
 void APITestBed::CreateMaterial()
 {
-	m_pEffectTintColor = m_pDevice->CreateFXEffectFromFile("TintColor.fx");
+	m_pEffectTintColor = m_pDevice->CreateFXEffectFromFile("../../Win32TestBed/TintColor.fx");
 	m_pEffectTintColor->SetValidateTechnique();
 
-	m_pEffectParticle = m_pDevice->CreateFXEffectFromFile("Particle.fx");
+	m_pEffectParticle = m_pDevice->CreateFXEffectFromFile("../../Win32TestBed/Particle.fx");
 	m_pEffectParticle->SetValidateTechnique();
+
+	file_data pngFileData = read_file("../../Win32TestBed/particle.png");
+	if (pngFileData.is_valid())
+	{
+		img_data png = read_image(pngFileData.buffer);
+
+		if (png.is_valid())
+		{
+			RenderAPI::TextureFormat texformat;
+
+			if (png.format == color_format::bgra32)
+			{
+				texformat = RenderAPI::TEX_XRGB;
+			}
+			else if (png.format == color_format::bgr24)
+			{
+				texformat = RenderAPI::TEX_ARGB;
+			}
+			m_pParticleTexture = m_pDevice->CreateTexture2D(RenderAPI::RESUSAGE_Default, texformat, png.width, png.height, png.buffer, png.line_pitch, png.height);
+			png.destroy();
+		}
+		pngFileData.destroy();
+	}
+
 }
 
 float RandomRangeF(float  min, float max) { return min + rand() * (max - min) / RAND_MAX; }
@@ -426,6 +453,7 @@ void APITestBed::DrawParticle()
 			m_pEffectParticle->SetMatrix("g_matProj", (float*)m_matProj.m);
 			m_pEffectParticle->SetValue("g_cameraX", (float*)m_matInvView.row[0], sizeof(gml::vec4));
 			m_pEffectParticle->SetValue("g_cameraY", (float*)m_matInvView.row[1], sizeof(gml::vec4));
+			m_pEffectParticle->SetTexture("g_particleTexture", m_pParticleTexture);
 			m_pContext->SetVertexBuffers(0, &(m_particleVBInfos[0]), m_particleVBInfos.size());
 			m_pContext->SetIndexBuffer(m_pParticleIB, 0);
 			m_pEffectParticle->CommitChange();

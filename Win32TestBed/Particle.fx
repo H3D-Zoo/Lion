@@ -4,6 +4,15 @@ float4x4 g_matProj;
 float4 g_cameraX;
 float4 g_cameraY;
 
+texture g_particleTexture;
+sampler g_particleSampler = sampler_state
+{
+	Texture = <g_particleTexture>;
+	MinFilter = Linear;
+	MagFilter = Linear;
+	MipFilter = None;
+};
+
 struct VSInput
 {
 	float4 position : POSITION;
@@ -14,7 +23,7 @@ struct VSInput
 struct V2P
 {
 	float4 position : POSITION;
-	float4 color : TEXCOORD0;
+	float2 texcoord : TEXCOORD0;
 };
 
 V2P VSParticle(VSInput INP)
@@ -26,13 +35,13 @@ V2P VSParticle(VSInput INP)
 	outPos = mul(outPos, g_matProj);
 
 	OUT.position = outPos;
-	OUT.color = float4(INP.texcoord.xy, 1, 1);
+	OUT.texcoord = INP.texcoord;
 	return OUT;
 }
 
 float4 PSParticle(V2P INP) : COLOR0
-{
-	return float4(INP.color.rgb * 0.5f + 0.5f, 1.0f);
+{	
+	return float4(tex2D(g_particleSampler, INP.texcoord).rgb, 1.0f);
 }
 
 technique Particle

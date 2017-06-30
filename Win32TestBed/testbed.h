@@ -49,6 +49,8 @@ private:
 	RenderAPI::FXEffect* m_pEffectTintColor = nullptr;
 	RenderAPI::FXEffect* m_pEffectParticle = nullptr;
 
+	RenderAPI::Texture2D* m_pParticleTexture = nullptr;
+
 	std::vector<RenderAPI::VertexBufferInfo> m_boxVBInfos;
 	std::vector<RenderAPI::VertexBufferInfo> m_particleVBInfos;
 

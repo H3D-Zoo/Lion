@@ -11,11 +11,18 @@
 namespace
 {
 	const int s_d3dUsageCount = 3;
-	unsigned int s_d3dUsage[s_d3dUsageCount] =
+	unsigned int s_d3dBufferUsage[s_d3dUsageCount] =
 	{
 		D3DUSAGE_WRITEONLY,
 		D3DUSAGE_WRITEONLY | D3DUSAGE_DYNAMIC,
 		D3DUSAGE_WRITEONLY,
+	};
+
+	unsigned int s_d3dTextureUsage[s_d3dUsageCount] =
+	{
+		D3DUSAGE_AUTOGENMIPMAP,
+		D3DUSAGE_DYNAMIC | D3DUSAGE_AUTOGENMIPMAP,
+		D3DUSAGE_AUTOGENMIPMAP,
 	};
 }
 
@@ -118,7 +125,7 @@ RenderAPI::VertexBuffer* Device::CreateVertexBuffer(RenderAPI::ResourceUsage usa
 	}
 
 	IDirect3DVertexBuffer9* pVertexBuffer = NULL;
-	unsigned int d3dUsage = s_d3dUsage[usage];
+	unsigned int d3dUsage = s_d3dBufferUsage[usage];
 	unsigned int bufferSize = vertexCount * vertexSize;
 
 	D3DPOOL pool = (m_pAPIContext->pD3D->IsSupportManaged() && immuable) ? D3DPOOL_MANAGED : D3DPOOL_DEFAULT;
@@ -156,7 +163,7 @@ RenderAPI::IndexBuffer* Device::CreateIndexBuffer(RenderAPI::ResourceUsage usage
 	}
 
 	IDirect3DIndexBuffer9* pIndexBuffer = NULL;
-	unsigned int d3dUsage = s_d3dUsage[usage];
+	unsigned int d3dUsage = s_d3dBufferUsage[usage];
 	unsigned int bufferSize = indexCount * s_IndexLengths[format];
 	D3DPOOL pool = (m_pAPIContext->pD3D->IsSupportManaged() && immuable) ? D3DPOOL_MANAGED : D3DPOOL_DEFAULT;
 	HRESULT hr = m_pDevice->CreateIndexBuffer(bufferSize, d3dUsage, s_IndexFormats[format], pool, &pIndexBuffer, NULL);
@@ -202,9 +209,8 @@ RenderAPI::Texture2D * Device::CreateTexture2D(RenderAPI::ResourceUsage usage, R
 		}
 	}
 
-
 	IDirect3DTexture9* pTexture = NULL;
-	unsigned int d3dUsage = s_d3dUsage[usage];
+	unsigned int d3dUsage = usage == s_d3dTextureUsage[usage];
 	D3DPOOL pool = (m_pAPIContext->pD3D->IsSupportManaged() && immuable) ? D3DPOOL_MANAGED : D3DPOOL_DEFAULT;
 	HRESULT hr = m_pDevice->CreateTexture(width, height, 0, d3dUsage, s_TextureFormats[format], pool, &pTexture, NULL);
 
@@ -213,23 +219,25 @@ RenderAPI::Texture2D * Device::CreateTexture2D(RenderAPI::ResourceUsage usage, R
 		return NULL;
 	}
 
+	::Texture2D* texture = new ::Texture2D(pTexture, format, usage, width, height);
+
 	if (initialData != NULL)
 	{
-		D3DLOCKED_RECT rect;
-		if (S_OK == pTexture->LockRect(0, &rect, NULL, D3DLOCK_DISCARD))
+		RenderAPI::MappedResource res = texture->LockRect(0, RenderAPI::LOCK_Discard);
+
+		if (res.Success)
 		{
-			int linePitch = dataLinePitch > rect.Pitch ? rect.Pitch : dataLinePitch;
-			char* dstPtr = (char*)rect.pBits;
+			unsigned int linePitch = (unsigned int)dataLinePitch > res.LinePitch ? res.LinePitch : dataLinePitch;
+			char* dstPtr = (char*)res.DataPtr;
 			char* srcPtr = (char*)initialData;
 			for (int i = 0; i < dataHeight; i++)
 			{
-				memcpy(dstPtr + i * rect.Pitch, srcPtr + i* dataLinePitch, linePitch);
+				memcpy(dstPtr + i * res.LinePitch, srcPtr + i* dataLinePitch, linePitch);
 			}
-			pTexture->UnlockRect(0);
+			texture->UnlockRect(0);
 		}
 	}
-
-	return new Texture2D(pTexture, format, usage, width, height);
+	return texture;
 }
 
 RenderAPI::FXEffect * Device::CreateFXEffectFromFile(const char * effectFilePath)
@@ -238,7 +246,7 @@ RenderAPI::FXEffect * Device::CreateFXEffectFromFile(const char * effectFilePath
 	AutoR<ID3DXBuffer> pErrorBuffer;
 	EffectInclude includeCallback;
 	DWORD flags = D3DXSHADER_USE_LEGACY_D3DX9_31_DLL; //要想支持ps 1_x 需要使用这个。
-	 
+
 
 	HRESULT hr = D3DXCreateEffectFromFileA(m_pDevice, effectFilePath, 0, &includeCallback, flags, 0, &pEffect, &pErrorBuffer);
 	if (SUCCEEDED(hr))
