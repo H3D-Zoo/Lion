@@ -235,7 +235,7 @@ RenderAPI::Texture2D * Device::CreateTexture2D(RenderAPI::ResourceUsage usage, R
 RenderAPI::FXEffect * Device::CreateFXEffectFromFile(const char * effectFilePath)
 {
 	ID3DXEffect* pEffect = NULL;
-	AutoR<ID3DXBuffer> pErrorBuffer = NULL;
+	AutoR<ID3DXBuffer> pErrorBuffer;
 	EffectInclude includeCallback;
 	DWORD flags = D3DXSHADER_USE_LEGACY_D3DX9_31_DLL; //要想支持ps 1_x 需要使用这个。
 	 

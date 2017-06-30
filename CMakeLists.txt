@@ -20,4 +20,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
 
 add_subdirectory(Source/DX9API DX9API)
 add_subdirectory(Source/NullAPI NullAPI)
+
+if(MSVC_VERSION GREATER 1800)
 add_subdirectory(Win32TestBed Win32TestBed)
+endif()

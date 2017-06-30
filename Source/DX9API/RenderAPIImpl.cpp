@@ -20,7 +20,7 @@ D3DFORMAT s_DSFormats[DSFormatCount] =
 	D3DFMT_D16,
 };
 
-D3DFORMAT s_TextureFormats[TexFormatCount]
+D3DFORMAT s_TextureFormats[TexFormatCount] =
 {
 	D3DFMT_UNKNOWN,
 	D3DFMT_A8R8G8B8,
@@ -58,7 +58,7 @@ D3DFORMAT s_IndexFormats[IndexFormatCount] =
 	D3DFMT_INDEX32,
 };
 
-unsigned int s_lockOptions[LockOptionCount]
+unsigned int s_lockOptions[LockOptionCount] = 
 {
 	0,
 	D3DLOCK_DISCARD,
@@ -188,8 +188,8 @@ namespace RenderAPI
 	bool CompileFXEffectFromFile(const char* sourceFXFile, const char* compiledFXFile)
 	{
 		EffectInclude includeCallback;
-		AutoR<ID3DXBuffer> pErrorBuffer = NULL;
-		AutoR<ID3DXBuffer> pEffectBuffer = NULL;
+		AutoR<ID3DXBuffer> pErrorBuffer;
+		AutoR<ID3DXBuffer> pEffectBuffer;
 		ID3DXEffectCompiler* pEffectCompile;
 		DWORD flags = D3DXSHADER_USE_LEGACY_D3DX9_31_DLL; //要想支持ps 1_x 需要使用这个。
 

@@ -496,7 +496,7 @@ ID3DXEffectStateManager* Context::GetStateManager()
 
 void Context::SetVertexElements(int index, const RenderAPI::VertexElement * s, int count)
 {
-	if ((int)m_vertexDeclCache.size() <= index)
+	if (m_vertexDeclCache.size() <= (unsigned int)index)
 	{
 		m_vertexDeclCache.resize(index + 1);
 	}
@@ -521,7 +521,7 @@ void Context::RebuildDecalration()
 		std::vector<VertexDecl>::iterator itCur = m_vertexDeclCache.begin();
 		std::vector<VertexDecl>::iterator itEnd = m_vertexDeclCache.end();
 
-		for (int i = 0; itCur != itEnd && i < m_vertexCeclCacheCount; ++itCur, ++i)
+		for (unsigned int i = 0; itCur != itEnd && i < m_vertexCeclCacheCount; ++itCur, ++i)
 		{
 			D3DVERTEXELEMENT9 element;
 			element.Stream = i;
@@ -542,7 +542,8 @@ void Context::RebuildDecalration()
 				m_d3dDeclaration.push_back(element);
 			}
 		}
-		m_d3dDeclaration.push_back(D3DDECL_END());
+		D3DVERTEXELEMENT9 endElement = D3DDECL_END();
+		m_d3dDeclaration.push_back(endElement);
 
 		VertexDecalrationPool::iterator findIter = m_vertexDeclarationPool.find(m_d3dDeclaration);
 		if (findIter != m_vertexDeclarationPool.end())
@@ -662,7 +663,7 @@ bool operator != (const RenderAPI::VertexElement& left, const RenderAPI::VertexE
 
 bool Context::VertexDecl::Set(const RenderAPI::VertexElement * s, int count)
 {
-	if ((int)Elements.size() < count)
+	if (Elements.size() < (unsigned int)count)
 	{
 		Elements.resize(count);
 		memcpy(&(Elements[0]), s, sizeof(RenderAPI::VertexElement) * count);
