@@ -6,6 +6,7 @@
 #include "RenderAPIImpl.h"
 #include "APIContext.h"
 #include "DX9Include.h"
+#include "AutoPtr.hpp"
 
 D3DFORMAT s_RTFormats[RTFormatCount] =
 {
@@ -218,4 +219,4 @@ namespace RenderAPI
 	}
 }
 
-RefCount::RefCount() : count(1) { }
+

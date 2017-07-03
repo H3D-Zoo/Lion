@@ -54,7 +54,9 @@ technique Particle
 		AlphaBlendEnable = TRUE;
 		SrcBlend = ONE;
 		DestBlend = ONE;
-		ZEnable = False;
+		ZWriteEnable = FALSE;
+		ZEnable = TRUE;
+
 		VertexShader = compile vs_1_0 VSParticle();
 		PixelShader = compile ps_1_0 PSParticle();
 	}

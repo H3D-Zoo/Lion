@@ -22,7 +22,7 @@ void FXEffect::Release()
 unsigned int FXEffect::Begin()
 {
 	UINT passCount = 0;
-	if (FAILED(m_pEffect->Begin(&passCount, 0)))
+	if (FAILED(m_pEffect->Begin(&passCount, D3DXFX_DONOTSAVESTATE)))
 	{
 		return 0;
 	}

@@ -7,6 +7,8 @@
 #include "RenderTarget.h"
 #include "DepthStencil.h"
 #include "APIContext.h"
+#include "AutoPtr.hpp"
+#include "RenderAPIImpl.h"
 
 namespace
 {

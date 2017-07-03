@@ -3,7 +3,7 @@
 #include "../../RenderAPI/RenderAPI.h"
 #include <vector>
 #include <map>
-#include "EffectStateManager.hpp"
+#include "StateManager.h"
 #include "DX9Include.h"
 
 class APIContext;
@@ -104,7 +104,7 @@ private:
 	void RebuildDecalration();
 
 	APIContext* m_pAPIContext;
-	FXStateManager m_fxStateManager;
+	FXStateManager m_renderStateManager;
 	IDirect3DDevice9* m_pDevice;
 	BackBufferManager m_backBufferManager;
 	unsigned int m_vertexCount;

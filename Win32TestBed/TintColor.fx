@@ -35,6 +35,10 @@ technique TintColor
 {
 	pass
 	{
+		AlphaBlendEnable = FALSE;
+		ZWriteEnable = TRUE;
+		ZEnable = TRUE;
+
 		VertexShader = compile vs_1_0 VSTintColor();
 		PixelShader = compile ps_1_0 PSTintColor();
 	}

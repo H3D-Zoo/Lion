@@ -1,7 +1,6 @@
 #pragma once
 
 #include "../../RenderAPI/RenderAPI.h"
-#include "RenderAPIImpl.h"
 #include "RenderTarget.h"
 #include "DepthStencil.h"
 #include "DX9Include.h"

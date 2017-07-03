@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include "RenderTarget.h"
 #include "DepthStencil.h"
+#include "RenderAPIImpl.h"
 
 Texture2D::Texture2D(IDirect3DTexture9* texture, RenderAPI::TextureFormat format, RenderAPI::ResourceUsage usage, unsigned int width, unsigned int height)
 	: m_texFormat(format)

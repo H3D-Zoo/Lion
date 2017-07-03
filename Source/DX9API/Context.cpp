@@ -164,7 +164,7 @@ Context::Context(APIContext* pAPIContext, IDirect3DDevice9 * device, RenderAPI::
 	: m_pAPIContext(pAPIContext)
 	, m_pDevice(device)
 	, m_backBufferManager(device, defRT, defDS)
-	, m_fxStateManager(device)
+	, m_renderStateManager(device)
 	, m_vertexDeclChanged(false)
 	, m_pVertexDeclaration(NULL)
 {
@@ -257,28 +257,26 @@ void Context::SetBlendState(const RenderAPI::BlendState& state)
 {
 	if (state.IsEnable)
 	{
-		m_pDevice->SetRenderState(D3DRS_ALPHABLENDENABLE, TRUE);
+		m_renderStateManager.SetAlphaBlending(TRUE);
 		if (state.IsAlphaSeperate)
 		{
-			m_pDevice->SetRenderState(D3DRS_SEPARATEALPHABLENDENABLE, TRUE);
-
-			m_pDevice->SetRenderState(D3DRS_SRCBLEND, s_blendFactors[state.ColorSrc]);
-			m_pDevice->SetRenderState(D3DRS_DESTBLEND, s_blendFactors[state.ColorDst]);
-			m_pDevice->SetRenderState(D3DRS_SRCBLENDALPHA, s_blendFactors[state.AlphaSrc]);
-			m_pDevice->SetRenderState(D3DRS_DESTBLENDALPHA, s_blendFactors[state.AlphaDst]);
+			m_renderStateManager.SetSeperateAlphaBlending(TRUE);
+			m_renderStateManager.SetAlphaBlendingOp(s_blendOps[state.AlphaOp]);
+			m_renderStateManager.SetAlphaSrcBlending(s_blendFactors[state.AlphaSrc]);
+			m_renderStateManager.SetAlphaDstBlending(s_blendFactors[state.AlphaDst]);
 		}
 		else
 		{
-			m_pDevice->SetRenderState(D3DRS_SEPARATEALPHABLENDENABLE, FALSE);
-			m_pDevice->SetRenderState(D3DRS_BLENDOP, s_blendOps[state.ColorOp]);
-			m_pDevice->SetRenderState(D3DRS_SRCBLEND, s_blendFactors[state.ColorSrc]);
-			m_pDevice->SetRenderState(D3DRS_DESTBLEND, s_blendFactors[state.ColorDst]);
-
+			m_renderStateManager.SetSeperateAlphaBlending(FALSE);
 		}
+
+		m_renderStateManager.SetBlendingOp(s_blendOps[state.ColorOp]);
+		m_renderStateManager.SetSrcBlending(s_blendFactors[state.ColorSrc]);
+		m_renderStateManager.SetDstBlending(s_blendFactors[state.ColorDst]);
 	}
 	else
 	{
-		m_pDevice->SetRenderState(D3DRS_ALPHABLENDENABLE, FALSE);
+		m_renderStateManager.SetAlphaBlending(FALSE);
 	}
 }
 
@@ -286,13 +284,13 @@ void Context::SetAlphaTestingState(const RenderAPI::AlphaTestingState& state)
 {
 	if (state.IsEnable)
 	{
-		m_pDevice->SetRenderState(D3DRS_ALPHATESTENABLE, TRUE);
-		m_pDevice->SetRenderState(D3DRS_ALPHAFUNC, s_compareMethods[state.Function]);
-		m_pDevice->SetRenderState(D3DRS_ALPHAREF, state.Reference);
+		m_renderStateManager.SetAlphaTest(TRUE);
+		m_renderStateManager.SetAlphaFunction(s_compareMethods[state.Function]);
+		m_renderStateManager.SetAlphaReference(state.Reference);
 	}
 	else
 	{
-		m_pDevice->SetRenderState(D3DRS_ALPHATESTENABLE, FALSE);
+		m_renderStateManager.SetAlphaTest(FALSE);
 	}
 }
 
@@ -300,13 +298,13 @@ void Context::SetDepthTestingState(const RenderAPI::DepthTestingState& state)
 {
 	if (state.IsEnable)
 	{
-		m_pDevice->SetRenderState(D3DRS_ZENABLE, D3DZB_TRUE);
-		m_pDevice->SetRenderState(D3DRS_ZFUNC, s_compareMethods[state.Function]);
+		m_renderStateManager.SetDepthTest(D3DZB_TRUE);
+		m_renderStateManager.SetDepthFunction(s_compareMethods[state.Function]);
 	}
 	else
 	{
-		m_pDevice->SetRenderState(D3DRS_ZENABLE, D3DZB_FALSE);
-		//m_pDevice->SetRenderState(D3DRS_ZFUNC, s_compareMethods[RenderAPI::COMPARE_Always]);
+		m_renderStateManager.SetDepthTest(D3DZB_FALSE);
+		//m_renderStateManager.SetDepthFunction(s_compareMethods[RenderAPI::COMPARE_Always]);
 	}
 }
 
@@ -314,40 +312,37 @@ void Context::SetStencilTestingState(const RenderAPI::StencilTestingState& state
 {
 	if (state.IsEnable)
 	{
-		m_pDevice->SetRenderState(D3DRS_STENCILENABLE, TRUE);
-		m_pDevice->SetRenderState(D3DRS_STENCILREF, state.Reference);
-		m_pDevice->SetRenderState(D3DRS_STENCILMASK, state.TestMask);
-		m_pDevice->SetRenderState(D3DRS_STENCILWRITEMASK, state.WriteMask);
+		m_renderStateManager.SetStencilTest(TRUE);
+		m_renderStateManager.SetStencilReference(state.Reference);
+		m_renderStateManager.SetStencilReadMask(state.TestMask);
+		m_renderStateManager.SetStencilWriteMask(state.WriteMask);
 		if (state.TwoSide)
 		{
-			m_pDevice->SetRenderState(D3DRS_STENCILFUNC, s_compareMethods[state.FrontSide.Function]);
-			m_pDevice->SetRenderState(D3DRS_STENCILFAIL, s_stencilOps[state.FrontSide.SFail]);
-			m_pDevice->SetRenderState(D3DRS_STENCILZFAIL, s_stencilOps[state.FrontSide.SPassZFail]);
-			m_pDevice->SetRenderState(D3DRS_STENCILPASS, s_stencilOps[state.FrontSide.AllPass]);
-
-			m_pDevice->SetRenderState(D3DRS_CCW_STENCILFUNC, s_compareMethods[state.BackSide.Function]);
-			m_pDevice->SetRenderState(D3DRS_CCW_STENCILFAIL, s_stencilOps[state.BackSide.SFail]);
-			m_pDevice->SetRenderState(D3DRS_CCW_STENCILZFAIL, s_stencilOps[state.BackSide.SPassZFail]);
-			m_pDevice->SetRenderState(D3DRS_CCW_STENCILPASS, s_stencilOps[state.BackSide.AllPass]);
+			m_renderStateManager.SetStencilTwoFace(TRUE);
+			m_renderStateManager.SetStencilBackFunction(s_compareMethods[state.BackSide.Function]);
+			m_renderStateManager.SetStencilBackSFail(s_stencilOps[state.BackSide.SFail]);
+			m_renderStateManager.SetStencilBackSPassZFail(s_stencilOps[state.BackSide.SPassZFail]);
+			m_renderStateManager.SetStencilBackAllPass(s_stencilOps[state.BackSide.AllPass]);
 		}
 		else
 		{
-			m_pDevice->SetRenderState(D3DRS_STENCILFUNC, TRUE);
-			m_pDevice->SetRenderState(D3DRS_STENCILFUNC, s_compareMethods[state.FrontSide.Function]);
-			m_pDevice->SetRenderState(D3DRS_STENCILFAIL, s_stencilOps[state.FrontSide.SFail]);
-			m_pDevice->SetRenderState(D3DRS_STENCILZFAIL, s_stencilOps[state.FrontSide.SPassZFail]);
-			m_pDevice->SetRenderState(D3DRS_STENCILPASS, s_stencilOps[state.FrontSide.AllPass]);
+			m_renderStateManager.SetStencilTwoFace(FALSE);
 		}
+
+		m_renderStateManager.SetStencilFrontFunction(s_compareMethods[state.FrontSide.Function]);
+		m_renderStateManager.SetStencilFrontSFail(s_stencilOps[state.FrontSide.SFail]);
+		m_renderStateManager.SetStencilFrontSPassZFail(s_stencilOps[state.FrontSide.SPassZFail]);
+		m_renderStateManager.SetStencilFrontAllPass(s_stencilOps[state.FrontSide.AllPass]);
 	}
 	else
 	{
-		m_pDevice->SetRenderState(D3DRS_STENCILENABLE, FALSE);
+		m_renderStateManager.SetStencilTest(FALSE);
 	}
 }
 
 void Context::SetDepthWriting(bool enable)
 {
-	m_pDevice->SetRenderState(D3DRS_ZWRITEENABLE, enable ? TRUE : FALSE);
+	m_renderStateManager.SetDepthWrite(enable ? TRUE : FALSE);
 }
 
 void Context::SetTextureBlendingState(unsigned int startSlot, const RenderAPI::TextureBlendingState* states, unsigned int count)
@@ -401,38 +396,39 @@ void Context::SetScissorState(const RenderAPI::ScissorState& state)
 {
 	if (state.IsEnable)
 	{
+		m_renderStateManager.SetScissorTest(TRUE);
+
 		RECT scissorRect;
 		scissorRect.left = state.Left;
 		scissorRect.right = state.Right;
 		scissorRect.top = state.Top;
 		scissorRect.bottom = state.Bottom;
-		m_pDevice->SetRenderState(D3DRS_SCISSORTESTENABLE, TRUE);
 		m_pDevice->SetScissorRect(&scissorRect);
 	}
 	else
 	{
-		m_pDevice->SetRenderState(D3DRS_SCISSORTESTENABLE, FALSE);
+		m_renderStateManager.SetScissorTest(FALSE);
 	}
 }
 
 void Context::SetFillMode(RenderAPI::FillMode mode)
 {
-	m_pDevice->SetRenderState(D3DRS_FILLMODE, s_fillMode[mode]);
+	m_renderStateManager.SetFillMode(s_fillMode[mode]);
 }
 
 void Context::SetCullMode(RenderAPI::CullMode mode)
 {
-	m_pDevice->SetRenderState(D3DRS_CULLMODE, s_cullMode[mode]);
+	m_renderStateManager.SetCullMode(s_cullMode[mode]);
 }
 
 void Context::SetDepthBias(float bias)
 {
-	m_pDevice->SetRenderState(D3DRS_DEPTHBIAS, (DWORD)bias);
+	m_renderStateManager.SetDepthBias((DWORD)bias);
 }
 
 void Context::SetTextureFactor(unsigned int factor)
 {
-	m_pDevice->SetRenderState(D3DRS_TEXTUREFACTOR, factor);
+	m_renderStateManager.SetTextureFactor(factor);
 }
 
 bool Context::BeginScene()
@@ -488,10 +484,9 @@ void Context::Release()
 	delete this;
 }
 
-
 ID3DXEffectStateManager* Context::GetStateManager()
 {
-	return &m_fxStateManager;
+	return &m_renderStateManager;
 }
 
 void Context::SetVertexElements(int index, const RenderAPI::VertexElement * s, int count)
