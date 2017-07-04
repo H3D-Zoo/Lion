@@ -135,3 +135,8 @@ void Texture2D::UnlockRect(unsigned int layer)
 		}
 	}
 }
+
+void Texture2D::GenerateMipmaps()
+{
+	m_pTexture->GenerateMipSubLevels();
+}

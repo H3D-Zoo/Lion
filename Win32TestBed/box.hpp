@@ -104,14 +104,16 @@ private:
 		m_vertices[index++].position = vertexPositions[0];
 
 
+		const float minuv = -0.5f;
+		const float maxuv = 1.5f;
 		for (index = 0; index < 6; index++)
 		{
 			int vIndex = index * 4;
 
-			m_vertices[vIndex++].texcoord.set(0, 0);
-			m_vertices[vIndex++].texcoord.set(1, 0);
-			m_vertices[vIndex++].texcoord.set(1, 1);
-			m_vertices[vIndex++].texcoord.set(0, 1);
+			m_vertices[vIndex++].texcoord.set(minuv, minuv);
+			m_vertices[vIndex++].texcoord.set(maxuv, minuv);
+			m_vertices[vIndex++].texcoord.set(maxuv, maxuv);
+			m_vertices[vIndex++].texcoord.set(minuv, maxuv);
 		}
 	}
 

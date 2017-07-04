@@ -110,7 +110,7 @@ void APITestBed::Update()
 	{
 		m_pContext->ClearRenderTarget(rt, 0xFF00FF00);
 		m_pContext->ClearDepthStencil(ds, 1.0f, 0);
-		DrawBox();
+		DrawBox(RenderAPI::TextureAddress::TEX_ADDRESS_Repeat);
 		DrawParticle();
 		m_pContext->EndScene();
 	}
@@ -129,7 +129,7 @@ void APITestBed::Update()
 	{
 		m_pContext->ClearRenderTarget(rtEditor, 0xFFFF0000);
 		m_pContext->ClearDepthStencil(dsEditor, 1.0f, 0);
-		DrawBox();
+		DrawBox(RenderAPI::TextureAddress::TEX_ADDRESS_Clamp);
 		m_pContext->EndScene();
 	}
 	m_editorSwapChain->Present();
@@ -301,6 +301,7 @@ void APITestBed::CreateMaterial()
 					}
 				}
 				m_pBoxTexture->UnlockRect(0);
+				m_pBoxTexture->GenerateMipmaps();
 			}
 			bmp.destroy();
 		}
@@ -311,8 +312,12 @@ void APITestBed::CreateMaterial()
 
 float RandomRangeF(float  min, float max) { return min + rand() * (max - min) / RAND_MAX; }
 
-void APITestBed::DrawBox()
+void APITestBed::DrawBox(RenderAPI::TextureAddress address)
 {
+	RenderAPI::TextureSampler sampler;
+	sampler.AddressU = sampler.AddressV = address;
+	sampler.Filter = RenderAPI::FILTER_MinL_MagL_MipL;
+
 	int passCount = m_pEffectTintColor->Begin();
 	if (passCount > 0)
 	{
@@ -328,6 +333,7 @@ void APITestBed::DrawBox()
 			m_pContext->SetIndexBuffer(m_pBoxIndexBuffer, 0);
 			const int faceCount = 6 * 2;
 			m_pContext->SetTexture(0, m_pBoxTexture);
+			m_pContext->SetTextureSampler(0, sampler);
 			m_pContext->DrawIndexed(RenderAPI::PRIMITIVE_TriangleList, 0, 0, faceCount);
 
 			m_pEffectTintColor->EndPass();

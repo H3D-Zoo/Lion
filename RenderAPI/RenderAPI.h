@@ -639,6 +639,8 @@ namespace RenderAPI
 		virtual MappedResource LockRect(unsigned int layer, LockOption lockOption) = 0;
 
 		virtual void UnlockRect(unsigned int layer) = 0;
+
+		virtual void GenerateMipmaps() = 0;
 	};
 
 	class RenderTarget : public RObject

@@ -37,6 +37,10 @@ void Texture2D::UnlockRect(unsigned int layer)
 
 }
 
+void Texture2D::GenerateMipmaps()
+{
+}
+
 void Texture2D::Release()
 {
 	delete this;

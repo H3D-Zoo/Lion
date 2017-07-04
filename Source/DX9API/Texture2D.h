@@ -25,6 +25,8 @@ public:
 
 	virtual void UnlockRect(unsigned int layer);
 
+	virtual void GenerateMipmaps();
+
 	virtual void Release();
 
 	void Resize(unsigned int width, unsigned int height);
