@@ -4,6 +4,7 @@
 #include "math/gmlcolor.h"
 #include "image/file_data.h"
 #include "image/img_data.h"
+#include "box.hpp"
 #define DLLName "DX9API.dll"
 
 bool APITestBed::Init(HWND hWindow, HWND hWindowEditor, unsigned int backBufferWidth, unsigned int backBufferHeight)
@@ -205,92 +206,12 @@ bool APITestBed::CreateDeviceAndContext(HWND hWindow, HWND hWindowEditor, unsign
 	return true;
 }
 
-struct BoxVertex
-{
-	gml::vec3 position;
-	unsigned int color = gml::color4::random().rgba();
-};
 
 void APITestBed::CreateMesh()
 {
-	const float kBoxSize = 1.0f;
-	gml::vec3 vertexPositions[] =
-	{
-		{ -kBoxSize, -kBoxSize , -kBoxSize },
-		{ +kBoxSize, -kBoxSize , -kBoxSize },
-		{ +kBoxSize, +kBoxSize , -kBoxSize },
-		{ -kBoxSize, +kBoxSize , -kBoxSize },
-		{ -kBoxSize, -kBoxSize , +kBoxSize },
-		{ +kBoxSize, -kBoxSize , +kBoxSize },
-		{ +kBoxSize, +kBoxSize , +kBoxSize },
-		{ -kBoxSize, +kBoxSize , +kBoxSize },
-
-	};
-
-	const int kVertexCount = 24;
-	const int kIndexCount = 36;
-	std::vector<BoxVertex> vertices(kVertexCount);
-	std::vector<unsigned short> indices(kIndexCount);
-	int index = 0;
-	//front
-	vertices[index++].position = vertexPositions[0];
-	vertices[index++].position = vertexPositions[1];
-	vertices[index++].position = vertexPositions[2];
-	vertices[index++].position = vertexPositions[3];
-
-	//back
-	vertices[index++].position = vertexPositions[5];
-	vertices[index++].position = vertexPositions[4];
-	vertices[index++].position = vertexPositions[7];
-	vertices[index++].position = vertexPositions[6];
-
-	//left	 
-	vertices[index++].position = vertexPositions[4];
-	vertices[index++].position = vertexPositions[0];
-	vertices[index++].position = vertexPositions[3];
-	vertices[index++].position = vertexPositions[7];
-
-	//right
-	vertices[index++].position = vertexPositions[1];
-	vertices[index++].position = vertexPositions[5];
-	vertices[index++].position = vertexPositions[6];
-	vertices[index++].position = vertexPositions[2];
-
-	//top
-	vertices[index++].position = vertexPositions[3];
-	vertices[index++].position = vertexPositions[2];
-	vertices[index++].position = vertexPositions[6];
-	vertices[index++].position = vertexPositions[7];
-
-	//botton
-	vertices[index++].position = vertexPositions[4];
-	vertices[index++].position = vertexPositions[5];
-	vertices[index++].position = vertexPositions[1];
-	vertices[index++].position = vertexPositions[0];
-
-	std::vector<RenderAPI::VertexElement> elements(2);
-	elements[0].Format = RenderAPI::INPUT_Float3;
-	elements[0].SemanticName = RenderAPI::SEMANTIC_POSITION;
-
-	elements[1].Format = RenderAPI::INPUT_Color4;
-	elements[1].SemanticName = RenderAPI::SEMANTIC_COLOR;
-
-	m_pBoxVertexBuffer = m_pDevice->CreateVertexBuffer(RenderAPI::RESUSAGE_Default, 24, sizeof(BoxVertex), &(elements[0]), elements.size(), &(vertices[0]));
-
-	index = 0;
-	for (int i = 0; i < 6; i++)
-	{
-
-		indices[index++] = i * 4 + 0;
-		indices[index++] = i * 4 + 2;
-		indices[index++] = i * 4 + 1;
-
-		indices[index++] = i * 4 + 0;
-		indices[index++] = i * 4 + 3;
-		indices[index++] = i * 4 + 2;
-	}
-
-	m_pBoxIndexBuffer = m_pDevice->CreateIndexBuffer(RenderAPI::RESUSAGE_Immuable, RenderAPI::INDEX_Int16, kIndexCount, &(indices[0]));
+	BoxMesh boxMesh;
+	m_pBoxVertexBuffer = m_pDevice->CreateVertexBuffer(RenderAPI::RESUSAGE_Default, boxMesh.GetVertexCount(), sizeof(BoxVertex), boxMesh.GetElementsPtr(), boxMesh.GetElementCount(), boxMesh.GetVerticesPtr());
+	m_pBoxIndexBuffer = m_pDevice->CreateIndexBuffer(RenderAPI::RESUSAGE_Immuable, RenderAPI::INDEX_Int16, boxMesh.GetIndexCount(), boxMesh.GetIndicesPtr());
 
 	m_boxVBInfos.resize(1);
 	m_boxVBInfos[0].BufferPtr = m_pBoxVertexBuffer;
@@ -298,83 +219,11 @@ void APITestBed::CreateMesh()
 	m_boxVBInfos[0].Stride = m_pBoxVertexBuffer->GetVertexStride();
 }
 
-struct ParticleVertexS
-{
-	gml::vec3 offset;
-	gml::vec2 texcoord;
-};
-
 void APITestBed::CreatePartcleMesh()
 {
-	const float kParticleSize = 0.1f;
-	const int kParticleVertexCount = kParticleCount * 4;
-
-	std::vector<ParticleVertexS> expandData(kParticleVertexCount);
-	std::vector<unsigned short> particleIndices(kParticleIndexCount);
-	for (int i = 0; i < kParticleCount; i++)
-	{
-		int vIndex = i * 4;
-		int fIndex = i * 6;
-		ParticleVertexS& v0 = expandData[vIndex];
-		ParticleVertexS& v1 = expandData[vIndex + 1];
-		ParticleVertexS& v2 = expandData[vIndex + 2];
-		ParticleVertexS& v3 = expandData[vIndex + 3];
-		unsigned short* face0 = &(particleIndices[fIndex]);
-		unsigned short* face1 = &(particleIndices[fIndex + 3]);
-
-		v0.offset.x = -kParticleSize;
-		v0.offset.y = -kParticleSize;
-		v0.offset.z = 0;
-		v0.texcoord.x = 0;
-		v0.texcoord.y = 0;
-
-		v1.offset.x = +kParticleSize;
-		v1.offset.y = -kParticleSize;
-		v1.offset.z = 0;
-		v1.texcoord.x = 1;
-		v1.texcoord.y = 0;
-
-		v2.offset.x = +kParticleSize;
-		v2.offset.y = +kParticleSize;
-		v2.offset.z = 0;
-		v2.texcoord.x = 1;
-		v2.texcoord.y = 1;
-
-		v3.offset.x = -kParticleSize;
-		v3.offset.y = +kParticleSize;
-		v3.offset.z = 0;
-		v3.texcoord.x = 0;
-		v3.texcoord.y = 1;
-
-		face0[0] = vIndex + 0;
-		face0[1] = vIndex + 2;
-		face0[2] = vIndex + 1;
-
-		face1[0] = vIndex + 0;
-		face1[1] = vIndex + 3;
-		face1[2] = vIndex + 2;
-	}
-
-	std::vector<RenderAPI::VertexElement> elements(2);
-	elements[0].Format = RenderAPI::INPUT_Float3;
-	elements[0].SemanticName = RenderAPI::SEMANTIC_TEXCOORD;
-	elements[0].SemanticIndex = 0;
-
-	elements[1].Format = RenderAPI::INPUT_Float2;
-	elements[1].SemanticName = RenderAPI::SEMANTIC_TEXCOORD;
-	elements[1].SemanticIndex = 1;
-
-	m_pParticleVBS = m_pDevice->CreateVertexBuffer(RenderAPI::RESUSAGE_Immuable, kParticleVertexCount, sizeof(ParticleVertexS), &(elements[0]), 2, &(expandData[0]));
-	m_pParticleIB = m_pDevice->CreateIndexBuffer(RenderAPI::RESUSAGE_Immuable, RenderAPI::INDEX_Int16, kParticleIndexCount, &(particleIndices[0]));
-
-	elements[0].Format = RenderAPI::INPUT_Float3;
-	elements[0].SemanticName = RenderAPI::SEMANTIC_POSITION;
-	elements[0].SemanticIndex = 0;
-
-	elements[1].Format = RenderAPI::INPUT_Color4;
-	elements[1].SemanticName = RenderAPI::SEMANTIC_COLOR;
-	elements[1].SemanticIndex = 0;
-	m_pParticleVBD = m_pDevice->CreateVertexBuffer(RenderAPI::RESUSAGE_Dynamic, kParticleVertexCount, sizeof(ParticleVertex), &(elements[0]), 2, nullptr);
+	m_pParticleVBS = m_pDevice->CreateVertexBuffer(RenderAPI::RESUSAGE_Immuable, m_particleInstance.kParticleVertexCount, sizeof(ParticleVertexS), m_particleInstance.GetSElementsPtr(), m_particleInstance.GetSElementCount(), m_particleInstance.GetSVerticesPtr());
+	m_pParticleVBD = m_pDevice->CreateVertexBuffer(RenderAPI::RESUSAGE_Dynamic, m_particleInstance.kParticleVertexCount, sizeof(ParticleVertexD), m_particleInstance.GetDElementsPtr(), m_particleInstance.GetDElementCount(), nullptr);
+	m_pParticleIB = m_pDevice->CreateIndexBuffer(RenderAPI::RESUSAGE_Immuable, RenderAPI::INDEX_Int16, m_particleInstance.kParticleIndexCount, m_particleInstance.GetIndicesPtr());
 
 	m_particleVBInfos.resize(2);
 	m_particleVBInfos[0].BufferPtr = m_pParticleVBD;
@@ -416,6 +265,48 @@ void APITestBed::CreateMaterial()
 		pngFileData.destroy();
 	}
 
+	file_data lenaFile = read_file("../../Win32TestBed/lena.bmp");
+	if (lenaFile.is_valid())
+	{
+		img_data bmp = read_image(lenaFile.buffer);
+
+		if (bmp.is_valid())
+		{
+			RenderAPI::TextureFormat texformat;
+
+			if (bmp.format == color_format::bgra32)
+			{
+				texformat = RenderAPI::TEX_ARGB;
+			}
+			else if (bmp.format == color_format::bgr24)
+			{
+				texformat = RenderAPI::TEX_XRGB;
+			}
+
+			m_pBoxTexture = m_pDevice->CreateTexture2D(RenderAPI::RESUSAGE_Default, texformat, bmp.width, bmp.height, nullptr, 0, 0);
+
+			RenderAPI::MappedResource res = m_pBoxTexture->LockRect(0, RenderAPI::LOCK_Discard);
+
+			if (res.Success)
+			{
+				char* dstPtr = (char*)res.DataPtr;
+				char* srcPtr = (char*)bmp.buffer;
+				for (int i = 0; i < bmp.height; i++)
+				{
+					for (int j = 0; j < bmp.width; j++)
+					{
+						char* dstColor = dstPtr + i * res.LinePitch + j * 4;
+						char* srcColor = srcPtr + i * bmp.line_pitch + j * 3;
+						memcpy(dstColor, srcColor, 3);
+					}
+				}
+				m_pBoxTexture->UnlockRect(0);
+			}
+			bmp.destroy();
+		}
+		lenaFile.destroy();
+	}
+
 }
 
 float RandomRangeF(float  min, float max) { return min + rand() * (max - min) / RAND_MAX; }
@@ -436,6 +327,7 @@ void APITestBed::DrawBox()
 			m_pContext->SetVertexBuffers(0, &(m_boxVBInfos[0]), m_boxVBInfos.size());
 			m_pContext->SetIndexBuffer(m_pBoxIndexBuffer, 0);
 			const int faceCount = 6 * 2;
+			m_pContext->SetTextures(0, &m_pBoxTexture, 1);
 			m_pContext->DrawIndexed(RenderAPI::PRIMITIVE_TriangleList, 0, 0, faceCount);
 
 			m_pEffectTintColor->EndPass();
@@ -479,7 +371,7 @@ void APITestBed::UploadParticlesAndCommitDrawcalls()
 
 		const float kParticleSize = 0.1f;
 		const float range = 1.5f;
-		ParticleVertex* vertices = (ParticleVertex*)m_pParticleVBD->DiscardLock();
+		ParticleVertexD* vertices = (ParticleVertexD*)m_pParticleVBD->DiscardLock();
 		if (vertices != nullptr)
 		{
 			filledCount += m_particleInstance.FillVertexBuffer(vertices, filledCount);

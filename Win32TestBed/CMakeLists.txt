@@ -66,6 +66,7 @@ set(TESTBEDD_MATH_FILES
 set(TESTBED_SOURCE_FILES
 	./main.cpp
 	./testbed.cpp
+	./box.hpp
 	./particle.h
 	./particle.cpp
 	./TintColor.fx

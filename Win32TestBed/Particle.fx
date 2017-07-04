@@ -4,8 +4,8 @@ float4x4 g_matProj;
 float4 g_cameraX;
 float4 g_cameraY;
 
-texture g_particleTexture;
-sampler g_particleSampler = sampler_state
+texture2D g_particleTexture;
+sampler2D g_particleSampler = sampler_state
 {
 	Texture = <g_particleTexture>;
 	MinFilter = Linear;

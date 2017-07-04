@@ -50,6 +50,7 @@ private:
 	RenderAPI::FXEffect* m_pEffectParticle = nullptr;
 
 	RenderAPI::Texture2D* m_pParticleTexture = nullptr;
+	RenderAPI::Texture2D* m_pBoxTexture = nullptr;
 
 	std::vector<RenderAPI::VertexBufferInfo> m_boxVBInfos;
 	std::vector<RenderAPI::VertexBufferInfo> m_particleVBInfos;
@@ -62,7 +63,5 @@ private:
 	gml::mat44 m_matProj;
 	gml::mat44 m_matInvView;
 
-	const int kParticleCount = 256;
-	const int kParticleFaceCount = kParticleCount * 2;
-	const int kParticleIndexCount = kParticleFaceCount * 3;
+	
 };
