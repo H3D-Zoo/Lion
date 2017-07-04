@@ -22,7 +22,7 @@ namespace RenderAPI
 
 		virtual void LogError(const char*) = 0;
 
-		virtual void LogWarning(const char*) = 0; 
+		virtual void LogWarning(const char*) = 0;
 
 		virtual void LogDebug(const char*) = 0;
 
@@ -179,16 +179,14 @@ namespace RenderAPI
 	{
 		TEX_Unknown = 0,
 		TEX_ARGB = 1,
-		TEX_ABGR = 2,
-		TEX_XRGB = 3,
-		TEX_XBGR = 4,
-		TEX_DXT1 = 5,
-		TEX_DXT3 = 6,
-		TEX_DXT5 = 7,
-		TEX_D24S8 = 8,
-		TEX_D24X8 = 9,
-		TEX_D32 = 10,
-		TEX_D16 = 11,
+		TEX_XRGB = 2,
+		TEX_DXT1 = 3,
+		TEX_DXT3 = 4,
+		TEX_DXT5 = 5,
+		TEX_D24S8 = 6,
+		TEX_D24X8 = 7,
+		TEX_D32 = 8,
+		TEX_D16 = 9,
 	};
 
 	enum IndexFormat
@@ -546,11 +544,11 @@ namespace RenderAPI
 
 		virtual void SetDepthStencil(DepthStencil* depthStencil) = 0;
 
-		virtual void SetVertexBuffers(unsigned int startSlot, VertexBufferInfo* buffers, unsigned int bufferCount) = 0;
+		virtual void SetVertexBuffers(VertexBufferInfo* buffers, unsigned int bufferCount) = 0;
 
 		virtual void SetIndexBuffer(IndexBuffer* buffer, unsigned int offset) = 0;
 
-		virtual void SetTextures(unsigned int startSlot, Texture2D** textures, unsigned int resCount) = 0;
+		virtual void SetTexture(unsigned int slot, RenderAPI::Texture2D* textures) = 0;
 
 		virtual void SetBlendState(const BlendState& state) = 0;
 
@@ -562,9 +560,9 @@ namespace RenderAPI
 
 		virtual void SetDepthWriting(bool enable) = 0;
 
-		virtual void SetTextureBlendingState(unsigned int startSlot, const TextureBlendingState* states, unsigned int count) = 0;
+		virtual void SetTextureBlendingState(unsigned int slot, const TextureBlendingState& state) = 0;
 
-		virtual void SetTextureSampler(unsigned int startSlot, const TextureSampler* samplers, unsigned int count) = 0;
+		virtual void SetTextureSampler(unsigned int slot, const TextureSampler& sampler) = 0;
 
 		virtual void SetScissorState(const ScissorState& state) = 0;
 
@@ -641,6 +639,8 @@ namespace RenderAPI
 		virtual MappedResource LockRect(unsigned int layer, LockOption lockOption) = 0;
 
 		virtual void UnlockRect(unsigned int layer) = 0;
+
+		virtual void GenerateMipmaps() = 0;
 	};
 
 	class RenderTarget : public RObject

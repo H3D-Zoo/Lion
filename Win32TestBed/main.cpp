@@ -39,6 +39,7 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance,
 		{
 			if (msg.message == WM_QUIT)
 			{
+				::DestroyWindow(hWndEditor);
 				break;
 			}
 			TranslateMessage(&msg);
@@ -130,7 +131,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow, APITestBed& testbed)
 
 	ShowWindow(hWnd, nCmdShow);
 	ShowWindow(hWndEditor, nCmdShow);
-	UpdateWindow(hWnd);	
+	UpdateWindow(hWnd);
 	UpdateWindow(hWndEditor);
 
 	return TRUE;

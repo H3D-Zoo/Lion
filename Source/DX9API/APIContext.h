@@ -1,9 +1,9 @@
 #pragma once
 
+#include "DX9Include.h"
 #include "Device.h"
 #include "Context.h"
-#include "RenderAPIImpl.h"
-#include "DX9Include.h"
+#include "RefCount.hpp"
 
 class APIContext
 {

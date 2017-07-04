@@ -25,7 +25,7 @@ void Context::SetDepthStencil(RenderAPI::DepthStencil* depthStencil)
 
 }
 
-void Context::SetVertexBuffers(unsigned int startSlot, RenderAPI::VertexBufferInfo* buffers, unsigned int bufferCount)
+void Context::SetVertexBuffers(RenderAPI::VertexBufferInfo* buffers, unsigned int bufferCount)
 {
 
 }
@@ -35,7 +35,7 @@ void Context::SetIndexBuffer(RenderAPI::IndexBuffer* buffer, unsigned int offset
 
 }
 
-void Context::SetTextures(unsigned int startSlot, RenderAPI::Texture2D** textures, unsigned int resCount)
+void Context::SetTexture(unsigned int slot, RenderAPI::Texture2D* texture)
 {
 
 }
@@ -65,12 +65,12 @@ void Context::SetDepthWriting(bool enable)
 
 }
 
-void Context::SetTextureBlendingState(unsigned int startSlot, const RenderAPI::TextureBlendingState* states, unsigned int count)
+void Context::SetTextureBlendingState(unsigned int slot, const RenderAPI::TextureBlendingState& state)
 {
 
 }
 
-void Context::SetTextureSampler(unsigned int startSlot, const RenderAPI::TextureSampler* samplers, unsigned int count)
+void Context::SetTextureSampler(unsigned int slot, const RenderAPI::TextureSampler& sampler)
 {
 
 }

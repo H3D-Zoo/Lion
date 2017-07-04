@@ -6,6 +6,7 @@
 #include "RenderAPIImpl.h"
 #include "APIContext.h"
 #include "DX9Include.h"
+#include "AutoPtr.hpp"
 
 D3DFORMAT s_RTFormats[RTFormatCount] =
 {
@@ -24,9 +25,7 @@ D3DFORMAT s_TextureFormats[TexFormatCount] =
 {
 	D3DFMT_UNKNOWN,
 	D3DFMT_A8R8G8B8,
-	D3DFMT_A8B8G8R8,
 	D3DFMT_X8R8G8B8,
-	D3DFMT_X8B8G8R8,
 	D3DFMT_DXT1,
 	D3DFMT_DXT3,
 	D3DFMT_DXT5,
@@ -220,4 +219,4 @@ namespace RenderAPI
 	}
 }
 
-RefCount::RefCount() : count(1) { }
+

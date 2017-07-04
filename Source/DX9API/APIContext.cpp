@@ -7,13 +7,8 @@ void APIContext::AddRef()
 
 void APIContext::Release()
 {
-
-	if (m_refCount.OnlyOne())
+	if (0 == --m_refCount)
 	{
 		delete this;
-	}
-	else
-	{
-		--m_refCount;
 	}
 }

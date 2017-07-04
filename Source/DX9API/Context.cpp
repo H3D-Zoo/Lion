@@ -164,7 +164,7 @@ Context::Context(APIContext* pAPIContext, IDirect3DDevice9 * device, RenderAPI::
 	: m_pAPIContext(pAPIContext)
 	, m_pDevice(device)
 	, m_backBufferManager(device, defRT, defDS)
-	, m_fxStateManager(device)
+	, m_renderStateManager(device)
 	, m_vertexDeclChanged(false)
 	, m_pVertexDeclaration(NULL)
 {
@@ -225,14 +225,14 @@ void Context::SetDepthStencil(RenderAPI::DepthStencil* depthStencil)
 	m_backBufferManager.SetDepthStencil(depthStencil);
 }
 
-void Context::SetVertexBuffers(unsigned int startSlot, RenderAPI::VertexBufferInfo* buffers, unsigned int bufferCount)
+void Context::SetVertexBuffers(RenderAPI::VertexBufferInfo* buffers, unsigned int bufferCount)
 {
-	m_vertexCeclCacheCount = bufferCount;
+	m_vertexDeclCacheCount = bufferCount;
 	for (unsigned int i = 0; i < bufferCount; i++)
 	{
 		IDirect3DVertexBuffer9* vertexBufferPtr = ((::VertexBuffer*)buffers[i].BufferPtr)->GetBufferPtr();
-		HRESULT hr = m_pDevice->SetStreamSource(startSlot + i, vertexBufferPtr, buffers[i].Offset, buffers[i].Stride);
-		SetVertexElements(startSlot + i, buffers[i].BufferPtr->GetElementPtr(), buffers[i].BufferPtr->GetElementCount());
+		HRESULT hr = m_pDevice->SetStreamSource(i, vertexBufferPtr, buffers[i].Offset, buffers[i].Stride);
+		SetVertexElements(i, buffers[i].BufferPtr->GetElementPtr(), buffers[i].BufferPtr->GetElementCount());
 	}
 	m_vertexCount = buffers[0].BufferPtr->GetVertexCount();
 }
@@ -244,41 +244,36 @@ void Context::SetIndexBuffer(RenderAPI::IndexBuffer* buffer, unsigned int offset
 	m_indexBufferOffset = offset;
 }
 
-void Context::SetTextures(unsigned int startSlot, RenderAPI::Texture2D** textures, unsigned int resCount)
+void Context::SetTexture(unsigned int slot, RenderAPI::Texture2D* texture)
 {
-	for (unsigned int i = 0; i < resCount; i++)
-	{
-		IDirect3DTexture9* pTexture = ((::Texture2D*)textures[i])->GetD3DTexture();
-		m_pDevice->SetTexture(startSlot + i, pTexture);
-	}
+	IDirect3DTexture9* pTexture = ((::Texture2D*)texture)->GetD3DTexture();
+	m_pDevice->SetTexture(slot, pTexture);
 }
 
 void Context::SetBlendState(const RenderAPI::BlendState& state)
 {
 	if (state.IsEnable)
 	{
-		m_pDevice->SetRenderState(D3DRS_ALPHABLENDENABLE, TRUE);
+		m_renderStateManager.SetAlphaBlending(TRUE);
 		if (state.IsAlphaSeperate)
 		{
-			m_pDevice->SetRenderState(D3DRS_SEPARATEALPHABLENDENABLE, TRUE);
-
-			m_pDevice->SetRenderState(D3DRS_SRCBLEND, s_blendFactors[state.ColorSrc]);
-			m_pDevice->SetRenderState(D3DRS_DESTBLEND, s_blendFactors[state.ColorDst]);
-			m_pDevice->SetRenderState(D3DRS_SRCBLENDALPHA, s_blendFactors[state.AlphaSrc]);
-			m_pDevice->SetRenderState(D3DRS_DESTBLENDALPHA, s_blendFactors[state.AlphaDst]);
+			m_renderStateManager.SetSeperateAlphaBlending(TRUE);
+			m_renderStateManager.SetAlphaBlendingOp(s_blendOps[state.AlphaOp]);
+			m_renderStateManager.SetAlphaSrcBlending(s_blendFactors[state.AlphaSrc]);
+			m_renderStateManager.SetAlphaDstBlending(s_blendFactors[state.AlphaDst]);
 		}
 		else
 		{
-			m_pDevice->SetRenderState(D3DRS_SEPARATEALPHABLENDENABLE, FALSE);
-			m_pDevice->SetRenderState(D3DRS_BLENDOP, s_blendOps[state.ColorOp]);
-			m_pDevice->SetRenderState(D3DRS_SRCBLEND, s_blendFactors[state.ColorSrc]);
-			m_pDevice->SetRenderState(D3DRS_DESTBLEND, s_blendFactors[state.ColorDst]);
-
+			m_renderStateManager.SetSeperateAlphaBlending(FALSE);
 		}
+
+		m_renderStateManager.SetBlendingOp(s_blendOps[state.ColorOp]);
+		m_renderStateManager.SetSrcBlending(s_blendFactors[state.ColorSrc]);
+		m_renderStateManager.SetDstBlending(s_blendFactors[state.ColorDst]);
 	}
 	else
 	{
-		m_pDevice->SetRenderState(D3DRS_ALPHABLENDENABLE, FALSE);
+		m_renderStateManager.SetAlphaBlending(FALSE);
 	}
 }
 
@@ -286,13 +281,13 @@ void Context::SetAlphaTestingState(const RenderAPI::AlphaTestingState& state)
 {
 	if (state.IsEnable)
 	{
-		m_pDevice->SetRenderState(D3DRS_ALPHATESTENABLE, TRUE);
-		m_pDevice->SetRenderState(D3DRS_ALPHAFUNC, s_compareMethods[state.Function]);
-		m_pDevice->SetRenderState(D3DRS_ALPHAREF, state.Reference);
+		m_renderStateManager.SetAlphaTest(TRUE);
+		m_renderStateManager.SetAlphaFunction(s_compareMethods[state.Function]);
+		m_renderStateManager.SetAlphaReference(state.Reference);
 	}
 	else
 	{
-		m_pDevice->SetRenderState(D3DRS_ALPHATESTENABLE, FALSE);
+		m_renderStateManager.SetAlphaTest(FALSE);
 	}
 }
 
@@ -300,13 +295,13 @@ void Context::SetDepthTestingState(const RenderAPI::DepthTestingState& state)
 {
 	if (state.IsEnable)
 	{
-		m_pDevice->SetRenderState(D3DRS_ZENABLE, D3DZB_TRUE);
-		m_pDevice->SetRenderState(D3DRS_ZFUNC, s_compareMethods[state.Function]);
+		m_renderStateManager.SetDepthTest(D3DZB_TRUE);
+		m_renderStateManager.SetDepthFunction(s_compareMethods[state.Function]);
 	}
 	else
 	{
-		m_pDevice->SetRenderState(D3DRS_ZENABLE, D3DZB_FALSE);
-		//m_pDevice->SetRenderState(D3DRS_ZFUNC, s_compareMethods[RenderAPI::COMPARE_Always]);
+		m_renderStateManager.SetDepthTest(D3DZB_FALSE);
+		//m_renderStateManager.SetDepthFunction(s_compareMethods[RenderAPI::COMPARE_Always]);
 	}
 }
 
@@ -314,125 +309,116 @@ void Context::SetStencilTestingState(const RenderAPI::StencilTestingState& state
 {
 	if (state.IsEnable)
 	{
-		m_pDevice->SetRenderState(D3DRS_STENCILENABLE, TRUE);
-		m_pDevice->SetRenderState(D3DRS_STENCILREF, state.Reference);
-		m_pDevice->SetRenderState(D3DRS_STENCILMASK, state.TestMask);
-		m_pDevice->SetRenderState(D3DRS_STENCILWRITEMASK, state.WriteMask);
+		m_renderStateManager.SetStencilTest(TRUE);
+		m_renderStateManager.SetStencilReference(state.Reference);
+		m_renderStateManager.SetStencilReadMask(state.TestMask);
+		m_renderStateManager.SetStencilWriteMask(state.WriteMask);
 		if (state.TwoSide)
 		{
-			m_pDevice->SetRenderState(D3DRS_STENCILFUNC, s_compareMethods[state.FrontSide.Function]);
-			m_pDevice->SetRenderState(D3DRS_STENCILFAIL, s_stencilOps[state.FrontSide.SFail]);
-			m_pDevice->SetRenderState(D3DRS_STENCILZFAIL, s_stencilOps[state.FrontSide.SPassZFail]);
-			m_pDevice->SetRenderState(D3DRS_STENCILPASS, s_stencilOps[state.FrontSide.AllPass]);
-
-			m_pDevice->SetRenderState(D3DRS_CCW_STENCILFUNC, s_compareMethods[state.BackSide.Function]);
-			m_pDevice->SetRenderState(D3DRS_CCW_STENCILFAIL, s_stencilOps[state.BackSide.SFail]);
-			m_pDevice->SetRenderState(D3DRS_CCW_STENCILZFAIL, s_stencilOps[state.BackSide.SPassZFail]);
-			m_pDevice->SetRenderState(D3DRS_CCW_STENCILPASS, s_stencilOps[state.BackSide.AllPass]);
+			m_renderStateManager.SetStencilTwoFace(TRUE);
+			m_renderStateManager.SetStencilBackFunction(s_compareMethods[state.BackSide.Function]);
+			m_renderStateManager.SetStencilBackSFail(s_stencilOps[state.BackSide.SFail]);
+			m_renderStateManager.SetStencilBackSPassZFail(s_stencilOps[state.BackSide.SPassZFail]);
+			m_renderStateManager.SetStencilBackAllPass(s_stencilOps[state.BackSide.AllPass]);
 		}
 		else
 		{
-			m_pDevice->SetRenderState(D3DRS_STENCILFUNC, TRUE);
-			m_pDevice->SetRenderState(D3DRS_STENCILFUNC, s_compareMethods[state.FrontSide.Function]);
-			m_pDevice->SetRenderState(D3DRS_STENCILFAIL, s_stencilOps[state.FrontSide.SFail]);
-			m_pDevice->SetRenderState(D3DRS_STENCILZFAIL, s_stencilOps[state.FrontSide.SPassZFail]);
-			m_pDevice->SetRenderState(D3DRS_STENCILPASS, s_stencilOps[state.FrontSide.AllPass]);
+			m_renderStateManager.SetStencilTwoFace(FALSE);
 		}
+
+		m_renderStateManager.SetStencilFrontFunction(s_compareMethods[state.FrontSide.Function]);
+		m_renderStateManager.SetStencilFrontSFail(s_stencilOps[state.FrontSide.SFail]);
+		m_renderStateManager.SetStencilFrontSPassZFail(s_stencilOps[state.FrontSide.SPassZFail]);
+		m_renderStateManager.SetStencilFrontAllPass(s_stencilOps[state.FrontSide.AllPass]);
 	}
 	else
 	{
-		m_pDevice->SetRenderState(D3DRS_STENCILENABLE, FALSE);
+		m_renderStateManager.SetStencilTest(FALSE);
 	}
 }
 
 void Context::SetDepthWriting(bool enable)
 {
-	m_pDevice->SetRenderState(D3DRS_ZWRITEENABLE, enable ? TRUE : FALSE);
+	m_renderStateManager.SetDepthWrite(enable ? TRUE : FALSE);
 }
 
-void Context::SetTextureBlendingState(unsigned int startSlot, const RenderAPI::TextureBlendingState* states, unsigned int count)
+void Context::SetTextureBlendingState(unsigned int slot, const RenderAPI::TextureBlendingState& state)
 {
-	for (unsigned int i = 0; i < count; i++)
+	if (state.ColorOp == RenderAPI::TEXOP_Disable)
 	{
-		const RenderAPI::TextureBlendingState& state = states[i];
-		if (state.ColorOp == RenderAPI::TEXOP_Disable)
-		{
-			m_pDevice->SetTextureStageState(startSlot + i, D3DTSS_COLOROP, D3DTOP_DISABLE);
-		}
-		else
-		{
-			m_pDevice->SetTextureStageState(startSlot + i, D3DTSS_COLOROP, s_texColorOps[state.ColorOp]);
-			m_pDevice->SetTextureStageState(startSlot + i, D3DTSS_ALPHAARG0, s_texBlendingArgs[state.AlphaArg0]);
-			m_pDevice->SetTextureStageState(startSlot + i, D3DTSS_ALPHAARG1, s_texBlendingArgs[state.AlphaArg1]);
-		}
+		m_pDevice->SetTextureStageState(slot, D3DTSS_COLOROP, D3DTOP_DISABLE);
+	}
+	else
+	{
+		m_pDevice->SetTextureStageState(slot, D3DTSS_COLOROP, s_texColorOps[state.ColorOp]);
+		m_pDevice->SetTextureStageState(slot, D3DTSS_ALPHAARG0, s_texBlendingArgs[state.AlphaArg0]);
+		m_pDevice->SetTextureStageState(slot, D3DTSS_ALPHAARG1, s_texBlendingArgs[state.AlphaArg1]);
+	}
 
-		if (state.AlphaOp == RenderAPI::TEXOP_Disable)
-		{
-			m_pDevice->SetTextureStageState(startSlot + i, D3DTSS_ALPHAOP, D3DTOP_DISABLE);
-		}
-		else
-		{
-			m_pDevice->SetTextureStageState(startSlot + i, D3DTSS_ALPHAOP, s_texColorOps[state.AlphaOp]);
-			m_pDevice->SetTextureStageState(startSlot + i, D3DTSS_ALPHAARG0, s_texBlendingArgs[state.AlphaArg0]);
-			m_pDevice->SetTextureStageState(startSlot + i, D3DTSS_ALPHAARG1, s_texBlendingArgs[state.AlphaArg1]);
-		}
+	if (state.AlphaOp == RenderAPI::TEXOP_Disable)
+	{
+		m_pDevice->SetTextureStageState(slot, D3DTSS_ALPHAOP, D3DTOP_DISABLE);
+	}
+	else
+	{
+		m_pDevice->SetTextureStageState(slot, D3DTSS_ALPHAOP, s_texColorOps[state.AlphaOp]);
+		m_pDevice->SetTextureStageState(slot, D3DTSS_ALPHAARG0, s_texBlendingArgs[state.AlphaArg0]);
+		m_pDevice->SetTextureStageState(slot, D3DTSS_ALPHAARG1, s_texBlendingArgs[state.AlphaArg1]);
 	}
 }
 
-void Context::SetTextureSampler(unsigned int startSlot, const RenderAPI::TextureSampler* samplers, unsigned int count)
+void Context::SetTextureSampler(unsigned int slot, const RenderAPI::TextureSampler& sampler)
 {
-	for (unsigned int i = 0; i < count; i++)
+	SamplerFilter& filter = s_samplerFilters[sampler.Filter];
+	m_pDevice->SetSamplerState(slot, D3DSAMP_MINFILTER, filter.min);
+	m_pDevice->SetSamplerState(slot, D3DSAMP_MAGFILTER, filter.mag);
+	m_pDevice->SetSamplerState(slot, D3DSAMP_MIPFILTER, filter.mip);
+	m_pDevice->SetSamplerState(slot, D3DSAMP_ADDRESSU, s_textureAddress[sampler.AddressU]);
+	m_pDevice->SetSamplerState(slot, D3DSAMP_ADDRESSV, s_textureAddress[sampler.AddressV]);
+	if (sampler.AddressV == RenderAPI::TEX_ADDRESS_Border || sampler.AddressU == RenderAPI::TEX_ADDRESS_Border)
 	{
-		const RenderAPI::TextureSampler& sampler = samplers[i];
-		SamplerFilter& filter = s_samplerFilters[sampler.Filter];
-		m_pDevice->SetSamplerState(startSlot + i, D3DSAMP_MINFILTER, filter.min);
-		m_pDevice->SetSamplerState(startSlot + i, D3DSAMP_MAGFILTER, filter.mag);
-		m_pDevice->SetSamplerState(startSlot + i, D3DSAMP_MIPFILTER, filter.mip);
-		m_pDevice->SetSamplerState(startSlot + i, D3DSAMP_ADDRESSU, s_textureAddress[sampler.AddressU]);
-		m_pDevice->SetSamplerState(startSlot + i, D3DSAMP_ADDRESSV, s_textureAddress[sampler.AddressV]);
-		if (sampler.AddressV == RenderAPI::TEX_ADDRESS_Border || sampler.AddressU == RenderAPI::TEX_ADDRESS_Border)
-		{
-			m_pDevice->SetSamplerState(startSlot + i, D3DSAMP_BORDERCOLOR, sampler.BorderColor);
-		};
-	}
+		m_pDevice->SetSamplerState(slot, D3DSAMP_BORDERCOLOR, sampler.BorderColor);
+	};
+
 }
 
 void Context::SetScissorState(const RenderAPI::ScissorState& state)
 {
 	if (state.IsEnable)
 	{
+		m_renderStateManager.SetScissorTest(TRUE);
+
 		RECT scissorRect;
 		scissorRect.left = state.Left;
 		scissorRect.right = state.Right;
 		scissorRect.top = state.Top;
 		scissorRect.bottom = state.Bottom;
-		m_pDevice->SetRenderState(D3DRS_SCISSORTESTENABLE, TRUE);
 		m_pDevice->SetScissorRect(&scissorRect);
 	}
 	else
 	{
-		m_pDevice->SetRenderState(D3DRS_SCISSORTESTENABLE, FALSE);
+		m_renderStateManager.SetScissorTest(FALSE);
 	}
 }
 
 void Context::SetFillMode(RenderAPI::FillMode mode)
 {
-	m_pDevice->SetRenderState(D3DRS_FILLMODE, s_fillMode[mode]);
+	m_renderStateManager.SetFillMode(s_fillMode[mode]);
 }
 
 void Context::SetCullMode(RenderAPI::CullMode mode)
 {
-	m_pDevice->SetRenderState(D3DRS_CULLMODE, s_cullMode[mode]);
+	m_renderStateManager.SetCullMode(s_cullMode[mode]);
 }
 
 void Context::SetDepthBias(float bias)
 {
-	m_pDevice->SetRenderState(D3DRS_DEPTHBIAS, (DWORD)bias);
+	m_renderStateManager.SetDepthBias((DWORD)bias);
 }
 
 void Context::SetTextureFactor(unsigned int factor)
 {
-	m_pDevice->SetRenderState(D3DRS_TEXTUREFACTOR, factor);
+	m_renderStateManager.SetTextureFactor(factor);
 }
 
 bool Context::BeginScene()
@@ -488,10 +474,9 @@ void Context::Release()
 	delete this;
 }
 
-
 ID3DXEffectStateManager* Context::GetStateManager()
 {
-	return &m_fxStateManager;
+	return &m_renderStateManager;
 }
 
 void Context::SetVertexElements(int index, const RenderAPI::VertexElement * s, int count)
@@ -521,7 +506,7 @@ void Context::RebuildDecalration()
 		std::vector<VertexDecl>::iterator itCur = m_vertexDeclCache.begin();
 		std::vector<VertexDecl>::iterator itEnd = m_vertexDeclCache.end();
 
-		for (unsigned int i = 0; itCur != itEnd && i < m_vertexCeclCacheCount; ++itCur, ++i)
+		for (unsigned int i = 0; itCur != itEnd && i < m_vertexDeclCacheCount; ++itCur, ++i)
 		{
 			D3DVERTEXELEMENT9 element;
 			element.Stream = i;

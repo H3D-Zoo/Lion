@@ -21,6 +21,8 @@ set(RENDERAPI_INCLUDE_FILES
 
 set(RENDERAPI_IMPL_INCLUDE_FILES
 	./APIContext.h
+	./AutoPtr.hpp
+	./RefCount.hpp
 	./RenderAPIImpl.h
 	./DX9Include.h
 	./Device.h
@@ -32,6 +34,7 @@ set(RENDERAPI_IMPL_INCLUDE_FILES
 	./IndexBuffer.h
 	./Texture2D.h
 	./FXEffect.h
+	./StateManager.h
 )
 
 set(RENDERAPI_IMPL_SOURCE_FILES
@@ -47,7 +50,7 @@ set(RENDERAPI_IMPL_SOURCE_FILES
 	./IndexBuffer.cpp
 	./Texture2D.cpp
 	./FXEffect.cpp
-	./EffectStateManager.hpp
+	./StateManager.cpp
 )
 
 source_group(include FILES ${DIR_INTERFACE})

@@ -1,5 +1,6 @@
 #pragma once
 #include "../../RenderAPI/RenderAPI.h"
+#include <vector>
 #include "DX9Include.h"
 
 class RenderTarget;
@@ -24,6 +25,8 @@ public:
 
 	virtual void UnlockRect(unsigned int layer);
 
+	virtual void GenerateMipmaps();
+
 	virtual void Release();
 
 	void Resize(unsigned int width, unsigned int height);
@@ -31,9 +34,12 @@ public:
 	IDirect3DTexture9* GetD3DTexture();
 
 private:
+	IDirect3DTexture9** TextureForUpdate(unsigned int index);
+
 	RenderAPI::ResourceUsage m_usage;
 	RenderAPI::TextureFormat m_texFormat;
 	IDirect3DTexture9* m_pTexture;
+	std::vector<IDirect3DTexture9*> m_pTempTextureForUpdate;
 	unsigned int m_texWidth;
 	unsigned int m_texHeight;
 };
