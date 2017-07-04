@@ -243,8 +243,8 @@ namespace RenderAPI
 
 	enum BlendOperator
 	{
-		BLEND_OP_Add = 0,
-		BLEND_OP_Sub = 1,
+		BLENDOP_Add = 0,
+		BLENDOP_Sub = 1,
 	};
 
 	struct BlendState
@@ -256,8 +256,8 @@ namespace RenderAPI
 			, ColorDst(BLEND_Zero)
 			, AlphaSrc(BLEND_One)
 			, AlphaDst(BLEND_Zero)
-			, ColorOp(BLEND_OP_Add)
-			, AlphaOp(BLEND_OP_Add)
+			, ColorOp(BLENDOP_Add)
+			, AlphaOp(BLENDOP_Add)
 		{	}
 
 

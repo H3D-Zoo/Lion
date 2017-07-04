@@ -22,7 +22,7 @@ private:
 	void CreateMesh();
 	void CreatePartcleMesh();
 	void CreateMaterial();
-	void DrawBox(RenderAPI::TextureAddress address);
+	void DrawBox(RenderAPI::TextureAddress address, bool alphaBlending);
 	void DrawParticle();
 	void UploadParticlesAndCommitDrawcalls();
 
