@@ -15,11 +15,11 @@ public:
 
 	virtual void SetDepthStencil(RenderAPI::DepthStencil* depthStencil);
 
-	virtual void SetVertexBuffers(unsigned int startSlot, RenderAPI::VertexBufferInfo* buffers, unsigned int bufferCount);
+	virtual void SetVertexBuffers(RenderAPI::VertexBufferInfo* buffers, unsigned int bufferCount);
 
 	virtual void SetIndexBuffer(RenderAPI::IndexBuffer* buffer, unsigned int offset);
 
-	virtual void SetTextures(unsigned int startSlot, RenderAPI::Texture2D** textures, unsigned int resCount);
+	virtual void SetTexture(unsigned int slot, RenderAPI::Texture2D* texture);
 
 	virtual void SetBlendState(const RenderAPI::BlendState& state);
 
@@ -31,9 +31,9 @@ public:
 
 	virtual void SetDepthWriting(bool enable);
 
-	virtual void SetTextureBlendingState(unsigned int startSlot, const RenderAPI::TextureBlendingState* states, unsigned int count);
+	virtual void SetTextureBlendingState(unsigned int slot, const RenderAPI::TextureBlendingState& state);
 
-	virtual void SetTextureSampler(unsigned int startSlot, const RenderAPI::TextureSampler* samplers, unsigned int count);
+	virtual void SetTextureSampler(unsigned int slot, const RenderAPI::TextureSampler& sampler);
 
 	virtual void SetScissorState(const RenderAPI::ScissorState& state);
 

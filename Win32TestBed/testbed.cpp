@@ -291,9 +291,9 @@ void APITestBed::CreateMaterial()
 			{
 				char* dstPtr = (char*)res.DataPtr;
 				char* srcPtr = (char*)bmp.buffer;
-				for (int i = 0; i < bmp.height; i++)
+				for (unsigned int i = 0; i < bmp.height; i++)
 				{
-					for (int j = 0; j < bmp.width; j++)
+					for (unsigned int j = 0; j < bmp.width; j++)
 					{
 						char* dstColor = dstPtr + i * res.LinePitch + j * 4;
 						char* srcColor = srcPtr + i * bmp.line_pitch + j * 3;
@@ -324,10 +324,10 @@ void APITestBed::DrawBox()
 			m_pEffectTintColor->SetMatrix("g_matView", (float*)m_matView.m);
 			m_pEffectTintColor->SetMatrix("g_matProj", (float*)m_matProj.m);
 			m_pEffectTintColor->CommitChange();
-			m_pContext->SetVertexBuffers(0, &(m_boxVBInfos[0]), m_boxVBInfos.size());
+			m_pContext->SetVertexBuffers(&(m_boxVBInfos[0]), m_boxVBInfos.size());
 			m_pContext->SetIndexBuffer(m_pBoxIndexBuffer, 0);
 			const int faceCount = 6 * 2;
-			m_pContext->SetTextures(0, &m_pBoxTexture, 1);
+			m_pContext->SetTexture(0, m_pBoxTexture);
 			m_pContext->DrawIndexed(RenderAPI::PRIMITIVE_TriangleList, 0, 0, faceCount);
 
 			m_pEffectTintColor->EndPass();
@@ -351,7 +351,7 @@ void APITestBed::DrawParticle()
 			m_pEffectParticle->SetValue("g_cameraX", (float*)m_matInvView.row[0], sizeof(gml::vec4));
 			m_pEffectParticle->SetValue("g_cameraY", (float*)m_matInvView.row[1], sizeof(gml::vec4));
 			m_pEffectParticle->SetTexture("g_particleTexture", m_pParticleTexture);
-			m_pContext->SetVertexBuffers(0, &(m_particleVBInfos[0]), m_particleVBInfos.size());
+			m_pContext->SetVertexBuffers(&(m_particleVBInfos[0]), m_particleVBInfos.size());
 			m_pContext->SetIndexBuffer(m_pParticleIB, 0);
 			m_pEffectParticle->CommitChange();
 			UploadParticlesAndCommitDrawcalls();

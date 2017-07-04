@@ -225,14 +225,14 @@ void Context::SetDepthStencil(RenderAPI::DepthStencil* depthStencil)
 	m_backBufferManager.SetDepthStencil(depthStencil);
 }
 
-void Context::SetVertexBuffers(unsigned int startSlot, RenderAPI::VertexBufferInfo* buffers, unsigned int bufferCount)
+void Context::SetVertexBuffers(RenderAPI::VertexBufferInfo* buffers, unsigned int bufferCount)
 {
-	m_vertexCeclCacheCount = bufferCount;
+	m_vertexDeclCacheCount = bufferCount;
 	for (unsigned int i = 0; i < bufferCount; i++)
 	{
 		IDirect3DVertexBuffer9* vertexBufferPtr = ((::VertexBuffer*)buffers[i].BufferPtr)->GetBufferPtr();
-		HRESULT hr = m_pDevice->SetStreamSource(startSlot + i, vertexBufferPtr, buffers[i].Offset, buffers[i].Stride);
-		SetVertexElements(startSlot + i, buffers[i].BufferPtr->GetElementPtr(), buffers[i].BufferPtr->GetElementCount());
+		HRESULT hr = m_pDevice->SetStreamSource(i, vertexBufferPtr, buffers[i].Offset, buffers[i].Stride);
+		SetVertexElements(i, buffers[i].BufferPtr->GetElementPtr(), buffers[i].BufferPtr->GetElementCount());
 	}
 	m_vertexCount = buffers[0].BufferPtr->GetVertexCount();
 }
@@ -244,13 +244,10 @@ void Context::SetIndexBuffer(RenderAPI::IndexBuffer* buffer, unsigned int offset
 	m_indexBufferOffset = offset;
 }
 
-void Context::SetTextures(unsigned int startSlot, RenderAPI::Texture2D** textures, unsigned int resCount)
+void Context::SetTexture(unsigned int slot, RenderAPI::Texture2D* texture)
 {
-	for (unsigned int i = 0; i < resCount; i++)
-	{
-		IDirect3DTexture9* pTexture = ((::Texture2D*)textures[i])->GetD3DTexture();
-		m_pDevice->SetTexture(startSlot + i, pTexture);
-	}
+	IDirect3DTexture9* pTexture = ((::Texture2D*)texture)->GetD3DTexture();
+	m_pDevice->SetTexture(slot, pTexture);
 }
 
 void Context::SetBlendState(const RenderAPI::BlendState& state)
@@ -345,51 +342,44 @@ void Context::SetDepthWriting(bool enable)
 	m_renderStateManager.SetDepthWrite(enable ? TRUE : FALSE);
 }
 
-void Context::SetTextureBlendingState(unsigned int startSlot, const RenderAPI::TextureBlendingState* states, unsigned int count)
+void Context::SetTextureBlendingState(unsigned int slot, const RenderAPI::TextureBlendingState& state)
 {
-	for (unsigned int i = 0; i < count; i++)
+	if (state.ColorOp == RenderAPI::TEXOP_Disable)
 	{
-		const RenderAPI::TextureBlendingState& state = states[i];
-		if (state.ColorOp == RenderAPI::TEXOP_Disable)
-		{
-			m_pDevice->SetTextureStageState(startSlot + i, D3DTSS_COLOROP, D3DTOP_DISABLE);
-		}
-		else
-		{
-			m_pDevice->SetTextureStageState(startSlot + i, D3DTSS_COLOROP, s_texColorOps[state.ColorOp]);
-			m_pDevice->SetTextureStageState(startSlot + i, D3DTSS_ALPHAARG0, s_texBlendingArgs[state.AlphaArg0]);
-			m_pDevice->SetTextureStageState(startSlot + i, D3DTSS_ALPHAARG1, s_texBlendingArgs[state.AlphaArg1]);
-		}
+		m_pDevice->SetTextureStageState(slot, D3DTSS_COLOROP, D3DTOP_DISABLE);
+	}
+	else
+	{
+		m_pDevice->SetTextureStageState(slot, D3DTSS_COLOROP, s_texColorOps[state.ColorOp]);
+		m_pDevice->SetTextureStageState(slot, D3DTSS_ALPHAARG0, s_texBlendingArgs[state.AlphaArg0]);
+		m_pDevice->SetTextureStageState(slot, D3DTSS_ALPHAARG1, s_texBlendingArgs[state.AlphaArg1]);
+	}
 
-		if (state.AlphaOp == RenderAPI::TEXOP_Disable)
-		{
-			m_pDevice->SetTextureStageState(startSlot + i, D3DTSS_ALPHAOP, D3DTOP_DISABLE);
-		}
-		else
-		{
-			m_pDevice->SetTextureStageState(startSlot + i, D3DTSS_ALPHAOP, s_texColorOps[state.AlphaOp]);
-			m_pDevice->SetTextureStageState(startSlot + i, D3DTSS_ALPHAARG0, s_texBlendingArgs[state.AlphaArg0]);
-			m_pDevice->SetTextureStageState(startSlot + i, D3DTSS_ALPHAARG1, s_texBlendingArgs[state.AlphaArg1]);
-		}
+	if (state.AlphaOp == RenderAPI::TEXOP_Disable)
+	{
+		m_pDevice->SetTextureStageState(slot, D3DTSS_ALPHAOP, D3DTOP_DISABLE);
+	}
+	else
+	{
+		m_pDevice->SetTextureStageState(slot, D3DTSS_ALPHAOP, s_texColorOps[state.AlphaOp]);
+		m_pDevice->SetTextureStageState(slot, D3DTSS_ALPHAARG0, s_texBlendingArgs[state.AlphaArg0]);
+		m_pDevice->SetTextureStageState(slot, D3DTSS_ALPHAARG1, s_texBlendingArgs[state.AlphaArg1]);
 	}
 }
 
-void Context::SetTextureSampler(unsigned int startSlot, const RenderAPI::TextureSampler* samplers, unsigned int count)
+void Context::SetTextureSampler(unsigned int slot, const RenderAPI::TextureSampler& sampler)
 {
-	for (unsigned int i = 0; i < count; i++)
+	SamplerFilter& filter = s_samplerFilters[sampler.Filter];
+	m_pDevice->SetSamplerState(slot, D3DSAMP_MINFILTER, filter.min);
+	m_pDevice->SetSamplerState(slot, D3DSAMP_MAGFILTER, filter.mag);
+	m_pDevice->SetSamplerState(slot, D3DSAMP_MIPFILTER, filter.mip);
+	m_pDevice->SetSamplerState(slot, D3DSAMP_ADDRESSU, s_textureAddress[sampler.AddressU]);
+	m_pDevice->SetSamplerState(slot, D3DSAMP_ADDRESSV, s_textureAddress[sampler.AddressV]);
+	if (sampler.AddressV == RenderAPI::TEX_ADDRESS_Border || sampler.AddressU == RenderAPI::TEX_ADDRESS_Border)
 	{
-		const RenderAPI::TextureSampler& sampler = samplers[i];
-		SamplerFilter& filter = s_samplerFilters[sampler.Filter];
-		m_pDevice->SetSamplerState(startSlot + i, D3DSAMP_MINFILTER, filter.min);
-		m_pDevice->SetSamplerState(startSlot + i, D3DSAMP_MAGFILTER, filter.mag);
-		m_pDevice->SetSamplerState(startSlot + i, D3DSAMP_MIPFILTER, filter.mip);
-		m_pDevice->SetSamplerState(startSlot + i, D3DSAMP_ADDRESSU, s_textureAddress[sampler.AddressU]);
-		m_pDevice->SetSamplerState(startSlot + i, D3DSAMP_ADDRESSV, s_textureAddress[sampler.AddressV]);
-		if (sampler.AddressV == RenderAPI::TEX_ADDRESS_Border || sampler.AddressU == RenderAPI::TEX_ADDRESS_Border)
-		{
-			m_pDevice->SetSamplerState(startSlot + i, D3DSAMP_BORDERCOLOR, sampler.BorderColor);
-		};
-	}
+		m_pDevice->SetSamplerState(slot, D3DSAMP_BORDERCOLOR, sampler.BorderColor);
+	};
+
 }
 
 void Context::SetScissorState(const RenderAPI::ScissorState& state)
@@ -516,7 +506,7 @@ void Context::RebuildDecalration()
 		std::vector<VertexDecl>::iterator itCur = m_vertexDeclCache.begin();
 		std::vector<VertexDecl>::iterator itEnd = m_vertexDeclCache.end();
 
-		for (unsigned int i = 0; itCur != itEnd && i < m_vertexCeclCacheCount; ++itCur, ++i)
+		for (unsigned int i = 0; itCur != itEnd && i < m_vertexDeclCacheCount; ++itCur, ++i)
 		{
 			D3DVERTEXELEMENT9 element;
 			element.Stream = i;

@@ -22,7 +22,7 @@ namespace RenderAPI
 
 		virtual void LogError(const char*) = 0;
 
-		virtual void LogWarning(const char*) = 0; 
+		virtual void LogWarning(const char*) = 0;
 
 		virtual void LogDebug(const char*) = 0;
 
@@ -544,11 +544,11 @@ namespace RenderAPI
 
 		virtual void SetDepthStencil(DepthStencil* depthStencil) = 0;
 
-		virtual void SetVertexBuffers(unsigned int startSlot, VertexBufferInfo* buffers, unsigned int bufferCount) = 0;
+		virtual void SetVertexBuffers(VertexBufferInfo* buffers, unsigned int bufferCount) = 0;
 
 		virtual void SetIndexBuffer(IndexBuffer* buffer, unsigned int offset) = 0;
 
-		virtual void SetTextures(unsigned int startSlot, Texture2D** textures, unsigned int resCount) = 0;
+		virtual void SetTexture(unsigned int slot, RenderAPI::Texture2D* textures) = 0;
 
 		virtual void SetBlendState(const BlendState& state) = 0;
 
@@ -560,9 +560,9 @@ namespace RenderAPI
 
 		virtual void SetDepthWriting(bool enable) = 0;
 
-		virtual void SetTextureBlendingState(unsigned int startSlot, const TextureBlendingState* states, unsigned int count) = 0;
+		virtual void SetTextureBlendingState(unsigned int slot, const TextureBlendingState& state) = 0;
 
-		virtual void SetTextureSampler(unsigned int startSlot, const TextureSampler* samplers, unsigned int count) = 0;
+		virtual void SetTextureSampler(unsigned int slot, const TextureSampler& sampler) = 0;
 
 		virtual void SetScissorState(const ScissorState& state) = 0;
 
