@@ -6,9 +6,9 @@ class RefCount
 {
 public:
 	RefCount() : count(1L) { }
-	ULONG operator ++() { return (ULONG)InterlockedIncrement(&count); }
-	ULONG operator --() { return (ULONG)InterlockedDecrement(&count); }
-	ULONG Count() const { return count; }
+	LONG operator ++() { return InterlockedIncrement(&count); }
+	LONG operator --() { return InterlockedDecrement(&count); }
+	LONG Count() const { return count; }
 private:
-	ULONG count;
+	volatile LONG count;
 };
