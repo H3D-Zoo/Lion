@@ -1,11 +1,16 @@
 #include "Context.h"
 
-void Context::ClearRenderTarget(RenderAPI::RenderTarget* rt, unsigned int color)
+void Context::ClearRenderTarget(unsigned int color)
 {
 
 }
 
-void Context::ClearDepthStencil(RenderAPI::DepthStencil* ds, float z, unsigned int stencil)
+void Context::ClearDepthBuffer( float z)
+{
+
+}
+
+void Context::ClearStencilBuffer(unsigned int stencil)
 {
 
 }

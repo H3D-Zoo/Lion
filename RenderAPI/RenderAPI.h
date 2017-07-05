@@ -509,12 +509,10 @@ namespace RenderAPI
 	{
 		VertexBufferInfo()
 			: BufferPtr(0)
-			, Stride(0)
 			, Offset(0)
 		{ }
 
 		VertexBuffer* BufferPtr;
-		unsigned int Stride;
 		unsigned int Offset;
 	};
 
@@ -534,9 +532,11 @@ namespace RenderAPI
 	class Context :public RObject
 	{
 	public:
-		virtual void ClearRenderTarget(RenderTarget* rt, unsigned int color) = 0;
+		virtual void ClearRenderTarget(unsigned int color) = 0;
 
-		virtual void ClearDepthStencil(DepthStencil* ds, float z, unsigned int stencil) = 0;
+		virtual void ClearDepthBuffer(float z) = 0;
+
+		virtual void ClearStencilBuffer(unsigned int stencil) = 0;
 
 		virtual void SetViewport(const Viewport&) = 0;
 

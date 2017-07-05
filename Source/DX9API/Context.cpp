@@ -188,18 +188,19 @@ Context::~Context()
 	m_pAPIContext = NULL;
 }
 
-void Context::ClearRenderTarget(RenderAPI::RenderTarget* rt, unsigned int color)
+void Context::ClearRenderTarget(unsigned int color)
 {
-	m_backBufferManager.SetTemporaryRT0(rt);
 	m_pDevice->Clear(0, NULL, D3DCLEAR_TARGET, color, 0, 0);
-	m_backBufferManager.ResetRT0();
 }
 
-void Context::ClearDepthStencil(RenderAPI::DepthStencil* ds, float z, unsigned int stencil)
+void Context::ClearDepthBuffer(float z)
 {
-	m_backBufferManager.SetTemporaryDS(ds);
-	m_pDevice->Clear(0, NULL, D3DCLEAR_ZBUFFER | D3DCLEAR_STENCIL, 0, z, stencil);
-	m_backBufferManager.ResetDS();
+	m_pDevice->Clear(0, NULL, D3DCLEAR_ZBUFFER, 0, z, 0);
+}
+
+void Context::ClearStencilBuffer(unsigned int stencil)
+{
+	m_pDevice->Clear(0, NULL, D3DCLEAR_STENCIL, 0, 0, stencil);
 }
 
 void Context::SetViewport(const RenderAPI::Viewport& vp)
@@ -231,7 +232,7 @@ void Context::SetVertexBuffers(RenderAPI::VertexBufferInfo* buffers, unsigned in
 	for (unsigned int i = 0; i < bufferCount; i++)
 	{
 		IDirect3DVertexBuffer9* vertexBufferPtr = ((::VertexBuffer*)buffers[i].BufferPtr)->GetBufferPtr();
-		HRESULT hr = m_pDevice->SetStreamSource(i, vertexBufferPtr, buffers[i].Offset, buffers[i].Stride);
+		HRESULT hr = m_pDevice->SetStreamSource(i, vertexBufferPtr, buffers[i].Offset, buffers[i].BufferPtr->GetVertexStride());
 		SetVertexElements(i, buffers[i].BufferPtr->GetElementPtr(), buffers[i].BufferPtr->GetElementCount());
 	}
 	m_vertexCount = buffers[0].BufferPtr->GetVertexCount();
@@ -550,12 +551,15 @@ void Context::RebuildDecalration()
 BackBufferManager::BackBufferManager(IDirect3DDevice9 * device, RenderAPI::RenderTarget * defRT, RenderAPI::DepthStencil * defDS)
 	: m_pDevice(device)
 	, m_pCurrentRTs(1)
-	, m_pLastRT0(NULL)
-	, m_pLastDS(NULL)
+	, m_pDefaultRT(NULL)
+	, m_pDefaultDS(NULL)
 {
 	m_pDevice->AddRef();
 	m_pCurrentRTs[0] = ((::RenderTarget*)defRT)->GetD3DSurface();
 	m_pCurrentDS = ((::DepthStencil*)defDS)->GetD3DSurface();
+
+	m_pDefaultRT = m_pCurrentRTs[0];
+	m_pDefaultDS = m_pCurrentDS;
 }
 
 BackBufferManager::~BackBufferManager()
@@ -575,7 +579,7 @@ void BackBufferManager::SetRenderTarget(unsigned int index, RenderAPI::RenderTar
 	}
 	else if (rtSurface != m_pCurrentRTs[index])
 	{
-		m_pDevice->SetRenderTarget(0, rtSurface);
+		HRESULT hr = m_pDevice->SetRenderTarget(0, rtSurface);
 		m_pCurrentRTs[index] = rtSurface;
 	}
 }
@@ -590,52 +594,14 @@ void BackBufferManager::SetDepthStencil(RenderAPI::DepthStencil * rt)
 	}
 }
 
-void BackBufferManager::SetTemporaryRT0(RenderAPI::RenderTarget * rt)
+bool BackBufferManager::IsDefaultRT()
 {
-	IDirect3DSurface9* rtSurface = ((::RenderTarget*)rt)->GetD3DSurface();
-	if (m_pCurrentRTs[0] != rtSurface)
-	{
-		if (m_pLastRT0 == NULL)
-		{
-			m_pLastRT0 = m_pCurrentRTs[0];
-		}
-
-		m_pCurrentRTs[0] = rtSurface;
-		m_pDevice->SetRenderTarget(0, rtSurface);
-	}
+	return m_pDefaultRT == m_pCurrentRTs[0];
 }
 
-void BackBufferManager::SetTemporaryDS(RenderAPI::DepthStencil * rt)
+bool BackBufferManager::IsDefaultDS()
 {
-	IDirect3DSurface9* dsSurface = ((::DepthStencil*)rt)->GetD3DSurface();
-	if (dsSurface != m_pCurrentDS)
-	{
-		if (m_pLastDS == NULL)
-		{
-			m_pLastDS = m_pCurrentDS;
-		}
-
-		m_pDevice->SetDepthStencilSurface(dsSurface);
-		m_pCurrentDS = dsSurface;
-	}
-}
-
-void BackBufferManager::ResetRT0()
-{
-	if (m_pLastRT0 != NULL)
-	{
-		m_pCurrentRTs[0] = m_pLastRT0;
-		m_pDevice->SetRenderTarget(0, m_pLastRT0);
-	}
-}
-
-void BackBufferManager::ResetDS()
-{
-	if (m_pLastDS != NULL)
-	{
-		m_pCurrentDS = m_pLastDS;
-		m_pDevice->SetDepthStencilSurface(m_pLastDS);
-	}
+	return m_pDefaultDS == m_pCurrentDS;
 }
 
 bool operator != (const RenderAPI::VertexElement& left, const RenderAPI::VertexElement& right)

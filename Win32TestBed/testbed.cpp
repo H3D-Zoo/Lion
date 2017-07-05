@@ -27,8 +27,11 @@ bool APITestBed::Init(HWND hWindow, HWND hWindowEditor, unsigned int backBufferW
 
 	CreateMesh();
 	CreatePartcleMesh();
+	CreateQuadMesh();
 	CreateMaterial();
 
+	m_pRenderTexture = m_pDevice->CreateRenderTarget(RenderAPI::BackBufferFormat::BACKBUFFER_XRGB8, 1024, 1024);
+	m_pRenderDepth = m_pDevice->CreateDepthStencil(RenderAPI::ZBufferFormat::ZBUFFER_D24S8, 1024, 1024);
 
 	const int kMatrixLength = sizeof(float) * 16;
 	m_matWorldBox.identity();
@@ -55,8 +58,13 @@ void APITestBed::Deinit()
 	Release(m_pParticleVBS);
 	Release(m_pParticleVBD);
 	Release(m_pParticleIB);
+	Release(m_pQuadVB);
+	Release(m_pQuadIB);
+	Release(m_pRenderTexture);
+	Release(m_pRenderDepth);
 	Release(m_pEffectTintColor);
 	Release(m_pEffectParticle);
+	Release(m_pEffectSimpleTexture);
 	Release(m_editorSwapChain);
 	Release(m_defaultSwapChain);
 	Release(m_pContext);
@@ -101,41 +109,60 @@ void APITestBed::Update()
 	m_matView = gml::mat44::look_at(eye, gml::vec3(0, 0, 0), gml::vec3::up());
 	m_matInvView = m_matView.inversed().transposed();
 
-	auto rt = m_defaultSwapChain->GetRenderTarget();
-	auto ds = m_defaultSwapChain->GetDepthStencil();
-	m_pContext->SetRenderTarget(0, rt);
-	m_pContext->SetDepthStencil(ds);
 	m_pContext->SetCullMode(RenderAPI::CULL_CCW);
+
+
+
+	m_pContext->SetRenderTarget(0, m_pRenderTexture);
+	m_pContext->SetDepthStencil(m_pRenderDepth);
+	RenderAPI::Viewport viewport;
+	viewport.Width = 1024;
+	viewport.Height = 1024;
+	m_pContext->SetViewport(viewport);
 	if (m_pContext->BeginScene())
 	{
-		m_pContext->ClearRenderTarget(rt, 0xFF00FF00);
-		m_pContext->ClearDepthStencil(ds, 1.0f, 0);
-		DrawBox(RenderAPI::TextureAddress::TEX_ADDRESS_Repeat, false);
-		DrawParticle();
+		m_pContext->ClearRenderTarget(0xFF0000FF);
+		m_pContext->ClearDepthBuffer(1.0f);
+		DrawParticle(m_matProjRTT);
 		m_pContext->EndScene();
 	}
 
-	m_defaultSwapChain->Present();
-	rt->Release();
+	m_pContext->SetCullMode(RenderAPI::CULL_CCW);
+	auto ds = m_defaultSwapChain->GetDepthStencil();
+	auto rt = m_defaultSwapChain->GetRenderTarget();
+	m_pContext->SetRenderTarget(0, rt);
+	m_pContext->SetDepthStencil(ds);
 	ds->Release();
+	rt->Release();
+	m_pContext->SetViewport(m_bbViewport);
+	if (m_pContext->BeginScene())
+	{
+		m_pContext->ClearRenderTarget(0xFF00FF00);
+		m_pContext->ClearDepthBuffer(1.0f);
+		DrawBox(RenderAPI::TextureAddress::TEX_ADDRESS_Repeat, false);
+		DrawParticle(m_matProj);
+		DrawRTTQuad();
+		m_pContext->EndScene();
+	}
+	m_defaultSwapChain->Present();
 
 	//sub window
 	auto rtEditor = m_editorSwapChain->GetRenderTarget();
 	auto dsEditor = m_editorSwapChain->GetDepthStencil();
 	m_pContext->SetRenderTarget(0, rtEditor);
 	m_pContext->SetDepthStencil(dsEditor);
+	rtEditor->Release();
+	dsEditor->Release();
+
 	m_pContext->SetCullMode(RenderAPI::CULL_CW);
 	if (m_pContext->BeginScene())
 	{
-		m_pContext->ClearRenderTarget(rtEditor, 0xFFFF0000);
-		m_pContext->ClearDepthStencil(dsEditor, 1.0f, 0);
+		m_pContext->ClearRenderTarget(0xFFFF0000);
+		m_pContext->ClearDepthBuffer(1.0f);
 		DrawBox(RenderAPI::TextureAddress::TEX_ADDRESS_Clamp, true);
 		m_pContext->EndScene();
 	}
 	m_editorSwapChain->Present();
-	rtEditor->Release();
-	dsEditor->Release();
-
 	if (m_pContext->CheckDeviceLost() == RenderAPI::DEVICE_Lost)
 	{
 		throw nullptr;
@@ -146,7 +173,11 @@ void APITestBed::OnResize(unsigned int width, unsigned int height)
 {
 	//build projection matrix;
 	m_matProj = gml::mat44::perspective_lh(gml::degree(45), width*1.0f / height, 1.0f, 100.0f);
+	m_matProjRTT = gml::mat44::perspective_lh(gml::degree(45), 1.0f, 1.0f, 100.0f);
+
 	m_defaultSwapChain->OnResize(width, height);
+	m_bbViewport.Width = width;
+	m_bbViewport.Height = height;
 }
 
 bool APITestBed::LoadDLL()
@@ -206,7 +237,6 @@ bool APITestBed::CreateDeviceAndContext(HWND hWindow, HWND hWindowEditor, unsign
 	return true;
 }
 
-
 void APITestBed::CreateMesh()
 {
 	BoxMesh boxMesh;
@@ -216,7 +246,35 @@ void APITestBed::CreateMesh()
 	m_boxVBInfos.resize(1);
 	m_boxVBInfos[0].BufferPtr = m_pBoxVertexBuffer;
 	m_boxVBInfos[0].Offset = 0;
-	m_boxVBInfos[0].Stride = m_pBoxVertexBuffer->GetVertexStride();
+}
+
+void APITestBed::CreateQuadMesh()
+{
+	struct QuadVertex
+	{
+		gml::vec3 position;
+		gml::vec2 texcoord;
+	} quadVertices[4] =
+	{
+		{ { 0.5, 0.5, 0 }, { 0, 1} },
+		{ { 1.0, 0.5, 0 }, { 1, 1 } },
+		{ { 1.0, 1.0, 0 }, { 1, 0 } },
+		{ { 0.5, 1.0, 0 }, { 0, 0 } },
+	};
+
+	RenderAPI::VertexElement elements[2];
+	elements[0].SemanticName = RenderAPI::SEMANTIC_POSITION;
+	elements[1].SemanticName = RenderAPI::SEMANTIC_TEXCOORD;
+	elements[0].Format = RenderAPI::INPUT_Float3;
+	elements[1].Format = RenderAPI::INPUT_Float2;
+	elements[0].SemanticIndex = 0;
+	elements[1].SemanticIndex = 0;
+
+	unsigned short quadIndices[] = { 0, 2, 1, 0, 3, 2 };
+
+
+	m_pQuadVB = m_pDevice->CreateVertexBuffer(RenderAPI::RESUSAGE_Immuable, 4, sizeof(QuadVertex), elements, 2, quadVertices);
+	m_pQuadIB = m_pDevice->CreateIndexBuffer(RenderAPI::RESUSAGE_Immuable, RenderAPI::INDEX_Int16, 6, quadIndices);
 }
 
 void APITestBed::CreatePartcleMesh()
@@ -227,10 +285,7 @@ void APITestBed::CreatePartcleMesh()
 
 	m_particleVBInfos.resize(2);
 	m_particleVBInfos[0].BufferPtr = m_pParticleVBD;
-	m_particleVBInfos[0].Stride = m_pParticleVBD->GetVertexStride();
-
 	m_particleVBInfos[1].BufferPtr = m_pParticleVBS;
-	m_particleVBInfos[1].Stride = m_pParticleVBS->GetVertexStride();
 }
 
 void APITestBed::CreateMaterial()
@@ -240,6 +295,9 @@ void APITestBed::CreateMaterial()
 
 	m_pEffectParticle = m_pDevice->CreateFXEffectFromFile("../../Win32TestBed/Particle.fx");
 	m_pEffectParticle->SetValidateTechnique();
+
+	m_pEffectSimpleTexture = m_pDevice->CreateFXEffectFromFile("../../Win32TestBed/SimpleTexture.fx");
+	m_pEffectSimpleTexture->SetValidateTechnique();
 
 	file_data pngFileData = read_file("../../Win32TestBed/particle.png");
 	if (pngFileData.is_valid())
@@ -349,7 +407,7 @@ void APITestBed::DrawBox(RenderAPI::TextureAddress address, bool alphaBlending)
 				m_pContext->SetBlendState(abstate);
 			}
 			m_pContext->DrawIndexed(RenderAPI::PRIMITIVE_TriangleList, 0, 0, faceCount);
-			
+
 			m_pEffectTintColor->EndPass();
 		}
 		m_pEffectTintColor->End();
@@ -363,7 +421,7 @@ void APITestBed::DrawBox(RenderAPI::TextureAddress address, bool alphaBlending)
 	}
 }
 
-void APITestBed::DrawParticle()
+void APITestBed::DrawParticle(const gml::mat44& matProj)
 {
 	int passCount = m_pEffectParticle->Begin();
 	if (passCount > 0)
@@ -374,7 +432,7 @@ void APITestBed::DrawParticle()
 				continue;
 			m_pEffectParticle->SetMatrix("g_matWorld", (float*)m_matWorldParticle.m);
 			m_pEffectParticle->SetMatrix("g_matView", (float*)m_matView.m);
-			m_pEffectParticle->SetMatrix("g_matProj", (float*)m_matProj.m);
+			m_pEffectParticle->SetMatrix("g_matProj", (float*)matProj.m);
 			m_pEffectParticle->SetValue("g_cameraX", (float*)m_matInvView.row[0], sizeof(gml::vec4));
 			m_pEffectParticle->SetValue("g_cameraY", (float*)m_matInvView.row[1], sizeof(gml::vec4));
 			m_pEffectParticle->SetTexture("g_particleTexture", m_pParticleTexture);
@@ -386,6 +444,32 @@ void APITestBed::DrawParticle()
 			m_pEffectParticle->EndPass();
 		}
 		m_pEffectParticle->End();
+	}
+}
+
+void APITestBed::DrawRTTQuad()
+{
+	RenderAPI::VertexBufferInfo vbInfo;
+	vbInfo.BufferPtr = m_pQuadVB;
+	vbInfo.Offset = 0;
+
+	int passCount = m_pEffectSimpleTexture->Begin();
+	if (passCount > 0)
+	{
+		for (int i = 0; i < passCount; i++)
+		{
+			if (!m_pEffectSimpleTexture->BeginPass(i))
+				continue;
+
+			m_pEffectSimpleTexture->SetTexture("g_texture", m_pRenderTexture->GetTexturePtr());
+			m_pEffectSimpleTexture->CommitChange();
+			m_pContext->SetVertexBuffers(&vbInfo, 1);
+			m_pContext->SetIndexBuffer(m_pQuadIB, 0);
+			m_pContext->DrawIndexed(RenderAPI::PRIMITIVE_TriangleList, 0, 0, 2);
+			m_pEffectSimpleTexture->EndPass();
+
+		}
+		m_pEffectSimpleTexture->End();
 	}
 }
 
