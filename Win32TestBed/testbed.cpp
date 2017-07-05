@@ -110,7 +110,7 @@ void APITestBed::Update()
 	{
 		m_pContext->ClearRenderTarget(rt, 0xFF00FF00);
 		m_pContext->ClearDepthStencil(ds, 1.0f, 0);
-		DrawBox(RenderAPI::TextureAddress::TEX_ADDRESS_Repeat);
+		DrawBox(RenderAPI::TextureAddress::TEX_ADDRESS_Repeat, false);
 		DrawParticle();
 		m_pContext->EndScene();
 	}
@@ -129,7 +129,7 @@ void APITestBed::Update()
 	{
 		m_pContext->ClearRenderTarget(rtEditor, 0xFFFF0000);
 		m_pContext->ClearDepthStencil(dsEditor, 1.0f, 0);
-		DrawBox(RenderAPI::TextureAddress::TEX_ADDRESS_Clamp);
+		DrawBox(RenderAPI::TextureAddress::TEX_ADDRESS_Clamp, true);
 		m_pContext->EndScene();
 	}
 	m_editorSwapChain->Present();
@@ -312,7 +312,7 @@ void APITestBed::CreateMaterial()
 
 float RandomRangeF(float  min, float max) { return min + rand() * (max - min) / RAND_MAX; }
 
-void APITestBed::DrawBox(RenderAPI::TextureAddress address)
+void APITestBed::DrawBox(RenderAPI::TextureAddress address, bool alphaBlending)
 {
 	RenderAPI::TextureSampler sampler;
 	sampler.AddressU = sampler.AddressV = address;
@@ -334,11 +334,32 @@ void APITestBed::DrawBox(RenderAPI::TextureAddress address)
 			const int faceCount = 6 * 2;
 			m_pContext->SetTexture(0, m_pBoxTexture);
 			m_pContext->SetTextureSampler(0, sampler);
+			if (alphaBlending)
+			{
+				RenderAPI::BlendState abstate;
+				abstate.IsEnable = true;
+				abstate.ColorSrc = RenderAPI::BLEND_One;
+				abstate.ColorDst = RenderAPI::BLEND_InvSrcColor;
+				abstate.ColorOp = RenderAPI::BLENDOP_Sub;
+				m_pContext->SetBlendState(abstate);
+			}
+			else
+			{
+				RenderAPI::BlendState abstate;
+				m_pContext->SetBlendState(abstate);
+			}
 			m_pContext->DrawIndexed(RenderAPI::PRIMITIVE_TriangleList, 0, 0, faceCount);
-
+			
 			m_pEffectTintColor->EndPass();
 		}
 		m_pEffectTintColor->End();
+	}
+
+	if (alphaBlending)
+	{
+		RenderAPI::BlendState abstate;
+		abstate.IsEnable = true;
+		m_pContext->SetBlendState(abstate);
 	}
 }
 
