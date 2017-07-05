@@ -19,20 +19,16 @@ public:
 
 	void SetDepthStencil(RenderAPI::DepthStencil* rt);
 
-	void SetTemporaryRT0(RenderAPI::RenderTarget* rt);
+	bool IsDefaultRT();
 
-	void SetTemporaryDS(RenderAPI::DepthStencil* rt);
-
-	void ResetRT0();
-
-	void ResetDS();
+	bool IsDefaultDS();
 
 private:
 	IDirect3DDevice9* m_pDevice;
 	std::vector<IDirect3DSurface9*> m_pCurrentRTs;
 	IDirect3DSurface9* m_pCurrentDS;
-	IDirect3DSurface9* m_pLastRT0;
-	IDirect3DSurface9* m_pLastDS;
+	IDirect3DSurface9* m_pDefaultRT;
+	IDirect3DSurface9* m_pDefaultDS;
 
 };
 
@@ -43,9 +39,11 @@ public:
 
 	~Context();
 
-	virtual void ClearRenderTarget(RenderAPI::RenderTarget* rt, unsigned int color);
+	virtual void ClearRenderTarget(unsigned int color);
 
-	virtual void ClearDepthStencil(RenderAPI::DepthStencil* ds, float z, unsigned int stencil);
+	virtual void ClearDepthBuffer(float z);
+
+	virtual void ClearStencilBuffer(unsigned int stencil);
 
 	virtual void SetViewport(const RenderAPI::Viewport&);
 

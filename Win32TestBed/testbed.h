@@ -20,10 +20,13 @@ private:
 	bool LoadDLL();
 	bool CreateDeviceAndContext(HWND hWindow, HWND hWindowEditor, unsigned int backBufferWidth, unsigned int backBufferHeight);
 	void CreateMesh();
+	void CreateQuadMesh();
 	void CreatePartcleMesh();
 	void CreateMaterial();
+	
 	void DrawBox(RenderAPI::TextureAddress address, bool alphaBlending);
-	void DrawParticle();
+	void DrawParticle(const gml::mat44& matProj);
+	void DrawRTTQuad();
 	void UploadParticlesAndCommitDrawcalls();
 
 	HMODULE m_hRenderAPIDLL = nullptr;
@@ -39,6 +42,8 @@ private:
 	RenderAPIDeinit m_apiDeinitPtr = nullptr;
 	RenderAPICreate m_apiCreatePtr = nullptr;
 
+	RenderAPI::Viewport m_bbViewport;
+
 	RenderAPI::VertexBuffer* m_pParticleVBS = nullptr;
 	RenderAPI::VertexBuffer* m_pParticleVBD = nullptr;
 	RenderAPI::IndexBuffer* m_pParticleIB = nullptr;
@@ -46,11 +51,18 @@ private:
 	RenderAPI::VertexBuffer* m_pBoxVertexBuffer = nullptr;
 	RenderAPI::IndexBuffer* m_pBoxIndexBuffer = nullptr;
 
+	RenderAPI::VertexBuffer* m_pQuadVB = nullptr;
+	RenderAPI::IndexBuffer* m_pQuadIB = nullptr;
+
 	RenderAPI::FXEffect* m_pEffectTintColor = nullptr;
 	RenderAPI::FXEffect* m_pEffectParticle = nullptr;
+	RenderAPI::FXEffect* m_pEffectSimpleTexture = nullptr;
 
 	RenderAPI::Texture2D* m_pParticleTexture = nullptr;
 	RenderAPI::Texture2D* m_pBoxTexture = nullptr;
+
+	RenderAPI::RenderTarget* m_pRenderTexture = nullptr;
+	RenderAPI::DepthStencil* m_pRenderDepth = nullptr;
 
 	std::vector<RenderAPI::VertexBufferInfo> m_boxVBInfos;
 	std::vector<RenderAPI::VertexBufferInfo> m_particleVBInfos;
@@ -61,6 +73,7 @@ private:
 	gml::mat44 m_matWorldBox;
 	gml::mat44 m_matView;
 	gml::mat44 m_matProj;
+	gml::mat44 m_matProjRTT;
 	gml::mat44 m_matInvView;
 
 	

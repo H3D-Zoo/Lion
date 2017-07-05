@@ -171,9 +171,14 @@ bool FXEffect::SetInt(const char * paramName, int iValue)
 
 bool FXEffect::SetTexture(const char * paramName, RenderAPI::Texture2D * texture)
 {
-	IDirect3DTexture9* texturePtr = ((::Texture2D*)(texture))->GetD3DTexture();
+	IDirect3DTexture9* texturePtr = NULL;
+	if (texture != NULL)
+	{
+		texturePtr = ((::Texture2D*)(texture))->GetD3DTexture();
+	}
+
 	D3DXHANDLE handle = m_pEffect->GetParameterByName(NULL, paramName);
-	if (handle != NULL || texturePtr != NULL)
+	if (handle != NULL)
 	{
 		return S_OK == m_pEffect->SetTexture(handle, texturePtr);
 	}

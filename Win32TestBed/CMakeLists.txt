@@ -71,6 +71,7 @@ set(TESTBED_SOURCE_FILES
 	./particle.cpp
 	./TintColor.fx
 	./Particle.fx
+	./SimpleTexture.fx
 )
 
 source_group(include FILES ${TESTBED_INCLUDE_FILES})

@@ -5,9 +5,11 @@
 class Context :public RenderAPI::Context
 {
 public:
-	virtual void ClearRenderTarget(RenderAPI::RenderTarget* rt, unsigned int color);
+	virtual void ClearRenderTarget(unsigned int color);
 
-	virtual void ClearDepthStencil(RenderAPI::DepthStencil* ds, float z, unsigned int stencil);
+	virtual void ClearDepthBuffer(float z);
+
+	virtual void ClearStencilBuffer(unsigned int stencil) ;
 
 	virtual void SetViewport(const RenderAPI::Viewport&);
 
