@@ -32,8 +32,8 @@ void ParticleInstance::SpawnParticle()
 	}
 	Particle& particle = m_particles[m_particleCount++];
 
-	particle.color = gml::color3::random();
-	particle.lifeTime = RandomRangeI(800, 1200);
+	particle.color = gml::color4::random();
+	particle.maxLifeTime = particle.lifeTime = RandomRangeI(800, 1200);
 
 	//box range
 	const float kBoxRange = 1.0f;
@@ -101,7 +101,7 @@ void ParticleInstance::FillStaticMesh()
 	}
 }
 
-ParticleInstance::ParticleInstance() 
+ParticleInstance::ParticleInstance()
 	: m_sVertices(kParticleVertexCount)
 	, m_indices(kParticleIndexCount)
 	, m_sElements(2)
@@ -144,7 +144,6 @@ void ParticleInstance::Update(unsigned int elapsedMillionSecond)
 
 int ParticleInstance::FillVertexBuffer(ParticleVertexD* posVBPtr, int offset)
 {
-	const int kParticleCount = 256;
 	int fillCount = __min(kParticleCount, m_particleCount - offset);
 
 	for (int i = 0; i < fillCount; i++)
@@ -155,7 +154,7 @@ int ParticleInstance::FillVertexBuffer(ParticleVertexD* posVBPtr, int offset)
 		ParticleVertexD& v2 = posVBPtr[vIndex + 2];
 		ParticleVertexD& v3 = posVBPtr[vIndex + 3];
 		Particle& p = m_particles[offset + i];
-		v0.color = v1.color = v2.color = v3.color = p.color = p.color;
+		v0.color = v1.color = v2.color = v3.color = p.color.bgra();
 		v0.position = v1.position = v2.position = v3.position = p.position;
 	}
 	return fillCount;
@@ -174,5 +173,7 @@ void ParticleInstance::Particle::Update(unsigned int deltaTime)
 
 		position += velocity * second + 0.5f *acceleration * second * second;
 		velocity += acceleration * second;
+
+		color.a = Alpha();
 	}
 }

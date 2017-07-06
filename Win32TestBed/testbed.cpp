@@ -30,12 +30,22 @@ bool APITestBed::Init(HWND hWindow, HWND hWindowEditor, unsigned int backBufferW
 	CreateQuadMesh();
 	CreateMaterial();
 
+	m_textureSize.x = 1024;
+	m_textureSize.y = 1024;
 	m_pRenderTexture = m_pDevice->CreateRenderTarget(RenderAPI::BackBufferFormat::BACKBUFFER_XRGB8, 1024, 1024);
 	m_pRenderDepth = m_pDevice->CreateDepthStencil(RenderAPI::ZBufferFormat::ZBUFFER_D24S8, 1024, 1024);
 
 	const int kMatrixLength = sizeof(float) * 16;
-	m_matWorldBox.identity();
-	m_matWorldParticle = gml::mat44::translate(2.5, 0, 0);
+	m_matWorldBoxs.resize(100);
+
+	gml::mat44 matScale = gml::mat44::scale(0.25f);
+	for (int i = 0; i < 10; i++)
+	{
+		for (int j = 0; j < 10; j++)
+			m_matWorldBoxs[i * 10 + j] = gml::mat44::translate(-4.5f + j, 0, -4.5f + i) * matScale;
+	}
+
+	m_matWorldParticle = gml::mat44::translate(2.5f, 0, 0);
 	m_matView = gml::mat44::look_at(gml::vec3(0, 0, -20), gml::vec3(0, 0, 0), gml::vec3::up());
 	m_matInvView = m_matView.inversed();
 	return true;
@@ -93,8 +103,8 @@ void APITestBed::Update()
 	const float distance = 10;
 	static float rho = 0;
 	static float phi = 0;
-	rho = timeScale * 0.5f;
-	phi = sin(timeScale) * gml::PI * 0.25f;
+	rho = timeScale * 0.15f;
+	phi = sin(timeScale) * gml::PI * 0.2f;
 	float sinr = sin(rho);
 	float sinp = sin(phi);
 	float cosr = cos(rho);
@@ -110,9 +120,6 @@ void APITestBed::Update()
 	m_matInvView = m_matView.inversed().transposed();
 
 	m_pContext->SetCullMode(RenderAPI::CULL_CCW);
-
-
-
 	m_pContext->SetRenderTarget(0, m_pRenderTexture);
 	m_pContext->SetDepthStencil(m_pRenderDepth);
 	RenderAPI::Viewport viewport;
@@ -121,7 +128,7 @@ void APITestBed::Update()
 	m_pContext->SetViewport(viewport);
 	if (m_pContext->BeginScene())
 	{
-		m_pContext->ClearRenderTarget(0xFF0000FF);
+		m_pContext->ClearRenderTarget(0xFF000099);
 		m_pContext->ClearDepthBuffer(1.0f);
 		DrawParticle(m_matProjRTT);
 		m_pContext->EndScene();
@@ -135,15 +142,25 @@ void APITestBed::Update()
 	ds->Release();
 	rt->Release();
 	m_pContext->SetViewport(m_bbViewport);
+	m_pContext->ClearRenderTarget(0xFF009999);
+	RenderAPI::ScissorState scissorState;
+	scissorState.IsEnable = true;
+	scissorState.Left = 100;
+	scissorState.Top = 50;
+	scissorState.Right = 1300;
+	scissorState.Bottom = 550;
+	m_pContext->SetScissorState(scissorState);
 	if (m_pContext->BeginScene())
 	{
-		m_pContext->ClearRenderTarget(0xFF00FF00);
+		m_pContext->ClearRenderTarget(0xFF009900);
 		m_pContext->ClearDepthBuffer(1.0f);
 		DrawBox(RenderAPI::TextureAddress::TEX_ADDRESS_Repeat, false);
 		DrawParticle(m_matProj);
 		DrawRTTQuad();
 		m_pContext->EndScene();
 	}
+	scissorState.IsEnable = false;
+	m_pContext->SetScissorState(scissorState);
 	m_defaultSwapChain->Present();
 
 	//sub window
@@ -157,7 +174,7 @@ void APITestBed::Update()
 	m_pContext->SetCullMode(RenderAPI::CULL_CW);
 	if (m_pContext->BeginScene())
 	{
-		m_pContext->ClearRenderTarget(0xFFFF0000);
+		m_pContext->ClearRenderTarget(0xFF990000);
 		m_pContext->ClearDepthBuffer(1.0f);
 		DrawBox(RenderAPI::TextureAddress::TEX_ADDRESS_Clamp, true);
 		m_pContext->EndScene();
@@ -175,6 +192,9 @@ void APITestBed::OnResize(unsigned int width, unsigned int height)
 	m_matProj = gml::mat44::perspective_lh(gml::degree(45), width*1.0f / height, 1.0f, 100.0f);
 	m_matProjRTT = gml::mat44::perspective_lh(gml::degree(45), 1.0f, 1.0f, 100.0f);
 
+	// depend of data in quadVertices
+	m_texelOffsetOffScreen.x = 1.0f / (width * 0.5f * 0.75f);
+	m_texelOffsetOffScreen.y = 1.0f / (height * 0.5f * 0.75f);
 	m_defaultSwapChain->OnResize(width, height);
 	m_bbViewport.Width = width;
 	m_bbViewport.Height = height;
@@ -256,10 +276,10 @@ void APITestBed::CreateQuadMesh()
 		gml::vec2 texcoord;
 	} quadVertices[4] =
 	{
-		{ { 0.5, 0.5, 0 }, { 0, 1} },
-		{ { 1.0, 0.5, 0 }, { 1, 1 } },
-		{ { 1.0, 1.0, 0 }, { 1, 0 } },
-		{ { 0.5, 1.0, 0 }, { 0, 0 } },
+		{ { 0.25, 0.25, 0 }, { 0, 1} },
+		{ { 1.00, 0.25, 0 }, { 1, 1 } },
+		{ { 1.00, 1.00, 0 }, { 1, 0 } },
+		{ { 0.25, 1.00, 0 }, { 0, 0 } },
 	};
 
 	RenderAPI::VertexElement elements[2];
@@ -372,6 +392,8 @@ float RandomRangeF(float  min, float max) { return min + rand() * (max - min) / 
 
 void APITestBed::DrawBox(RenderAPI::TextureAddress address, bool alphaBlending)
 {
+	RenderAPI::DepthTestingState depthState;
+	depthState.IsEnable = true;
 	RenderAPI::TextureSampler sampler;
 	sampler.AddressU = sampler.AddressV = address;
 	sampler.Filter = RenderAPI::FILTER_MinL_MagL_MipL;
@@ -383,15 +405,14 @@ void APITestBed::DrawBox(RenderAPI::TextureAddress address, bool alphaBlending)
 		{
 			if (!m_pEffectTintColor->BeginPass(i))
 				continue;
-			m_pEffectTintColor->SetMatrix("g_matWorld", (float*)m_matWorldBox.m);
-			m_pEffectTintColor->SetMatrix("g_matView", (float*)m_matView.m);
-			m_pEffectTintColor->SetMatrix("g_matProj", (float*)m_matProj.m);
-			m_pEffectTintColor->CommitChange();
+
+
 			m_pContext->SetVertexBuffers(&(m_boxVBInfos[0]), m_boxVBInfos.size());
 			m_pContext->SetIndexBuffer(m_pBoxIndexBuffer, 0);
-			const int faceCount = 6 * 2;
 			m_pContext->SetTexture(0, m_pBoxTexture);
 			m_pContext->SetTextureSampler(0, sampler);
+			m_pEffectTintColor->SetMatrix("g_matView", (float*)m_matView.m);
+			m_pEffectTintColor->SetMatrix("g_matProj", (float*)m_matProj.m);
 			if (alphaBlending)
 			{
 				RenderAPI::BlendState abstate;
@@ -406,8 +427,28 @@ void APITestBed::DrawBox(RenderAPI::TextureAddress address, bool alphaBlending)
 				RenderAPI::BlendState abstate;
 				m_pContext->SetBlendState(abstate);
 			}
-			m_pContext->DrawIndexed(RenderAPI::PRIMITIVE_TriangleList, 0, 0, faceCount);
 
+			const int faceCount = 6 * 2;
+			for (int i = 0; i < 10; i++)
+			{
+				for (int j = 0; j < 10; j++)
+				{
+					if ((i % 2) ^ (j % 2))
+					{
+						depthState.Function = RenderAPI::COMPARE_Less;
+						m_pContext->SetDepthTestingState(depthState);
+					}
+					else
+					{
+
+						depthState.Function = RenderAPI::COMPARE_Greater;
+						m_pContext->SetDepthTestingState(depthState);
+					}
+					m_pEffectTintColor->SetMatrix("g_matWorld", (float*)m_matWorldBoxs[i * 10 + j].m);
+					m_pEffectTintColor->CommitChange();
+					m_pContext->DrawIndexed(RenderAPI::PRIMITIVE_TriangleList, 0, 0, faceCount);
+				}
+			}
 			m_pEffectTintColor->EndPass();
 		}
 		m_pEffectTintColor->End();
@@ -419,10 +460,15 @@ void APITestBed::DrawBox(RenderAPI::TextureAddress address, bool alphaBlending)
 		abstate.IsEnable = true;
 		m_pContext->SetBlendState(abstate);
 	}
+
+	depthState.Function = RenderAPI::COMPARE_Less;
+	m_pContext->SetDepthTestingState(depthState);
 }
 
 void APITestBed::DrawParticle(const gml::mat44& matProj)
 {
+	RenderAPI::AlphaTestingState alphaState;
+
 	int passCount = m_pEffectParticle->Begin();
 	if (passCount > 0)
 	{
@@ -449,10 +495,19 @@ void APITestBed::DrawParticle(const gml::mat44& matProj)
 
 void APITestBed::DrawRTTQuad()
 {
+
+	m_pContext->ClearStencilBuffer(0);
+
 	RenderAPI::VertexBufferInfo vbInfo;
 	vbInfo.BufferPtr = m_pQuadVB;
 	vbInfo.Offset = 0;
 
+	RenderAPI::AlphaTestingState alphaState;
+	alphaState.IsEnable = true;
+	alphaState.Reference = 0.5;
+	m_pContext->SetAlphaTestingState(alphaState);
+
+	m_pEffectSimpleTexture->SetTechniqueByName("SimpleTextureStencil");
 	int passCount = m_pEffectSimpleTexture->Begin();
 	if (passCount > 0)
 	{
@@ -460,7 +515,28 @@ void APITestBed::DrawRTTQuad()
 		{
 			if (!m_pEffectSimpleTexture->BeginPass(i))
 				continue;
+			m_pEffectSimpleTexture->SetValue("g_texelOffset", &(m_texelOffsetOffScreen[0]), sizeof(gml::vec4));
+			m_pEffectSimpleTexture->SetTexture("g_texture", m_pRenderTexture->GetTexturePtr());
+			m_pEffectSimpleTexture->CommitChange();
+			m_pContext->SetVertexBuffers(&vbInfo, 1);
+			m_pContext->SetIndexBuffer(m_pQuadIB, 0);
+			m_pContext->DrawIndexed(RenderAPI::PRIMITIVE_TriangleList, 0, 0, 2);
+			m_pEffectSimpleTexture->EndPass();
+		}
+		m_pEffectSimpleTexture->End();
+	}
+	alphaState.IsEnable = false;
+	m_pContext->SetAlphaTestingState(alphaState);
 
+	
+	m_pEffectSimpleTexture->SetTechniqueByName("SimpleTexture");
+	passCount = m_pEffectSimpleTexture->Begin();
+	if (passCount > 0)
+	{
+		for (int i = 0; i < passCount; i++)
+		{
+			if (!m_pEffectSimpleTexture->BeginPass(i))
+				continue;
 			m_pEffectSimpleTexture->SetTexture("g_texture", m_pRenderTexture->GetTexturePtr());
 			m_pEffectSimpleTexture->CommitChange();
 			m_pContext->SetVertexBuffers(&vbInfo, 1);
@@ -471,6 +547,9 @@ void APITestBed::DrawRTTQuad()
 		}
 		m_pEffectSimpleTexture->End();
 	}
+
+	RenderAPI::StencilTestingState stencilState;
+	m_pContext->SetStencilTestingState(stencilState);
 }
 
 void APITestBed::UploadParticlesAndCommitDrawcalls()
@@ -479,7 +558,6 @@ void APITestBed::UploadParticlesAndCommitDrawcalls()
 	int particleCount = m_particleInstance.GetParticleCount();
 	while (filledCount < particleCount)
 	{
-
 		const float kParticleSize = 0.1f;
 		const float range = 1.5f;
 		ParticleVertexD* vertices = (ParticleVertexD*)m_pParticleVBD->DiscardLock();

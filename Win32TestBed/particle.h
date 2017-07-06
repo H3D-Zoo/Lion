@@ -7,7 +7,7 @@
 struct ParticleVertexD
 {
 	gml::vec3 position;
-	gml::color3 color;
+	unsigned int color;
 };
 
 struct ParticleVertexS
@@ -20,8 +20,9 @@ class ParticleInstance
 {
 	struct Particle
 	{
+		unsigned int maxLifeTime;
 		unsigned int lifeTime;
-		gml::color3 color;
+		gml::color4 color;
 		gml::vec3 position;
 		gml::vec3 velocity;
 		gml::vec3 acceleration;
@@ -29,6 +30,8 @@ class ParticleInstance
 		void Update(unsigned int deltaTime);
 
 		bool IsDead() { return lifeTime == 0; }
+
+		float Alpha() { return (float)lifeTime / maxLifeTime; }
 	};
 
 public:

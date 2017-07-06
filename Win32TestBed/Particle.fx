@@ -38,7 +38,7 @@ V2P VSParticle(VSInput INP)
 
 	OUT.position = outPos;
 	OUT.texcoord = INP.texcoord;
-	OUT.color = float4(INP.color.rgb, 1);
+	OUT.color = INP.color;
 	return OUT;
 }
 
@@ -52,7 +52,7 @@ technique Particle
 	pass
 	{
 		AlphaBlendEnable = TRUE;
-		SrcBlend = ONE;
+		SrcBlend = SrcAlpha;
 		DestBlend = ONE;
 		ZWriteEnable = FALSE;
 		ZEnable = TRUE;

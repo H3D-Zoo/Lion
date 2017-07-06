@@ -69,8 +69,10 @@ private:
 
 	ParticleInstance m_particleInstance;
 
+	gml::vec4 m_texelOffsetOffScreen;
+	gml::vec4 m_textureSize;
 	gml::mat44 m_matWorldParticle;
-	gml::mat44 m_matWorldBox;
+	std::vector<gml::mat44> m_matWorldBoxs;
 	gml::mat44 m_matView;
 	gml::mat44 m_matProj;
 	gml::mat44 m_matProjRTT;
