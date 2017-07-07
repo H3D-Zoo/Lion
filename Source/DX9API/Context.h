@@ -106,6 +106,7 @@ private:
 	APIContext* m_pAPIContext;
 	FXStateManager m_renderStateManager;
 	IDirect3DDevice9* m_pDevice;
+	IDirect3DDevice9Ex* m_pDeviceEx;
 	BackBufferManager m_backBufferManager;
 	unsigned int m_vertexCount;
 	unsigned int m_indexBufferOffset;

@@ -57,7 +57,7 @@ D3DFORMAT s_IndexFormats[IndexFormatCount] =
 	D3DFMT_INDEX32,
 };
 
-unsigned int s_lockOptions[LockOptionCount] = 
+unsigned int s_lockOptions[LockOptionCount] =
 {
 	0,
 	D3DLOCK_DISCARD,

@@ -170,6 +170,10 @@ Context::Context(APIContext* pAPIContext, IDirect3DDevice9 * device, RenderAPI::
 	, m_pVertexDeclaration(NULL)
 {
 	m_pAPIContext->pContext = this;
+	if (m_pAPIContext->pD3D->IsSupportD3D9EX())
+	{
+		m_pDeviceEx = (IDirect3DDevice9Ex*)m_pDevice;
+	}
 }
 
 Context::~Context()
@@ -185,6 +189,7 @@ Context::~Context()
 
 	m_pDevice->Release();
 	m_pAPIContext->Release();
+	m_pDeviceEx = NULL;
 	m_pDevice = NULL;
 	m_pAPIContext = NULL;
 }
@@ -452,14 +457,24 @@ RenderAPI::DeviceState Context::Present()
 
 RenderAPI::DeviceState Context::CheckDeviceLost()
 {
-	HRESULT hr = m_pDevice->TestCooperativeLevel();
-	return DeviceStateMapping(hr);
+	if (m_pDeviceEx != NULL)
+	{
+		// D3D9EX的设备丢失要通过CheckDeviceState来进行
+		HRESULT hr = m_pDeviceEx->CheckDeviceState(m_pAPIContext->CreationParam.hDeviceWindow);
+		return DeviceStateMapping(hr);
+	}
+	else
+	{
+
+		HRESULT hr = m_pDevice->TestCooperativeLevel();
+		return DeviceStateMapping(hr);
+	}
 }
 
 RenderAPI::DeviceState Context::ResetDevice()
 {
 	HRESULT hr = S_OK;
-	if (m_pAPIContext->pD3D->IsSupportD3D9EX())
+	if (m_pDeviceEx != NULL)
 	{
 		D3DDISPLAYMODEEX* pfullScreenSetting = NULL;
 		D3DDISPLAYMODEEX fullScreenSetting;
@@ -479,7 +494,15 @@ RenderAPI::DeviceState Context::ResetDevice()
 	{
 		hr = m_pDevice->Reset(&(m_pAPIContext->CreationParam));
 	}
-	return DeviceStateMapping(hr);
+
+	if (hr == D3DERR_INVALIDCALL)
+	{
+		return CheckDeviceLost();
+	}
+	else
+	{
+		return DeviceStateMapping(hr);
+	}
 }
 
 void Context::Release()
