@@ -23,7 +23,7 @@ set(RENDERAPI_IMPL_INCLUDE_FILES
 	./APIContext.h
 	./AutoPtr.hpp
 	./RefCount.hpp
-	./RenderAPIImpl.h
+	./EnumMapping.h
 	./DX9Include.h
 	./Device.h
 	./Context.h
@@ -40,7 +40,7 @@ set(RENDERAPI_IMPL_INCLUDE_FILES
 
 set(RENDERAPI_IMPL_SOURCE_FILES
 	./APIContext.cpp
-	./RenderAPIImpl.cpp
+	./EnumMapping.cpp
 	./DX9Include.cpp
 	./Device.cpp
 	./Context.cpp

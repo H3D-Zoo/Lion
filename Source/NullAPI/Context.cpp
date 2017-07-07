@@ -125,14 +125,19 @@ void Context::DrawIndexed(RenderAPI::Primitive primitive, unsigned int baseVerte
 
 }
 
+RenderAPI::DeviceState Context::Present()
+{
+	return RenderAPI::DEVICE_OK;
+}
+
 RenderAPI::DeviceState Context::CheckDeviceLost()
 {
 	return RenderAPI::DEVICE_OK;
 }
 
-bool Context::ResetDevice()
+RenderAPI::DeviceState Context::ResetDevice()
 {
-	return true;
+	return RenderAPI::DEVICE_OK;
 }
 
 void Context::Release()

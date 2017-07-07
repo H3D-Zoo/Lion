@@ -1,6 +1,6 @@
 #include "DX9Include.h"
 #include <string>
-#include "RenderAPIImpl.h"
+#include "EnumMapping.h"
 
 D3D9DLL::D3D9DLL()
 	: m_hDLL(NULL)
@@ -35,40 +35,7 @@ bool D3D9DLL::Init()
 	D3DPerfEndEvent = (LPD3DPERF_EndEvent)GetProcAddress(m_hDLL, "D3DPERF_EndEvent");
 	D3DPerfSetMarker = (LPD3DPERF_SetMarker)GetProcAddress(m_hDLL, "D3DPERF_SetMarker");
 
-	// 通过查找Direct3DCreate9Ex是否存在来确认当前操作系统是否支持D3D9 EX
-	LPDIRECT3DCREATE9EX Direct3DCreate9ExPtr = NULL;
-	LPDIRECT3DCREATE9 Direct3DCreate9Ptr = NULL;
-	Direct3DCreate9ExPtr = (LPDIRECT3DCREATE9EX)GetProcAddress(m_hDLL, "Direct3DCreate9Ex");
-	Direct3DCreate9Ptr = (LPDIRECT3DCREATE9)GetProcAddress(m_hDLL, "Direct3DCreate9");
-	//verbose:CheckPointStr("获得函数指针.end");
-
-	if (Direct3DCreate9ExPtr != NULL)
-	{
-		// 如果支持D3D9EX，创建设备并赋予IDirect3D9* 父类指针
-		//CheckPointStr("创建d3d9Ex对象，begin");
-		HRESULT hr = Direct3DCreate9ExPtr(D3D_SDK_VERSION, &m_d3d9ExPtr);
-
-		//CheckPointStr("创建d3d9Ex对象，end");
-		// 这里可能会失败！如果显卡不支持WDDM [2/4/2013 YiKaiming]
-		if (FAILED(hr))
-		{
-			//LogInfo(ENGINE_INIT, OutPut_File, "创建d3d9Ex对象失败，改用D3D9.begin");
-			m_d3d9ExPtr = NULL;
-			m_d3d9Ptr = (IDirect3D9*)Direct3DCreate9Ptr(D3D_SDK_VERSION);
-			//LogInfo(ENGINE_INIT, OutPut_File, "创建d3d9. end");
-		}
-		else
-		{
-			m_d3d9Ptr = m_d3d9ExPtr;
-			//LogInfo(ENGINE_INIT, OutPut_File, "成功创建d3d9Ex对象.");
-		}
-	}
-	else
-	{
-		//CheckPointStr("不使用d3d9Ex,创建D3D9对象，begin");
-		m_d3d9Ptr = (IDirect3D9*)Direct3DCreate9Ptr(D3D_SDK_VERSION);
-		//CheckPointStr("创建d3d9. end");
-	}
+	CreateD3D();
 	if (m_d3d9Ptr == NULL)
 	{
 		return false;
@@ -79,19 +46,7 @@ bool D3D9DLL::Init()
 
 void D3D9DLL::Deinit()
 {
-	if (m_d3d9ExPtr != NULL)
-	{
-		// 如果Ex创建成功，会把d3d9Ptr设为相同值
-		m_d3d9ExPtr->Release();
-		m_d3d9ExPtr = NULL;
-		m_d3d9Ptr = NULL;
-	}
-	else if (m_d3d9Ptr != NULL)
-	{
-		m_d3d9Ptr->Release();
-		m_d3d9Ptr = NULL;
-	}
-
+	DestroyD3D();
 	::FreeLibrary(m_hDLL);
 }
 
@@ -165,6 +120,60 @@ bool D3D9DLL::CheckDeviceMultiSampleType(D3DFORMAT rtFormat, D3DFORMAT dsFormat,
 	return true;
 }
 
+void D3D9DLL::CreateD3D()
+{
+	// 通过查找Direct3DCreate9Ex是否存在来确认当前操作系统是否支持D3D9 EX
+	LPDIRECT3DCREATE9EX Direct3DCreate9ExPtr = NULL;
+	LPDIRECT3DCREATE9 Direct3DCreate9Ptr = NULL;
+	Direct3DCreate9ExPtr = (LPDIRECT3DCREATE9EX)GetProcAddress(m_hDLL, "Direct3DCreate9Ex");
+	Direct3DCreate9Ptr = (LPDIRECT3DCREATE9)GetProcAddress(m_hDLL, "Direct3DCreate9");
+	//verbose:CheckPointStr("获得函数指针.end");
+
+	if (Direct3DCreate9ExPtr != NULL)
+	{
+		// 如果支持D3D9EX，创建设备并赋予IDirect3D9* 父类指针
+		//CheckPointStr("创建d3d9Ex对象，begin");
+		HRESULT hr = Direct3DCreate9ExPtr(D3D_SDK_VERSION, &m_d3d9ExPtr);
+
+		//CheckPointStr("创建d3d9Ex对象，end");
+		// 这里可能会失败！如果显卡不支持WDDM [2/4/2013 YiKaiming]
+		if (FAILED(hr))
+		{
+			//LogInfo(ENGINE_INIT, OutPut_File, "创建d3d9Ex对象失败，改用D3D9.begin");
+			m_d3d9ExPtr = NULL;
+			m_d3d9Ptr = (IDirect3D9*)Direct3DCreate9Ptr(D3D_SDK_VERSION);
+			//LogInfo(ENGINE_INIT, OutPut_File, "创建d3d9. end");
+		}
+		else
+		{
+			m_d3d9Ptr = m_d3d9ExPtr;
+			//LogInfo(ENGINE_INIT, OutPut_File, "成功创建d3d9Ex对象.");
+		}
+	}
+	else
+	{
+		//CheckPointStr("不使用d3d9Ex,创建D3D9对象，begin");
+		m_d3d9Ptr = (IDirect3D9*)Direct3DCreate9Ptr(D3D_SDK_VERSION);
+		//CheckPointStr("创建d3d9. end");
+	}
+}
+
+void D3D9DLL::DestroyD3D()
+{
+	if (m_d3d9ExPtr != NULL)
+	{
+		// 如果Ex创建成功，会把d3d9Ptr设为相同值
+		m_d3d9ExPtr->Release();
+		m_d3d9ExPtr = NULL;
+		m_d3d9Ptr = NULL;
+	}
+	else if (m_d3d9Ptr != NULL)
+	{
+		m_d3d9Ptr->Release();
+		m_d3d9Ptr = NULL;
+	}
+}
+
 D3DPRESENT_PARAMETERS D3D9DLL::MakeCreationParam(HWND hWindow, unsigned int width, unsigned int height, bool isFullscreen, bool vsync, D3DFORMAT rtFormat, D3DFORMAT dsFormat, D3DMULTISAMPLE_TYPE mulsample)
 {
 	D3DPRESENT_PARAMETERS d3dpp;
@@ -197,6 +206,12 @@ D3DPRESENT_PARAMETERS D3D9DLL::MakeCreationParam(HWND hWindow, unsigned int widt
 bool D3D9DLL::IsSupportManaged()
 {
 	return !IsSupportD3D9EX();
+}
+
+void D3D9DLL::Recreate()
+{
+	DestroyD3D();
+	CreateD3D();
 }
 
 IDirect3DDevice9* D3D9DLL::CreateDevice(HWND hWindow, unsigned int width, unsigned int height, bool isFullscreen, bool vsync, D3DFORMAT rtFormat, D3DFORMAT dsFormat, D3DMULTISAMPLE_TYPE mulsample)

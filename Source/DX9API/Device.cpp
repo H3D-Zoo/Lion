@@ -8,7 +8,7 @@
 #include "DepthStencil.h"
 #include "APIContext.h"
 #include "AutoPtr.hpp"
-#include "RenderAPIImpl.h"
+#include "EnumMapping.h"
 #include "OcclusionQuery.h"
 
 namespace

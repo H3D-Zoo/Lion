@@ -31,12 +31,21 @@ public:
 
 	bool IsSupportManaged();
 
+	// 如果在设备停止的时候，D3D对象也要被重新创建
+	// 但是我们暂时没能力获取硬件停止的状态
+	// 所以这个接口没人用
+	void Recreate();
+
 private:
 	bool CheckBackBufferFormat(D3DFORMAT checkFormat, D3DFORMAT adapterFormat) const;
 
 	bool CheckDepthStencilFormat(D3DFORMAT checkFormat, D3DFORMAT adapterFormat) const;
 
 	bool CheckDeviceMultiSampleType(D3DFORMAT rtFormat, D3DFORMAT dsFormat, bool isFullsreen, D3DMULTISAMPLE_TYPE mulsampleType) const;
+
+	void CreateD3D();
+
+	void DestroyD3D();
 
 	HMODULE m_hDLL;
 

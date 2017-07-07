@@ -1,4 +1,5 @@
 #include "SwapChain.h"
+#include "EnumMapping.h"
 
 SwapChain::SwapChain(IDirect3DSwapChain9* swapChain, ::DepthStencil* dsSurface, const RenderAPI::SwapChainDesc & swapChainDesc)
 	: m_pRenderTarget(NULL)
@@ -53,9 +54,13 @@ bool SwapChain::OnResize(unsigned int width, unsigned int height)
 	}
 }
 
-void SwapChain::Present()
+RenderAPI::DeviceState SwapChain::Present()
 {
-	m_pSwapChain->Present(NULL, NULL, NULL, NULL, NULL);
+	// possible return values should be D3D_OK or D3DERR_DEVICEREMOVED
+	// if D3DERR_DEVICEREMOVED is returned, we should recreate D3DDevice.
+	// but it seems be occured in device9ex situation.
+	HRESULT hr = m_pSwapChain->Present(NULL, NULL, NULL, NULL, NULL);
+	return DeviceStateMapping(hr);
 }
 
 void SwapChain::Release()

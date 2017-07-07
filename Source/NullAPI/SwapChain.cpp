@@ -42,9 +42,9 @@ bool SwapChain::OnResize(unsigned int width, unsigned int height)
 	}
 }
 
-void SwapChain::Present()
+RenderAPI::DeviceState SwapChain::Present()
 {
-
+	return RenderAPI::DEVICE_OK;
 }
 
 void SwapChain::Release()

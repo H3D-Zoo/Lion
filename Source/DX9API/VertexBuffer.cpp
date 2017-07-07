@@ -1,5 +1,5 @@
 #include "VertexBuffer.h"
-#include "RenderAPIImpl.h"
+#include "EnumMapping.h"
 
 VertexBuffer::VertexBuffer(IDirect3DVertexBuffer9* vertexBuffer, RenderAPI::ResourceUsage usage, unsigned int vertexCount, unsigned int vertexSize, RenderAPI::VertexElement * elements, unsigned int elementCount)
 	: m_usage(usage)

@@ -1,5 +1,5 @@
 #include "IndexBuffer.h"
-#include "RenderAPIImpl.h"
+#include "EnumMapping.h"
 
 IndexBuffer::IndexBuffer(IDirect3DIndexBuffer9* indexBuffer, RenderAPI::ResourceUsage usage, RenderAPI::IndexFormat format, unsigned int count)
 	: m_usage(usage)

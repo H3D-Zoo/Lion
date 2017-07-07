@@ -55,9 +55,11 @@ public:
 
 	virtual void DrawIndexed(RenderAPI::Primitive primitive, unsigned int baseVertex, unsigned int startIndex, unsigned int primitiveCount);
 
+	virtual RenderAPI::DeviceState Present();
+
 	virtual RenderAPI::DeviceState CheckDeviceLost();
 
-	virtual bool ResetDevice();
+	virtual RenderAPI::DeviceState ResetDevice();
 
 	virtual void Release();
 };

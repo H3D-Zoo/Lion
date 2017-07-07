@@ -1,6 +1,7 @@
 #pragma once
 #include <string>
 #include "DX9Include.h"
+#include "../../RenderAPI/RenderAPI.h"
 
 const int RTFormatCount = 2;
 const int DSFormatCount = 3;
@@ -19,3 +20,4 @@ extern unsigned int s_lockOptions[LockOptionCount];
 extern D3DMULTISAMPLE_TYPE s_sampleTypes[MSFormatCount];
 
 bool IsLocalFileExist(const std::string & fileName);
+RenderAPI::DeviceState DeviceStateMapping(unsigned int rst);

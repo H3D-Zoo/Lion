@@ -4,6 +4,7 @@
 #include "VertexBuffer.h"
 #include "IndexBuffer.h"
 #include "APIContext.h"
+#include "EnumMapping.h"
 
 namespace
 {
@@ -444,30 +445,42 @@ void Context::DrawIndexed(RenderAPI::Primitive primitive, unsigned int baseVerte
 	m_pDevice->DrawIndexedPrimitive(s_primitives[primitive], baseVertex, 0, m_vertexCount, startIndex, primitiveCount);
 }
 
+RenderAPI::DeviceState Context::Present()
+{
+	HRESULT hr = m_pDevice->Present(NULL, NULL, NULL, NULL);
+	return DeviceStateMapping(hr);
+}
+
 RenderAPI::DeviceState Context::CheckDeviceLost()
 {
 	HRESULT hr = m_pDevice->TestCooperativeLevel();
-	if (hr == S_OK)
+	return DeviceStateMapping(hr);
+}
+
+RenderAPI::DeviceState Context::ResetDevice()
+{
+	HRESULT hr = S_OK;
+	if (m_pAPIContext->pD3D->IsSupportD3D9EX())
 	{
-		return RenderAPI::DEVICE_OK;
-	}
-	else if (hr == D3DERR_DEVICELOST)
-	{
-		return RenderAPI::DEVICE_Lost;
-	}
-	else if (hr == D3DERR_DEVICENOTRESET)
-	{
-		return RenderAPI::DEVICE_WaitReset;
+		D3DDISPLAYMODEEX* pfullScreenSetting = NULL;
+		D3DDISPLAYMODEEX fullScreenSetting;
+		if (m_pAPIContext->CreationParam.Windowed == FALSE)
+		{
+			fullScreenSetting.Size = sizeof(fullScreenSetting);
+			fullScreenSetting.Width = m_pAPIContext->CreationParam.BackBufferWidth;
+			fullScreenSetting.Height = m_pAPIContext->CreationParam.BackBufferHeight;
+			fullScreenSetting.RefreshRate = m_pAPIContext->CreationParam.FullScreen_RefreshRateInHz;
+			fullScreenSetting.Format = m_pAPIContext->CreationParam.BackBufferFormat;
+			fullScreenSetting.ScanLineOrdering = D3DSCANLINEORDERING_PROGRESSIVE;
+			pfullScreenSetting = &fullScreenSetting;
+		}
+		hr= ((IDirect3DDevice9Ex*)m_pDevice)->ResetEx(&(m_pAPIContext->CreationParam), pfullScreenSetting);
 	}
 	else
 	{
-		return RenderAPI::DEVICE_Error;
+		hr = m_pDevice->Reset(&(m_pAPIContext->CreationParam));
 	}
-}
-
-bool Context::ResetDevice()
-{
-	return S_OK == m_pDevice->Reset(&(m_pAPIContext->CreationParam));
+	return DeviceStateMapping(hr);
 }
 
 void Context::Release()

@@ -468,8 +468,9 @@ namespace RenderAPI
 	{
 		DEVICE_OK = 0,
 		DEVICE_Lost = 1,
-		DEVICE_WaitReset = 2,
-		DEVICE_Error = 3,
+		DEVICE_NeedReset = 2,
+		DEVICE_NeedRecreate = 3,
+		DEVICE_Error = 4,
 	};
 
 	struct ScissorState
@@ -585,9 +586,11 @@ namespace RenderAPI
 
 		virtual void DrawIndexed(RenderAPI::Primitive primitive, unsigned int baseVertex, unsigned int startIndex, unsigned int primitiveCount) = 0;
 
+		virtual DeviceState Present() = 0;
+
 		virtual DeviceState CheckDeviceLost() = 0;
 
-		virtual bool ResetDevice() = 0;
+		virtual DeviceState ResetDevice() = 0;
 	};
 
 	class VertexBuffer : public RObject
@@ -723,7 +726,10 @@ namespace RenderAPI
 
 		virtual bool OnResize(unsigned int width, unsigned int height) = 0;
 
-		virtual void Present() = 0;
+		// Present失败的时候，有两个可能
+		// 如果Present在BeginScene/EndScene之间调用，则表示调用失败
+		// 否则表示设备丢失，使用Context::CheckDeviceLost来查询设备状态，以确认是否需要重建
+		virtual DeviceState Present() = 0;
 	};
 
 	class OcclusionQuery : public RObject
@@ -736,5 +742,7 @@ namespace RenderAPI
 		virtual bool Get(void* dataPtr, unsigned int length) = 0;
 	};
 
+
+	// 从文件中读取fx代码并编译
 	bool CompileFXEffectFromFile(const char* sourceFXFile, const char* compiledFXFile);
 }

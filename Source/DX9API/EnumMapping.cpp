@@ -3,7 +3,7 @@
 #include "../../RenderAPI/RenderAPI.h"
 #include "Device.h"
 #include "Context.h"
-#include "RenderAPIImpl.h"
+#include "EnumMapping.h"
 #include "APIContext.h"
 #include "DX9Include.h"
 #include "AutoPtr.hpp"
@@ -67,6 +67,32 @@ unsigned int s_lockOptions[LockOptionCount] =
 bool IsLocalFileExist(const std::string & fileName)
 {
 	return (_access(fileName.c_str(), 0) != -1);
+}
+
+RenderAPI::DeviceState DeviceStateMapping(unsigned int rst)
+{
+	if (rst == S_OK)
+	{
+		return RenderAPI::DEVICE_OK;
+	}
+	else if (rst == D3DERR_DEVICELOST)
+	{
+		return RenderAPI::DEVICE_Lost;
+	}
+	else if (rst == D3DERR_DEVICENOTRESET)
+	{
+		return RenderAPI::DEVICE_NeedReset;
+	}
+	else if (rst == D3DERR_DRIVERINTERNALERROR)
+	{
+		// 这个返回值是需要重新创建d3d9对象
+		return RenderAPI::DEVICE_NeedRecreate;
+	}
+	else
+	{
+		return RenderAPI::DEVICE_Error;
+	}
+
 }
 
 namespace

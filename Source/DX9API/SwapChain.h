@@ -23,7 +23,7 @@ public:
 
 	virtual bool OnResize(unsigned int width, unsigned int height);
 
-	virtual void Present();
+	virtual RenderAPI::DeviceState Present();
 
 	virtual void Release();
 
