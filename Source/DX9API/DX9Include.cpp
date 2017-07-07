@@ -6,6 +6,7 @@ D3D9DLL::D3D9DLL()
 	: m_hDLL(NULL)
 	, m_d3d9ExPtr(NULL)
 	, m_d3d9Ptr(NULL)
+	, m_supportOcclusionQuery(false)
 	, D3DPerfBeginEvent(NULL)
 	, D3DPerfEndEvent(NULL)
 	, D3DPerfSetMarker(NULL)
@@ -98,6 +99,8 @@ bool D3D9DLL::IsSupportD3D9EX()
 {
 	return m_d3d9ExPtr != NULL;
 }
+
+bool D3D9DLL::IsSupportOcclusionQuery() { return m_supportOcclusionQuery; }
 
 bool D3D9DLL::CheckFormatValidate(D3DFORMAT & renderTarget, D3DFORMAT depthStencil) const
 {
@@ -196,7 +199,7 @@ bool D3D9DLL::IsSupportManaged()
 	return !IsSupportD3D9EX();
 }
 
-IDirect3DDevice9 * D3D9DLL::CreateDevice(HWND hWindow, unsigned int width, unsigned int height, bool isFullscreen, bool vsync, D3DFORMAT rtFormat, D3DFORMAT dsFormat, D3DMULTISAMPLE_TYPE mulsample)
+IDirect3DDevice9* D3D9DLL::CreateDevice(HWND hWindow, unsigned int width, unsigned int height, bool isFullscreen, bool vsync, D3DFORMAT rtFormat, D3DFORMAT dsFormat, D3DMULTISAMPLE_TYPE mulsample)
 {
 	//by sssa2000 20110120
 	DWORD MT = D3DCREATE_MULTITHREADED | D3DCREATE_FPU_PRESERVE;
@@ -241,6 +244,11 @@ IDirect3DDevice9 * D3D9DLL::CreateDevice(HWND hWindow, unsigned int width, unsig
 			hr = m_d3d9ExPtr->CreateDeviceEx(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, hWindow, softwareBehaviorFlag, &d3dpp, NULL, &devicePtr);
 			//CheckPointStr("CreateDeviceEx，end");
 		}
+
+		if (devicePtr != NULL)
+		{
+			m_supportOcclusionQuery = S_OK == devicePtr->CreateQuery(D3DQUERYTYPE_OCCLUSION, NULL);
+		}
 		return devicePtr;
 	}
 	else
@@ -255,6 +263,11 @@ IDirect3DDevice9 * D3D9DLL::CreateDevice(HWND hWindow, unsigned int width, unsig
 			//CheckPointStr("D3DCREATE_SOFTWARE_VERTEXPROCESSING创建Device begin");
 			m_d3d9Ptr->CreateDevice(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, hWindow, softwareBehaviorFlag, &d3dpp, &devicePtr);
 			//CheckPointStr("创建Device end");
+		}
+
+		if (devicePtr != NULL)
+		{
+			m_supportOcclusionQuery = S_OK == devicePtr->CreateQuery(D3DQUERYTYPE_OCCLUSION, NULL);
 		}
 		return devicePtr;
 	}

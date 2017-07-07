@@ -30,6 +30,8 @@ public:
 
 	virtual RenderAPI::DepthStencil* CreateDepthStencil(RenderAPI::ZBufferFormat format, unsigned int width, unsigned int height);
 
+	virtual RenderAPI::OcclusionQuery* CreateOcclusionQuery();
+
 	virtual void Release();
 
 private:

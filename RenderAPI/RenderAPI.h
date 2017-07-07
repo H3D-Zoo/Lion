@@ -202,6 +202,7 @@ namespace RenderAPI
 	class FXEffect;
 	class RenderTarget;
 	class DepthStencil;
+	class OcclusionQuery;
 
 	class Device : public RObject
 	{
@@ -222,6 +223,8 @@ namespace RenderAPI
 		virtual RenderTarget* CreateRenderTarget(BackBufferFormat format, unsigned int width, unsigned int height) = 0;
 
 		virtual DepthStencil* CreateDepthStencil(ZBufferFormat format, unsigned int width, unsigned int height) = 0;
+
+		virtual OcclusionQuery* CreateOcclusionQuery() = 0;
 	};
 
 	/*
@@ -721,6 +724,16 @@ namespace RenderAPI
 		virtual bool OnResize(unsigned int width, unsigned int height) = 0;
 
 		virtual void Present() = 0;
+	};
+
+	class OcclusionQuery : public RObject
+	{
+	public:
+		virtual bool Begin() = 0;
+
+		virtual void End() = 0;
+
+		virtual bool Get(void* dataPtr, unsigned int length) = 0;
 	};
 
 	bool CompileFXEffectFromFile(const char* sourceFXFile, const char* compiledFXFile);

@@ -35,6 +35,7 @@ set(RENDERAPI_IMPL_INCLUDE_FILES
 	./Texture2D.h
 	./FXEffect.h
 	./StateManager.h
+	./OcclusionQuery.h
 )
 
 set(RENDERAPI_IMPL_SOURCE_FILES
@@ -51,6 +52,7 @@ set(RENDERAPI_IMPL_SOURCE_FILES
 	./Texture2D.cpp
 	./FXEffect.cpp
 	./StateManager.cpp
+	./OcclusionQuery.cpp
 )
 
 source_group(include FILES ${DIR_INTERFACE})

@@ -21,6 +21,8 @@ public:
 
 	bool IsSupportD3D9EX();
 
+	bool IsSupportOcclusionQuery();
+
 	bool CheckFormatValidate(D3DFORMAT & renderTarget, D3DFORMAT depthStencil) const;
 
 	IDirect3DDevice9* CreateDevice(HWND hWindow, unsigned int width, unsigned int height, bool isFullscreen, bool vsync, D3DFORMAT rtFormat, D3DFORMAT dsFormat, D3DMULTISAMPLE_TYPE mulsample);
@@ -41,6 +43,7 @@ private:
 	// 如果Ex创建成功，会把d3d9Ptr设为相同值
 	IDirect3D9Ex* m_d3d9ExPtr;
 	IDirect3D9* m_d3d9Ptr;
+	bool m_supportOcclusionQuery;
 
 public:
 	// D3D导出函数的实际指针 [2/1/2013 YiKaiming]

@@ -20,15 +20,16 @@ set(RENDERAPI_INCLUDE_FILES
 
 set(RENDERAPI_IMPL_INCLUDE_FILES
 	./RenderAPIImpl.h
-	 ./Device.h
-	 ./Context.h
-	 ./SwapChain.h
-	 ./RenderTarget.h
-	 ./DepthStencil.h
-	 ./VertexBuffer.h
-	 ./IndexBuffer.h
-	 ./Texture2D.h
-	 ./FXEffect.h
+	./Device.h
+	./Context.h
+	./SwapChain.h
+	./RenderTarget.h
+	./DepthStencil.h
+	./VertexBuffer.h
+	./IndexBuffer.h
+	./Texture2D.h
+	./FXEffect.h
+	./OcclusionQuery.h
 )
 
 set(RENDERAPI_IMPL_SOURCE_FILES
@@ -42,6 +43,7 @@ set(RENDERAPI_IMPL_SOURCE_FILES
 	 ./IndexBuffer.cpp
 	 ./Texture2D.cpp
 	 ./FXEffect.cpp
+	 ./OcclusionQuery.cpp
 )
 
 source_group(include FILES ${DIR_INTERFACE})

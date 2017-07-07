@@ -6,6 +6,7 @@
 #include "FXEffect.h"
 #include "RenderTarget.h"
 #include "DepthStencil.h"
+#include "OcclusionQuery.h"
 
 Device::Device(const RenderAPI::SwapChainDesc & desc, bool isFullscreen, bool useVerticalSync)
 	: m_defaultSwapChain(desc)
@@ -67,6 +68,11 @@ RenderAPI::RenderTarget * Device::CreateRenderTarget(RenderAPI::BackBufferFormat
 RenderAPI::DepthStencil * Device::CreateDepthStencil(RenderAPI::ZBufferFormat format, unsigned int width, unsigned int height)
 {
 	return new DepthStencil(format, width, height, true);
+}
+
+RenderAPI::OcclusionQuery* Device::CreateOcclusionQuery()
+{
+	return new OcclusionQuery();
 }
 
 void Device::Release()

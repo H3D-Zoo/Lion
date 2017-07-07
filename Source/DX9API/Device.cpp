@@ -9,6 +9,7 @@
 #include "APIContext.h"
 #include "AutoPtr.hpp"
 #include "RenderAPIImpl.h"
+#include "OcclusionQuery.h"
 
 namespace
 {
@@ -287,6 +288,19 @@ RenderAPI::RenderTarget * Device::CreateRenderTarget(RenderAPI::BackBufferFormat
 RenderAPI::DepthStencil * Device::CreateDepthStencil(RenderAPI::ZBufferFormat format, unsigned int width, unsigned int height)
 {
 	return CreateDepthStencilImplement(format, width, height);
+}
+
+RenderAPI::OcclusionQuery* Device::CreateOcclusionQuery()
+{
+	if (m_pAPIContext->pD3D->IsSupportOcclusionQuery())
+	{
+		IDirect3DQuery9* pOcclusionQuery = NULL;
+		if (S_OK == m_pDevice->CreateQuery(D3DQUERYTYPE_OCCLUSION, &pOcclusionQuery))
+		{
+			return new OcclusionQuery(pOcclusionQuery);
+		}
+	}
+	return NULL;
 }
 
 ::DepthStencil* Device::CreateDepthStencilImplement(RenderAPI::ZBufferFormat format, unsigned int width, unsigned int height)
