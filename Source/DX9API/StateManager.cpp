@@ -45,7 +45,7 @@ ULONG FXStateManager::Release(THIS)
 
 HRESULT FXStateManager::SetRenderState(THIS_ D3DRENDERSTATETYPE d3dRenderState, DWORD dwValue)
 {
-	return Set(d3dRenderState, dwValue);
+	return SetRS(d3dRenderState, dwValue);
 }
 
 HRESULT FXStateManager::SetSamplerState(THIS_ DWORD dwStage, D3DSAMPLERSTATETYPE d3dSamplerState, DWORD dwValue)
@@ -139,41 +139,68 @@ StateManager::StateManager(IDirect3DDevice9* pDevice)
 	, m_RSValues(RenderStateCount)
 {
 	pDevice->AddRef();
+	for (int i = 0; i < TextureSlotCount; i++)
+	{
+		m_TSSValues[i].resize(TextureStageStateCount);
+		m_SSValues[i].resize(SamplerStateCount);
+	}
 
-#define DEF(x) m_pDevice->GetRenderState(x, &(m_RSValues[x]));
-	DEF(D3DRS_TEXTUREFACTOR);
-	DEF(D3DRS_FILLMODE);
-	DEF(D3DRS_CULLMODE);
-	DEF(D3DRS_SCISSORTESTENABLE);
-	DEF(D3DRS_STENCILENABLE);
-	DEF(D3DRS_STENCILREF);
-	DEF(D3DRS_STENCILMASK);
-	DEF(D3DRS_STENCILWRITEMASK);
-	DEF(D3DRS_TWOSIDEDSTENCILMODE);
-	DEF(D3DRS_STENCILFUNC);
-	DEF(D3DRS_STENCILFAIL);
-	DEF(D3DRS_STENCILZFAIL);
-	DEF(D3DRS_STENCILPASS);
-	DEF(D3DRS_CCW_STENCILFUNC);
-	DEF(D3DRS_CCW_STENCILFAIL);
-	DEF(D3DRS_CCW_STENCILZFAIL);
-	DEF(D3DRS_CCW_STENCILPASS);
-	DEF(D3DRS_ZENABLE);
-	DEF(D3DRS_ZWRITEENABLE);
-	DEF(D3DRS_ZFUNC);
-	DEF(D3DRS_DEPTHBIAS);
-	DEF(D3DRS_ALPHATESTENABLE);
-	DEF(D3DRS_ALPHAFUNC);
-	DEF(D3DRS_ALPHAREF);
-	DEF(D3DRS_ALPHABLENDENABLE);
-	DEF(D3DRS_SEPARATEALPHABLENDENABLE);
-	DEF(D3DRS_BLENDOP);
-	DEF(D3DRS_SRCBLEND);
-	DEF(D3DRS_DESTBLEND);
-	DEF(D3DRS_BLENDOPALPHA);
-	DEF(D3DRS_SRCBLENDALPHA);
-	DEF(D3DRS_DESTBLENDALPHA);
-#undef DEF
+#define GetRS(x) m_pDevice->GetRenderState(x, &(m_RSValues[x]));
+
+	GetRS(D3DRS_TEXTUREFACTOR);
+	GetRS(D3DRS_FILLMODE);
+	GetRS(D3DRS_CULLMODE);
+	GetRS(D3DRS_SCISSORTESTENABLE);
+	GetRS(D3DRS_STENCILENABLE);
+	GetRS(D3DRS_STENCILREF);
+	GetRS(D3DRS_STENCILMASK);
+	GetRS(D3DRS_STENCILWRITEMASK);
+	GetRS(D3DRS_TWOSIDEDSTENCILMODE);
+	GetRS(D3DRS_STENCILFUNC);
+	GetRS(D3DRS_STENCILFAIL);
+	GetRS(D3DRS_STENCILZFAIL);
+	GetRS(D3DRS_STENCILPASS);
+	GetRS(D3DRS_CCW_STENCILFUNC);
+	GetRS(D3DRS_CCW_STENCILFAIL);
+	GetRS(D3DRS_CCW_STENCILZFAIL);
+	GetRS(D3DRS_CCW_STENCILPASS);
+	GetRS(D3DRS_ZENABLE);
+	GetRS(D3DRS_ZWRITEENABLE);
+	GetRS(D3DRS_ZFUNC);
+	GetRS(D3DRS_DEPTHBIAS);
+	GetRS(D3DRS_ALPHATESTENABLE);
+	GetRS(D3DRS_ALPHAFUNC);
+	GetRS(D3DRS_ALPHAREF);
+	GetRS(D3DRS_ALPHABLENDENABLE);
+	GetRS(D3DRS_SEPARATEALPHABLENDENABLE);
+	GetRS(D3DRS_BLENDOP);
+	GetRS(D3DRS_SRCBLEND);
+	GetRS(D3DRS_DESTBLEND);
+	GetRS(D3DRS_BLENDOPALPHA);
+	GetRS(D3DRS_SRCBLENDALPHA);
+	GetRS(D3DRS_DESTBLENDALPHA);
+#undef GetRS
+
+#define GetTSS(slot, x) m_pDevice->GetTextureStageState(slot, x, &(m_TSSValues[slot][x]));
+#define GetSS(slot, x) m_pDevice->GetSamplerState(slot, x, &(m_SSValues[slot][x]));
+
+	for (int i = 0; i < TextureSlotCount; i++)
+	{
+		GetTSS(i, D3DTSS_COLOROP);
+		GetTSS(i, D3DTSS_COLORARG1);
+		GetTSS(i, D3DTSS_COLORARG2);
+		GetTSS(i, D3DTSS_ALPHAOP);
+		GetTSS(i, D3DTSS_ALPHAARG1);
+		GetTSS(i, D3DTSS_ALPHAARG2);
+
+		GetSS(i, D3DSAMP_MINFILTER);
+		GetSS(i, D3DSAMP_MAGFILTER);
+		GetSS(i, D3DSAMP_MIPFILTER);
+		GetSS(i, D3DSAMP_ADDRESSU);
+		GetSS(i, D3DSAMP_ADDRESSV);
+	}
+#undef GetTSS
+#undef GetSS
 }
 
 StateManager::~StateManager()
@@ -181,13 +208,41 @@ StateManager::~StateManager()
 	m_pDevice->Release();
 }
 
-HRESULT StateManager::Set(D3DRENDERSTATETYPE type, DWORD value)
+HRESULT StateManager::SetRS(D3DRENDERSTATETYPE type, DWORD value)
 {
 	DWORD& cv = m_RSValues[type];
 	if (cv != value)
 	{
 		cv = value;
 		return m_pDevice->SetRenderState(type, value);
+	}
+	else
+	{
+		return S_OK;
+	}
+}
+
+HRESULT StateManager::SetTSS(unsigned int slot, D3DTEXTURESTAGESTATETYPE type, DWORD value)
+{
+	DWORD& cv = m_TSSValues[slot][type];
+	if (cv != value)
+	{
+		cv = value;
+		return m_pDevice->SetTextureStageState(slot, type, value);
+	}
+	else
+	{
+		return S_OK;
+	}
+}
+
+HRESULT StateManager::SetSS(unsigned int slot, D3DSAMPLERSTATETYPE type, DWORD value)
+{
+	DWORD& cv = m_SSValues[slot][type];
+	if (cv != value)
+	{
+		cv = value;
+		return m_pDevice->SetSamplerState(slot, type, value);
 	}
 	else
 	{

@@ -3,7 +3,9 @@
 #include "DX9Include.h"
 #include "RefCount.hpp"
 
-#define RSDefine(name, rs) void Set##name(DWORD value) { Set(rs, value);}
+#define RSDefine(name, rs) void Set##name(DWORD value) { SetRS(rs, value); }
+#define TSSDefine(name, rs) void Set##name(unsigned int slot, DWORD value) { SetTSS(slot,rs, value); }
+#define SSDefine(name, rs) void Set##name(unsigned int slot, DWORD value) { SetSS(slot,rs, value); }
 
 class StateManager
 {
@@ -12,8 +14,12 @@ public:
 	StateManager(IDirect3DDevice9* pDevice);
 
 	~StateManager();
-	
-	HRESULT Set(D3DRENDERSTATETYPE type, DWORD value);
+
+	HRESULT SetRS(D3DRENDERSTATETYPE type, DWORD value);
+
+	HRESULT SetTSS(unsigned int slot, D3DTEXTURESTAGESTATETYPE type, DWORD value);
+
+	HRESULT SetSS(unsigned int slot, D3DSAMPLERSTATETYPE type, DWORD value);
 
 	RSDefine(TextureFactor, D3DRS_TEXTUREFACTOR);
 
@@ -79,11 +85,44 @@ public:
 
 	RSDefine(AlphaDstBlending, D3DRS_DESTBLENDALPHA);
 
+	TSSDefine(TextureColorOp, D3DTSS_COLOROP);
+
+	TSSDefine(TextureColorArg1, D3DTSS_COLORARG1);
+
+	TSSDefine(TextureColorArg2, D3DTSS_COLORARG2);
+
+	TSSDefine(TextureAlphaOp, D3DTSS_ALPHAOP);
+
+	TSSDefine(TextureAlphaArg1, D3DTSS_ALPHAARG1);
+
+	TSSDefine(TextureAlphaArg2, D3DTSS_ALPHAARG2);
+
+	SSDefine(SamplerMinFilter, D3DSAMP_MINFILTER);
+
+	SSDefine(SamplerMagFilter, D3DSAMP_MAGFILTER);
+
+	SSDefine(SamplerMipFilter, D3DSAMP_MIPFILTER);
+
+	SSDefine(SamplerAddressU, D3DSAMP_ADDRESSU);
+
+	SSDefine(SamplerAddressV, D3DSAMP_ADDRESSV);
+
+	SSDefine(SamplerBorderColor, D3DSAMP_BORDERCOLOR);
+
 protected:
 	IDirect3DDevice9* m_pDevice;
 
-	enum { RenderStateCount = D3DRS_BLENDOPALPHA + 1 };
+	enum
+	{
+		RenderStateCount = D3DRS_BLENDOPALPHA + 1,
+		TextureSlotCount = 8,
+		TextureStageStateCount = D3DTSS_CONSTANT + 1,
+		SamplerStateCount = D3DSAMP_DMAPOFFSET + 1,
+
+	};
 	std::vector<DWORD> m_RSValues;
+	std::vector<DWORD> m_TSSValues[TextureSlotCount];
+	std::vector<DWORD> m_SSValues[TextureSlotCount];
 
 };
 

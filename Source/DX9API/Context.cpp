@@ -348,40 +348,39 @@ void Context::SetTextureBlendingState(unsigned int slot, const RenderAPI::Textur
 {
 	if (state.ColorOp == RenderAPI::TEXOP_Disable)
 	{
-		m_pDevice->SetTextureStageState(slot, D3DTSS_COLOROP, D3DTOP_DISABLE);
+		m_renderStateManager.SetTextureColorOp(slot, D3DTOP_DISABLE);
 	}
 	else
 	{
-		m_pDevice->SetTextureStageState(slot, D3DTSS_COLOROP, s_texColorOps[state.ColorOp]);
-		m_pDevice->SetTextureStageState(slot, D3DTSS_ALPHAARG0, s_texBlendingArgs[state.AlphaArg0]);
-		m_pDevice->SetTextureStageState(slot, D3DTSS_ALPHAARG1, s_texBlendingArgs[state.AlphaArg1]);
+		m_renderStateManager.SetTextureColorOp(slot, s_texColorOps[state.ColorOp]);
+		m_renderStateManager.SetTextureColorArg1(slot, s_texBlendingArgs[state.ColorArg0]);
+		m_renderStateManager.SetTextureColorArg2(slot, s_texBlendingArgs[state.ColorArg1]);
 	}
 
 	if (state.AlphaOp == RenderAPI::TEXOP_Disable)
 	{
-		m_pDevice->SetTextureStageState(slot, D3DTSS_ALPHAOP, D3DTOP_DISABLE);
+		m_renderStateManager.SetTextureAlphaOp(slot, D3DTOP_DISABLE);
 	}
 	else
 	{
-		m_pDevice->SetTextureStageState(slot, D3DTSS_ALPHAOP, s_texColorOps[state.AlphaOp]);
-		m_pDevice->SetTextureStageState(slot, D3DTSS_ALPHAARG0, s_texBlendingArgs[state.AlphaArg0]);
-		m_pDevice->SetTextureStageState(slot, D3DTSS_ALPHAARG1, s_texBlendingArgs[state.AlphaArg1]);
+		m_renderStateManager.SetTextureAlphaOp(slot, s_texColorOps[state.AlphaOp]);
+		m_renderStateManager.SetTextureAlphaArg1(slot, s_texBlendingArgs[state.AlphaArg0]);
+		m_renderStateManager.SetTextureAlphaArg2(slot, s_texBlendingArgs[state.AlphaArg1]);
 	}
 }
 
 void Context::SetTextureSampler(unsigned int slot, const RenderAPI::TextureSampler& sampler)
 {
 	SamplerFilter& filter = s_samplerFilters[sampler.Filter];
-	m_pDevice->SetSamplerState(slot, D3DSAMP_MINFILTER, filter.min);
-	m_pDevice->SetSamplerState(slot, D3DSAMP_MAGFILTER, filter.mag);
-	m_pDevice->SetSamplerState(slot, D3DSAMP_MIPFILTER, filter.mip);
-	m_pDevice->SetSamplerState(slot, D3DSAMP_ADDRESSU, s_textureAddress[sampler.AddressU]);
-	m_pDevice->SetSamplerState(slot, D3DSAMP_ADDRESSV, s_textureAddress[sampler.AddressV]);
+	m_renderStateManager.SetSamplerMinFilter(slot, filter.min);
+	m_renderStateManager.SetSamplerMagFilter(slot, filter.mag);
+	m_renderStateManager.SetSamplerMipFilter(slot, filter.mip);
+	m_renderStateManager.SetSamplerAddressU(slot, s_textureAddress[sampler.AddressU]);
+	m_renderStateManager.SetSamplerAddressV(slot, s_textureAddress[sampler.AddressV]);
 	if (sampler.AddressV == RenderAPI::TEX_ADDRESS_Border || sampler.AddressU == RenderAPI::TEX_ADDRESS_Border)
 	{
-		m_pDevice->SetSamplerState(slot, D3DSAMP_BORDERCOLOR, sampler.BorderColor);
+		m_renderStateManager.SetSamplerBorderColor(slot, sampler.BorderColor);
 	};
-
 }
 
 void Context::SetScissorState(const RenderAPI::ScissorState& state)
@@ -474,7 +473,7 @@ RenderAPI::DeviceState Context::ResetDevice()
 			fullScreenSetting.ScanLineOrdering = D3DSCANLINEORDERING_PROGRESSIVE;
 			pfullScreenSetting = &fullScreenSetting;
 		}
-		hr= ((IDirect3DDevice9Ex*)m_pDevice)->ResetEx(&(m_pAPIContext->CreationParam), pfullScreenSetting);
+		hr = ((IDirect3DDevice9Ex*)m_pDevice)->ResetEx(&(m_pAPIContext->CreationParam), pfullScreenSetting);
 	}
 	else
 	{
