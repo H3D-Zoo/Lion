@@ -314,7 +314,7 @@ HRESULT STDMETHODCALLTYPE EffectInclude::Open(D3DXINCLUDE_TYPE, LPCSTR pFileName
 		if (!readRes)
 		{
 			int errCode = GetLastError();
-			//LogErrorWithDesc("Read Include File 失败%s. pFileName=%s;dest_filename=%s;%d=", pFileName, dest_filename.c_str(), errcode);
+			//LogEWithDesc("Read Include File 失败%s. pFileName=%s;dest_filename=%s;%d=", pFileName, dest_filename.c_str(), errcode);
 			*ppData = 0;
 			CloseHandle(hFile);
 			return S_FALSE;
@@ -334,7 +334,7 @@ HRESULT STDMETHODCALLTYPE EffectInclude::Open(D3DXINCLUDE_TYPE, LPCSTR pFileName
 		//char buff[MAX_PATH];
 		//GetCurrentDirectoryA(MAX_PATH, buff);
 		//g_Log.OutPutConsole(true,"无法打开Fx Include文件%s.\n当前目录:%s",pFileName,buff);
-		//LogErrorWithDesc("无法打开Fx 文件dest_filename=%s.\n当前目录:%s ;pFileName=%s", dest_filename.c_str(), buff, pFileName);
+		//LogEWithDesc("无法打开Fx 文件dest_filename=%s.\n当前目录:%s ;pFileName=%s", dest_filename.c_str(), buff, pFileName);
 		return S_FALSE;
 	}
 }

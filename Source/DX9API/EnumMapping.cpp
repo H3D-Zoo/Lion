@@ -122,7 +122,7 @@ namespace
 			}
 			else
 			{
-				//LogErrorWithDesc("生成fxo文件失败！fopen failed:%s", path.c_str());
+				//LogEWithDesc("生成fxo文件失败！fopen failed:%s", path.c_str());
 				//针对D3D加载fx失败问题；check  多打印一条
 				if (IsLocalFileExist(path))
 				{

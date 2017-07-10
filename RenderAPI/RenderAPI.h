@@ -20,13 +20,13 @@ namespace RenderAPI
 	public:
 		virtual ~Logger() { }
 
-		virtual void LogError(const char*) = 0;
+		virtual void LogE(const char*) = 0;
 
-		virtual void LogWarning(const char*) = 0;
+		virtual void LogW(const char*) = 0;
 
-		virtual void LogDebug(const char*) = 0;
+		virtual void LogD(const char*) = 0;
 
-		virtual void LogVerbose(const char*) = 0;
+		virtual void LogV(const char*) = 0;
 	};
 
 	// 获得系统内置默认Log对象
