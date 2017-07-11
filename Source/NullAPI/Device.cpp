@@ -75,6 +75,11 @@ RenderAPI::OcclusionQuery* Device::CreateOcclusionQuery()
 	return new OcclusionQuery();
 }
 
+void* Device::GetImplementPtr()
+{
+	return NULL;
+}
+
 void Device::Release()
 {
 	delete this;

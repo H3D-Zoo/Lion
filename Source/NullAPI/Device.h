@@ -26,6 +26,8 @@ public:
 
 	virtual RenderAPI::OcclusionQuery* CreateOcclusionQuery();
 
+	virtual void* GetImplementPtr();
+
 	virtual void Release();
 
 private:

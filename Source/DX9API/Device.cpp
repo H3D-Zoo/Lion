@@ -303,6 +303,11 @@ RenderAPI::OcclusionQuery* Device::CreateOcclusionQuery()
 	return NULL;
 }
 
+void* Device::GetImplementPtr()
+{
+	return m_pDevice;
+}
+
 ::DepthStencil* Device::CreateDepthStencilImplement(RenderAPI::ZBufferFormat format, unsigned int width, unsigned int height)
 {
 	IDirect3DSurface9* pDSSurface = NULL;

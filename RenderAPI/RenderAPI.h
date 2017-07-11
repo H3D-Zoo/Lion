@@ -225,6 +225,9 @@ namespace RenderAPI
 		virtual DepthStencil* CreateDepthStencil(ZBufferFormat format, unsigned int width, unsigned int height) = 0;
 
 		virtual OcclusionQuery* CreateOcclusionQuery() = 0;
+
+		//为了引擎临时加上去的，等一下一步在去掉吧
+		virtual void* GetImplementPtr() = 0;
 	};
 
 	/*
