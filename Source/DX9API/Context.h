@@ -6,7 +6,7 @@
 #include "StateManager.h"
 #include "DX9Include.h"
 
-class APIContext;
+class APIGlobal;
 
 class BackBufferManager
 {
@@ -35,7 +35,7 @@ private:
 class Context :public RenderAPI::Context
 {
 public:
-	Context(APIContext* pAPIContext, IDirect3DDevice9* device, RenderAPI::RenderTarget* defRT, RenderAPI::DepthStencil* defDS);
+	Context(APIGlobal* pAPIContext, IDirect3DDevice9* device, RenderAPI::RenderTarget* defRT, RenderAPI::DepthStencil* defDS);
 
 	~Context();
 
@@ -103,7 +103,7 @@ private:
 	void SetVertexElements(int index, const RenderAPI::VertexElement* s, int count);
 	void RebuildDecalration();
 
-	APIContext* m_pAPIContext;
+	APIGlobal* m_pAPI;
 	FXStateManager m_renderStateManager;
 	IDirect3DDevice9* m_pDevice;
 	IDirect3DDevice9Ex* m_pDeviceEx;

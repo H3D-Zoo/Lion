@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../../RenderAPI/RenderAPI.h"
-#include "RenderAPIImpl.h"
+#include "RefCount.hpp"
 #include "RenderTarget.h"
 #include "DepthStencil.h"
 

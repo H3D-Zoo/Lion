@@ -60,13 +60,9 @@ RenderAPI::Texture2D * DepthStencil::GetTexturePtr()
 
 void DepthStencil::Release()
 {
-	if (m_refCount.OnlyOne())
+	if (--m_refCount)
 	{
 		delete this;
-	}
-	else
-	{
-		--m_refCount;
 	}
 }
 

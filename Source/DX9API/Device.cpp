@@ -1,12 +1,12 @@
 #include <stdlib.h>
 #include "Device.h"
+#include "Context.h"
 #include "VertexBuffer.h"
 #include "IndexBuffer.h"
 #include "Texture2D.h"
 #include "FXEffect.h"
 #include "RenderTarget.h"
 #include "DepthStencil.h"
-#include "APIContext.h"
 #include "AutoPtr.hpp"
 #include "EnumMapping.h"
 #include "OcclusionQuery.h"
@@ -29,12 +29,12 @@ namespace
 	};
 }
 
-Device::Device(APIContext* pAPIContext, IDirect3DDevice9* device, const RenderAPI::SwapChainDesc & desc, bool isFullscreen, bool useVerticalSync)
-	: m_pAPIContext(pAPIContext)
+Device::Device(APIGlobal* pAPIContext, IDirect3DDevice9* device, const RenderAPI::SwapChainDesc & desc, bool isFullscreen, bool useVerticalSync)
+	: m_pAPI(pAPIContext)
 	, m_pDefaultSwapChain(NULL)
 	, m_pDevice(device)
 {
-	m_pAPIContext->pDevice = this;
+	m_pAPI->pDevice = this;
 	IDirect3DSwapChain9* pSwapChain = NULL;
 	m_pDevice->GetSwapChain(0, &pSwapChain);
 	IDirect3DSurface9* pDSSurafce = NULL;
@@ -47,10 +47,10 @@ Device::~Device()
 {
 	m_pDefaultSwapChain->Release();
 	m_pDevice->Release();
-	m_pAPIContext->Release();
+	m_pAPI->Release();
 	m_pDefaultSwapChain = NULL;
 	m_pDevice = NULL;
-	m_pAPIContext = NULL;
+	m_pAPI = NULL;
 }
 
 RenderAPI::SwapChain * Device::GetDefaultSwapChain()
@@ -131,7 +131,7 @@ RenderAPI::VertexBuffer* Device::CreateVertexBuffer(RenderAPI::ResourceUsage usa
 	unsigned int d3dUsage = s_d3dBufferUsage[usage];
 	unsigned int bufferSize = vertexCount * vertexSize;
 
-	D3DPOOL pool = (m_pAPIContext->pD3D->IsSupportManaged() && immuable) ? D3DPOOL_MANAGED : D3DPOOL_DEFAULT;
+	D3DPOOL pool = (m_pAPI->IsSupportManaged() && immuable) ? D3DPOOL_MANAGED : D3DPOOL_DEFAULT;
 	HRESULT hr = m_pDevice->CreateVertexBuffer(bufferSize, d3dUsage, 0, pool, &pVertexBuffer, NULL);
 	if (hr != S_OK)
 	{
@@ -168,7 +168,7 @@ RenderAPI::IndexBuffer* Device::CreateIndexBuffer(RenderAPI::ResourceUsage usage
 	IDirect3DIndexBuffer9* pIndexBuffer = NULL;
 	unsigned int d3dUsage = s_d3dBufferUsage[usage];
 	unsigned int bufferSize = indexCount * s_IndexLengths[format];
-	D3DPOOL pool = (m_pAPIContext->pD3D->IsSupportManaged() && immuable) ? D3DPOOL_MANAGED : D3DPOOL_DEFAULT;
+	D3DPOOL pool = (m_pAPI->IsSupportManaged() && immuable) ? D3DPOOL_MANAGED : D3DPOOL_DEFAULT;
 	HRESULT hr = m_pDevice->CreateIndexBuffer(bufferSize, d3dUsage, s_IndexFormats[format], pool, &pIndexBuffer, NULL);
 
 	if (hr != S_OK)
@@ -214,7 +214,7 @@ RenderAPI::Texture2D * Device::CreateTexture2D(RenderAPI::ResourceUsage usage, R
 
 	IDirect3DTexture9* pTexture = NULL;
 	unsigned int d3dUsage = usage == s_d3dTextureUsage[usage];
-	D3DPOOL pool = (m_pAPIContext->pD3D->IsSupportManaged() && immuable) ? D3DPOOL_MANAGED : D3DPOOL_DEFAULT;
+	D3DPOOL pool = (m_pAPI->IsSupportManaged() && immuable) ? D3DPOOL_MANAGED : D3DPOOL_DEFAULT;
 	HRESULT hr = m_pDevice->CreateTexture(width, height, 0, d3dUsage, s_TextureFormats[format], pool, &pTexture, NULL);
 
 	if (hr != S_OK)
@@ -258,7 +258,7 @@ RenderAPI::FXEffect * Device::CreateFXEffectFromFile(const char * effectFilePath
 		//pEffect->SetStateManager(pDeviceD3D->GetStateManager());
 		//读fx文件
 		//LogInfo(ENGINE_INIT, OutPut_File, "LoadFxFromDisk:读fxo文件:%s", fxofilename.c_str());
-		pEffect->SetStateManager(m_pAPIContext->pContext->GetStateManager());
+		pEffect->SetStateManager(m_pAPI->pContext->GetStateManager());
 		return new FXEffect(pEffect);
 	}
 	else
@@ -292,7 +292,7 @@ RenderAPI::DepthStencil * Device::CreateDepthStencil(RenderAPI::ZBufferFormat fo
 
 RenderAPI::OcclusionQuery* Device::CreateOcclusionQuery()
 {
-	if (m_pAPIContext->pD3D->IsSupportOcclusionQuery())
+	if (m_pAPI->IsSupportOcclusionQuery())
 	{
 		IDirect3DQuery9* pOcclusionQuery = NULL;
 		if (S_OK == m_pDevice->CreateQuery(D3DQUERYTYPE_OCCLUSION, &pOcclusionQuery))

@@ -8,9 +8,11 @@ include_directories(
 )
 
 set(RENDERAPI_SOURCE_FILES_COMMON
+	${DIR_COMMON}/RefCount.hpp
 	${DIR_COMMON}/Logger.h
-	${DIR_COMMON}/Logger.cpp
-	${DIR_COMMON}/RenderAPI.cpp
+	${DIR_COMMON}/Logger.cpp	
+	${DIR_COMMON}/BaseAPIGlobal.h
+	${DIR_COMMON}/BaseAPIGlobal.cpp
 	${DIR_COMMON}/RenderAPIExport.def
 )
 
@@ -19,7 +21,7 @@ set(RENDERAPI_INCLUDE_FILES
 )
 
 set(RENDERAPI_IMPL_INCLUDE_FILES
-	./RenderAPIImpl.h
+	./APIGlobal.h
 	./Device.h
 	./Context.h
 	./SwapChain.h
@@ -33,7 +35,7 @@ set(RENDERAPI_IMPL_INCLUDE_FILES
 )
 
 set(RENDERAPI_IMPL_SOURCE_FILES
-	 ./RenderAPIImpl.cpp
+	 ./APIGlobal.cpp
 	 ./Device.cpp
 	 ./Context.cpp
 	 ./SwapChain.cpp

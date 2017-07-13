@@ -1,6 +1,6 @@
 #pragma once
 #include "../../RenderAPI/RenderAPI.h"
-#include "DX9Include.h"
+#include "APIGlobal.h"
 
 class FXEffect : public RenderAPI::FXEffect
 {

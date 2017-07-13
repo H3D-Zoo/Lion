@@ -1,9 +1,9 @@
 #include "Context.h"
+#include "APIGlobal.h"
 #include "RenderTarget.h"
 #include "DepthStencil.h"
 #include "VertexBuffer.h"
 #include "IndexBuffer.h"
-#include "APIContext.h"
 #include "EnumMapping.h"
 
 namespace
@@ -161,16 +161,16 @@ namespace
 	};
 }
 
-Context::Context(APIContext* pAPIContext, IDirect3DDevice9 * device, RenderAPI::RenderTarget* defRT, RenderAPI::DepthStencil* defDS)
-	: m_pAPIContext(pAPIContext)
+Context::Context(APIGlobal* pAPI, IDirect3DDevice9 * device, RenderAPI::RenderTarget* defRT, RenderAPI::DepthStencil* defDS)
+	: m_pAPI(pAPI)
 	, m_pDevice(device)
 	, m_backBufferManager(device, defRT, defDS)
 	, m_renderStateManager(device)
 	, m_vertexDeclChanged(false)
 	, m_pVertexDeclaration(NULL)
 {
-	m_pAPIContext->pContext = this;
-	if (m_pAPIContext->pD3D->IsSupportD3D9EX())
+	m_pAPI->pContext = this;
+	if (m_pAPI->IsSupportD3D9EX())
 	{
 		m_pDeviceEx = (IDirect3DDevice9Ex*)m_pDevice;
 	}
@@ -188,10 +188,10 @@ Context::~Context()
 	m_vertexDeclarationPool.clear();
 
 	m_pDevice->Release();
-	m_pAPIContext->Release();
+	m_pAPI->Release();
 	m_pDeviceEx = NULL;
 	m_pDevice = NULL;
-	m_pAPIContext = NULL;
+	m_pAPI = NULL;
 }
 
 void Context::ClearRenderTarget(unsigned int color)
@@ -460,7 +460,7 @@ RenderAPI::DeviceState Context::CheckDeviceLost()
 	if (m_pDeviceEx != NULL)
 	{
 		// D3D9EX的设备丢失要通过CheckDeviceState来进行
-		HRESULT hr = m_pDeviceEx->CheckDeviceState(m_pAPIContext->CreationParam.hDeviceWindow);
+		HRESULT hr = m_pDeviceEx->CheckDeviceState(m_pAPI->CreationParam.hDeviceWindow);
 		return DeviceStateMapping(hr);
 	}
 	else
@@ -478,21 +478,21 @@ RenderAPI::DeviceState Context::ResetDevice()
 	{
 		D3DDISPLAYMODEEX* pfullScreenSetting = NULL;
 		D3DDISPLAYMODEEX fullScreenSetting;
-		if (m_pAPIContext->CreationParam.Windowed == FALSE)
+		if (m_pAPI->CreationParam.Windowed == FALSE)
 		{
 			fullScreenSetting.Size = sizeof(fullScreenSetting);
-			fullScreenSetting.Width = m_pAPIContext->CreationParam.BackBufferWidth;
-			fullScreenSetting.Height = m_pAPIContext->CreationParam.BackBufferHeight;
-			fullScreenSetting.RefreshRate = m_pAPIContext->CreationParam.FullScreen_RefreshRateInHz;
-			fullScreenSetting.Format = m_pAPIContext->CreationParam.BackBufferFormat;
+			fullScreenSetting.Width = m_pAPI->CreationParam.BackBufferWidth;
+			fullScreenSetting.Height = m_pAPI->CreationParam.BackBufferHeight;
+			fullScreenSetting.RefreshRate = m_pAPI->CreationParam.FullScreen_RefreshRateInHz;
+			fullScreenSetting.Format = m_pAPI->CreationParam.BackBufferFormat;
 			fullScreenSetting.ScanLineOrdering = D3DSCANLINEORDERING_PROGRESSIVE;
 			pfullScreenSetting = &fullScreenSetting;
 		}
-		hr = ((IDirect3DDevice9Ex*)m_pDevice)->ResetEx(&(m_pAPIContext->CreationParam), pfullScreenSetting);
+		hr = ((IDirect3DDevice9Ex*)m_pDevice)->ResetEx(&(m_pAPI->CreationParam), pfullScreenSetting);
 	}
 	else
 	{
-		hr = m_pDevice->Reset(&(m_pAPIContext->CreationParam));
+		hr = m_pDevice->Reset(&(m_pAPI->CreationParam));
 	}
 
 	if (hr == D3DERR_INVALIDCALL)

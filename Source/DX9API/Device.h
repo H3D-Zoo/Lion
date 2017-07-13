@@ -6,11 +6,11 @@
 #include "DX9Include.h"
 
 
-class APIContext;
+class APIGlobal;
 class Device : public RenderAPI::Device
 {
 public:
-	Device(APIContext* pAPIContext, IDirect3DDevice9* device, const RenderAPI::SwapChainDesc& desc, bool isFullscreen, bool useVerticalSync);
+	Device(APIGlobal* pAPIContext, IDirect3DDevice9* device, const RenderAPI::SwapChainDesc& desc, bool isFullscreen, bool useVerticalSync);
 
 	~Device();
 
@@ -37,7 +37,7 @@ public:
 	virtual void Release();
 
 private:
-	APIContext* m_pAPIContext;
+	APIGlobal* m_pAPI;
 	::DepthStencil* CreateDepthStencilImplement(RenderAPI::ZBufferFormat format, unsigned int width, unsigned int height);
 	::SwapChain* m_pDefaultSwapChain;
 	IDirect3DDevice9* m_pDevice;

@@ -15,7 +15,8 @@ bool APITestBed::Init(HWND hWindow, HWND hWindowEditor, unsigned int backBufferW
 		return false;
 	}
 
-	if (!m_apiInitPtr())
+	m_pAPIGlobal = m_createAPIGlobal();
+	if (m_pAPIGlobal == nullptr)
 	{
 		return false;
 	}
@@ -79,13 +80,7 @@ void APITestBed::Deinit()
 	Release(m_defaultSwapChain);
 	Release(m_pContext);
 	Release(m_pDevice);
-
-	if (m_apiDeinitPtr != nullptr)
-	{
-		m_apiDeinitPtr();
-		m_apiDeinitPtr = nullptr;
-	}
-
+	Release(m_pAPIGlobal);
 	if (m_hRenderAPIDLL != nullptr)
 	{
 		FreeLibrary(m_hRenderAPIDLL);
@@ -208,13 +203,9 @@ bool APITestBed::LoadDLL()
 		return false;
 	}
 
-	m_apiInitPtr = (RenderAPIInit)GetProcAddress(m_hRenderAPIDLL, "Initialize");
-	m_apiDeinitPtr = (RenderAPIDeinit)GetProcAddress(m_hRenderAPIDLL, "Deinitialize");
-	m_apiCreatePtr = (RenderAPICreate)GetProcAddress(m_hRenderAPIDLL, "CreateDeviceAndContext");
+	m_createAPIGlobal = (CreateAPIGlobal)GetProcAddress(m_hRenderAPIDLL, "CreateAPIGlobal");
 
-	if (m_apiInitPtr == nullptr ||
-		m_apiDeinitPtr == nullptr ||
-		m_apiCreatePtr == nullptr)
+	if (m_createAPIGlobal == nullptr)
 	{
 		return false;
 	}
@@ -231,7 +222,7 @@ bool APITestBed::CreateDeviceAndContext(HWND hWindow, HWND hWindowEditor, unsign
 	desc.aaMode = RenderAPI::AA_Disable;
 	desc.backbufferWidth = backBufferWidth;
 	desc.backbufferHeight = backBufferHeight;
-	auto rst = m_apiCreatePtr(desc, false, false);
+	auto rst = m_pAPIGlobal->CreateDeviceAndContext(desc, false, false);
 
 	if (!rst.Success)
 	{
@@ -528,7 +519,7 @@ void APITestBed::DrawRTTQuad()
 	alphaState.IsEnable = false;
 	m_pContext->SetAlphaTestingState(alphaState);
 
-	
+
 	m_pEffectSimpleTexture->SetTechniqueByName("SimpleTexture");
 	passCount = m_pEffectSimpleTexture->Begin();
 	if (passCount > 0)

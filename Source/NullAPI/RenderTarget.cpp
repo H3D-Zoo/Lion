@@ -59,13 +59,9 @@ RenderAPI::Texture2D * RenderTarget::GetTexturePtr()
 
 void RenderTarget::Release()
 {
-	if (m_refCount.OnlyOne())
+	if (--m_refCount)
 	{
 		delete this;
-	}
-	else
-	{
-		--m_refCount;
 	}
 }
 

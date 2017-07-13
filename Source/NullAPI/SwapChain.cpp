@@ -49,13 +49,9 @@ RenderAPI::DeviceState SwapChain::Present()
 
 void SwapChain::Release()
 {
-	if (m_refCount.OnlyOne())
+	if (--m_refCount == 0)
 	{
 		delete this;
-	}
-	else
-	{
-		--m_refCount;
 	}
 }
 

@@ -1,8 +1,74 @@
-#include "DX9Include.h"
+#include "APIGlobal.h"
 #include <string>
 #include "EnumMapping.h"
+#include "Device.h"
+#include "Context.h"
+#include "AutoPtr.hpp"
 
-D3D9DLL::D3D9DLL()
+
+namespace
+{
+	bool GenerateFxoFileToDisk(AutoR<ID3DXBuffer>& pBuffer, const char* path)
+	{
+		if (!pBuffer)
+		{
+			return false;
+		}
+		//输出二进制文件
+		char* effectCode = (char*)pBuffer->GetBufferPointer();
+		DWORD size = pBuffer->GetBufferSize();
+		if (effectCode)
+		{
+			FILE* pFile = fopen(path, "wb");
+			if (pFile)
+			{
+				/*size_t writesize=*/
+				//写fxo文件
+				fwrite(effectCode, size, 1, pFile);
+				fclose(pFile);
+				//LogInfo(ENGINE_INIT, OutPut_File, "GenerateFxoFileToDisk:写fxo文件:%s", path.c_str());
+				return true;
+			}
+			else
+			{
+				//LogEWithDesc("生成fxo文件失败！fopen failed:%s", path.c_str());
+				//针对D3D加载fx失败问题；check  多打印一条
+				if (IsLocalFileExist(path))
+				{
+					//LogInfo(ENGINE_INIT, OutPut_File, "文件\\目录 存在：%s", path.c_str());
+				}
+				else
+				{
+					//LogInfo(ENGINE_INIT, OutPut_File, "文件\\目录 不存在：%s", path.c_str());
+				}
+				return false;
+			}
+		}
+		else
+		{
+			return false;
+		}
+	}
+}
+
+RenderAPI::APIGlobal* CreateAPIGlobal()
+{
+	::APIGlobal* pAPI = new ::APIGlobal();
+	if (pAPI->Init())
+	{
+		return pAPI;
+	}
+	else
+	{
+		delete pAPI;
+		return NULL;
+	}
+}
+void Deinitialize()
+{
+}
+
+APIGlobal::APIGlobal()
 	: m_hDLL(NULL)
 	, m_d3d9ExPtr(NULL)
 	, m_d3d9Ptr(NULL)
@@ -19,7 +85,7 @@ D3D9DLL::D3D9DLL()
 typedef HRESULT(WINAPI *LPDIRECT3DCREATE9EX)(UINT, IDirect3D9Ex**);
 typedef IDirect3D9* (WINAPI *LPDIRECT3DCREATE9)(UINT);
 
-bool D3D9DLL::Init()
+bool APIGlobal::Init()
 {
 	//  [1/25/2013 YiKaiming]
 	// verbose:load d3d9.dll manmually
@@ -44,20 +110,20 @@ bool D3D9DLL::Init()
 	return true;
 }
 
-void D3D9DLL::Deinit()
+void APIGlobal::Deinit()
 {
 	DestroyD3D();
 	::FreeLibrary(m_hDLL);
 }
 
-bool D3D9DLL::IsSupportD3D9EX()
+bool APIGlobal::IsSupportD3D9EX()
 {
 	return m_d3d9ExPtr != NULL;
 }
 
-bool D3D9DLL::IsSupportOcclusionQuery() { return m_supportOcclusionQuery; }
+bool APIGlobal::IsSupportOcclusionQuery() { return m_supportOcclusionQuery; }
 
-bool D3D9DLL::CheckFormatValidate(D3DFORMAT & renderTarget, D3DFORMAT depthStencil) const
+bool APIGlobal::CheckFormatValidate(D3DFORMAT & renderTarget, D3DFORMAT depthStencil) const
 {
 	D3DDISPLAYMODE d3ddm;
 	m_d3d9Ptr->GetAdapterDisplayMode(D3DADAPTER_DEFAULT, &d3ddm);
@@ -76,7 +142,7 @@ bool D3D9DLL::CheckFormatValidate(D3DFORMAT & renderTarget, D3DFORMAT depthStenc
 	return true;
 }
 
-bool D3D9DLL::CheckBackBufferFormat(D3DFORMAT checkFormat, D3DFORMAT adapterFormat) const
+bool APIGlobal::CheckBackBufferFormat(D3DFORMAT checkFormat, D3DFORMAT adapterFormat) const
 {
 	HRESULT hr = m_d3d9Ptr->CheckDeviceFormat(
 		D3DADAPTER_DEFAULT,
@@ -89,7 +155,7 @@ bool D3D9DLL::CheckBackBufferFormat(D3DFORMAT checkFormat, D3DFORMAT adapterForm
 	return hr == S_OK;
 }
 
-bool D3D9DLL::CheckDepthStencilFormat(D3DFORMAT checkFormat, D3DFORMAT adapterFormat) const
+bool APIGlobal::CheckDepthStencilFormat(D3DFORMAT checkFormat, D3DFORMAT adapterFormat) const
 {
 	HRESULT hr = m_d3d9Ptr->CheckDeviceFormat(
 		D3DADAPTER_DEFAULT,
@@ -103,7 +169,7 @@ bool D3D9DLL::CheckDepthStencilFormat(D3DFORMAT checkFormat, D3DFORMAT adapterFo
 }
 
 
-bool D3D9DLL::CheckDeviceMultiSampleType(D3DFORMAT rtFormat, D3DFORMAT dsFormat, bool isFullsreen, D3DMULTISAMPLE_TYPE mulsampleType) const
+bool APIGlobal::CheckDeviceMultiSampleType(D3DFORMAT rtFormat, D3DFORMAT dsFormat, bool isFullsreen, D3DMULTISAMPLE_TYPE mulsampleType) const
 {
 	DWORD numAAQuality;
 	HRESULT hr = m_d3d9Ptr->CheckDeviceMultiSampleType(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, rtFormat, !isFullsreen, mulsampleType, &numAAQuality);
@@ -120,7 +186,7 @@ bool D3D9DLL::CheckDeviceMultiSampleType(D3DFORMAT rtFormat, D3DFORMAT dsFormat,
 	return true;
 }
 
-void D3D9DLL::CreateD3D()
+void APIGlobal::CreateD3D()
 {
 	// 通过查找Direct3DCreate9Ex是否存在来确认当前操作系统是否支持D3D9 EX
 	LPDIRECT3DCREATE9EX Direct3DCreate9ExPtr = NULL;
@@ -158,7 +224,7 @@ void D3D9DLL::CreateD3D()
 	}
 }
 
-void D3D9DLL::DestroyD3D()
+void APIGlobal::DestroyD3D()
 {
 	if (m_d3d9ExPtr != NULL)
 	{
@@ -174,7 +240,7 @@ void D3D9DLL::DestroyD3D()
 	}
 }
 
-D3DPRESENT_PARAMETERS D3D9DLL::MakeCreationParam(HWND hWindow, unsigned int width, unsigned int height, bool isFullscreen, bool vsync, D3DFORMAT rtFormat, D3DFORMAT dsFormat, D3DMULTISAMPLE_TYPE mulsample)
+D3DPRESENT_PARAMETERS APIGlobal::MakeCreationParam(HWND hWindow, unsigned int width, unsigned int height, bool isFullscreen, bool vsync, D3DFORMAT rtFormat, D3DFORMAT dsFormat, D3DMULTISAMPLE_TYPE mulsample)
 {
 	D3DPRESENT_PARAMETERS d3dpp;
 	ZeroMemory(&d3dpp, sizeof(d3dpp));
@@ -203,18 +269,18 @@ D3DPRESENT_PARAMETERS D3D9DLL::MakeCreationParam(HWND hWindow, unsigned int widt
 	return d3dpp;
 }
 
-bool D3D9DLL::IsSupportManaged()
+bool APIGlobal::IsSupportManaged()
 {
 	return !IsSupportD3D9EX();
 }
 
-void D3D9DLL::Recreate()
+void APIGlobal::Recreate()
 {
 	DestroyD3D();
 	CreateD3D();
 }
 
-IDirect3DDevice9* D3D9DLL::CreateDevice(HWND hWindow, unsigned int width, unsigned int height, bool isFullscreen, bool vsync, D3DFORMAT rtFormat, D3DFORMAT dsFormat, D3DMULTISAMPLE_TYPE mulsample)
+IDirect3DDevice9* APIGlobal::CreateDevice(HWND hWindow, unsigned int width, unsigned int height, bool isFullscreen, bool vsync, D3DFORMAT rtFormat, D3DFORMAT dsFormat, D3DMULTISAMPLE_TYPE mulsample)
 {
 	//by sssa2000 20110120
 	DWORD MT = D3DCREATE_MULTITHREADED | D3DCREATE_FPU_PRESERVE;
@@ -286,6 +352,108 @@ IDirect3DDevice9* D3D9DLL::CreateDevice(HWND hWindow, unsigned int width, unsign
 		}
 		return devicePtr;
 	}
+}
+
+void APIGlobal::AddRef()
+{
+	++m_refCount;
+}
+
+void APIGlobal::Release()
+{
+	if (0 == --m_refCount)
+	{
+		delete this;
+	}
+}
+
+
+RenderAPI::CreationResult APIGlobal::CreateDeviceAndContext(const RenderAPI::SwapChainDesc& desc, bool isFullscreen, bool useVerticalSync)
+{
+	RenderAPI::CreationResult result;
+
+	D3DFORMAT rtFormat = s_RTFormats[desc.backbufferFormat];
+	D3DFORMAT dsFormat = s_DSFormats[desc.zbufferFormat];
+	D3DMULTISAMPLE_TYPE mulsample = s_sampleTypes[desc.aaMode];
+
+	if (CheckFormatValidate(rtFormat, dsFormat))
+	{
+		IDirect3DDevice9* devicePtr = CreateDevice(
+			(HWND)desc.hWindow,
+			desc.backbufferWidth, desc.backbufferHeight,
+			isFullscreen, useVerticalSync,
+			rtFormat, dsFormat,
+			mulsample);
+
+		if (devicePtr != NULL)
+		{
+			RenderAPI::SwapChainDesc newDesc = desc;
+			if (desc.backbufferWidth == 0 || desc.backbufferHeight == 0)
+			{
+				RECT rect;
+				::GetClientRect((HWND)desc.hWindow, &rect);
+				newDesc.backbufferWidth = rect.right - rect.left;
+				newDesc.backbufferHeight = rect.bottom - rect.top;
+			}
+
+			result.Success = true;
+			LONG count = devicePtr->AddRef();
+			CreationParam = MakeCreationParam(
+				(HWND)desc.hWindow,
+				desc.backbufferWidth, desc.backbufferHeight,
+				isFullscreen, useVerticalSync,
+				rtFormat, dsFormat,
+				mulsample);
+
+			AddRef();
+			result.DevicePtr = new ::Device(this, devicePtr, newDesc, isFullscreen, useVerticalSync);
+			RenderAPI::SwapChain* swapChain = result.DevicePtr->GetDefaultSwapChain();
+			RenderAPI::RenderTarget* rt = swapChain->GetRenderTarget();
+			RenderAPI::DepthStencil* ds = swapChain->GetDepthStencil();
+
+			AddRef();
+			result.ContextPtr = new ::Context(this, devicePtr, rt, ds);
+			rt->Release();
+			ds->Release();
+			swapChain->Release();
+		}
+	}
+	return result;
+}
+
+bool APIGlobal::CompileFXEffectFromFile(const char* sourceFXFile, const char* compiledFXFile)
+{
+	EffectInclude includeCallback;
+	AutoR<ID3DXBuffer> pErrorBuffer;
+	AutoR<ID3DXBuffer> pEffectBuffer;
+	ID3DXEffectCompiler* pEffectCompile;
+	DWORD flags = D3DXSHADER_USE_LEGACY_D3DX9_31_DLL; //要想支持ps 1_x 需要使用这个。
+
+
+	HRESULT hr = D3DXCreateEffectCompilerFromFileA(sourceFXFile, NULL, &includeCallback, flags, &pEffectCompile, &pErrorBuffer);
+	if (FAILED(hr))
+	{
+		//PrintFxError("FX编译失败！D3DXCreateEffectCompilerFromFile Failed", pErrorBuffer);
+		return false;
+	}
+
+	//lockobj lock(D3DX_EFFET_LOCK);
+
+	unsigned debugFlag =
+#if _DEBUG
+		D3DXSHADER_DEBUG;
+#else
+		0;
+#endif
+	hr = pEffectCompile->CompileEffect(debugFlag, &pEffectBuffer, &pErrorBuffer);
+	if (FAILED(hr))
+	{
+		//PrintFxError("FX编译失败！CompileEffect Failed", pErrorBuffer);
+		return false;
+	}
+
+	return GenerateFxoFileToDisk(pEffectBuffer, compiledFXFile);
+
 }
 
 HRESULT STDMETHODCALLTYPE EffectInclude::Open(D3DXINCLUDE_TYPE, LPCSTR pFileName, LPCVOID /*pParentData*/, LPCVOID *ppData, UINT *pBytes)

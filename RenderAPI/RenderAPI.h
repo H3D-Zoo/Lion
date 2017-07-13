@@ -2,46 +2,11 @@
 
 namespace RenderAPI
 {
-	/*
-		全局初始化/析构函数
-	*/
-	// RHI 初始化接口，请在使用以下任一其他接口之前调用此接口
-	bool Initialize();
 
-	// 请把所有其他用户接口都释放后，最后调用这个接口
-	void Deinitialize();
+	class Device;
+	class Context;
+	class Logger;
 
-	/*
-		系统日志设置函数
-	*/
-	// 外部用户继承并实现此接口，以重定向或自定义处理系统内部的Log。
-	class Logger
-	{
-	public:
-		virtual ~Logger() { }
-
-		virtual void LogE(const char*) = 0;
-
-		virtual void LogW(const char*) = 0;
-
-		virtual void LogD(const char*) = 0;
-
-		virtual void LogV(const char*) = 0;
-	};
-
-	// 获得系统内置默认Log对象
-	Logger* GetDefaultLogger();
-
-	// 获取当前系统正在使用的Log对象
-	Logger* GetCurrentLogger();
-
-	// 修改系统使用的Log对象，以自定义log输出位置。
-	// 当参数为nullptr的时候，系统会使用默认的log对象处理输出
-	void SetCurrentLogger(Logger*);
-
-	/*
-		用户接口创建
-	*/
 	enum BackBufferFormat
 	{
 		BACKBUFFER_XRGB8 = 0,
@@ -85,8 +50,6 @@ namespace RenderAPI
 		AAMode aaMode;
 	};
 
-	class Device;
-	class Context;
 	struct CreationResult
 	{
 		CreationResult()
@@ -99,7 +62,52 @@ namespace RenderAPI
 		Context* ContextPtr;
 	};
 
-	CreationResult CreateDeviceAndContext(SwapChainDesc& desc, bool isFullscreen, bool useVerticalSync);
+	/*
+	全局初始化/析构函数
+	*/
+	class APIGlobal
+	{
+	public:
+		// 请把所有其他用户接口都释放后，最后调用这个接口
+		virtual void Release() = 0;
+
+		// 获得系统内置默认Log对象
+		virtual Logger* GetDefaultLogger() = 0;
+
+		// 获取当前系统正在使用的Log对象
+		virtual Logger* GetCurrentLogger() = 0;
+
+		// 修改系统使用的Log对象，以自定义log输出位置。
+		// 当参数为nullptr的时候，系统会使用默认的log对象处理输出
+		virtual void SetCurrentLogger(Logger*) = 0;
+
+		// 用户接口创建
+		virtual CreationResult CreateDeviceAndContext(const SwapChainDesc& desc, bool isFullscreen, bool useVerticalSync) = 0;
+
+		// 从文件中读取fx代码并编译，结果输出到compiledFXFile里
+		virtual bool CompileFXEffectFromFile(const char* sourceFXFile, const char* compiledFXFile) = 0;
+	};
+
+	// RHI 初始化接口
+	APIGlobal* CreateAPIGlobal();
+
+	/*
+		系统日志设置函数
+	*/
+	// 外部用户继承并实现此接口，以重定向或自定义处理系统内部的Log。
+	class Logger
+	{
+	public:
+		virtual ~Logger() { }
+
+		virtual void LogE(const char*) = 0;
+
+		virtual void LogW(const char*) = 0;
+
+		virtual void LogD(const char*) = 0;
+
+		virtual void LogV(const char*) = 0;
+	};
 
 	/*
 		用户渲染接口
@@ -744,8 +752,4 @@ namespace RenderAPI
 
 		virtual bool Get(void* dataPtr, unsigned int length) = 0;
 	};
-
-
-	// 从文件中读取fx代码并编译
-	bool CompileFXEffectFromFile(const char* sourceFXFile, const char* compiledFXFile);
 }

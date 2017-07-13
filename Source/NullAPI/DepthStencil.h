@@ -1,6 +1,6 @@
 #pragma once
 #include "../../RenderAPI/RenderAPI.h"
-#include "RenderAPIImpl.h"
+#include "RefCount.hpp"
 
 class Texture2D;
 
