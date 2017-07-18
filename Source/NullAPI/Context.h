@@ -5,6 +5,10 @@
 class Context :public RenderAPI::Context
 {
 public:
+	virtual RenderAPI::DeviceCaps GetDeviceCaps();
+
+	virtual unsigned int GetAvailableTextureMemory();
+
 	virtual void ClearRenderTarget(unsigned int color);
 
 	virtual void ClearDepthBuffer(float z);

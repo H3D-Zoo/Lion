@@ -32,3 +32,40 @@ bool APIGlobal::CompileFXEffectFromFile(const char* sourceFXFile, const char* co
 {
 	return true;
 }
+
+const char * APIGlobal::GetDeviceDriver() const
+{
+	return "";
+}
+
+const char * APIGlobal::GetDeviceName() const
+{
+	return "";
+}
+
+const char * APIGlobal::GetDeviceDesc() const
+{
+	return "";
+}
+
+unsigned int APIGlobal::GetVendorID() const
+{
+	return 0;
+}
+
+RenderAPI::DriverVersion APIGlobal::GetDriverVersion() const
+{
+	RenderAPI::DriverVersion version;
+
+	version.Product = 0;
+	version.Version = 0;
+	version.Subversion = 0;
+	version.BuildNumber = 0;
+	version.WHQLLevel = 0;
+	return version;
+}
+
+bool APIGlobal::CheckMultiSampleSupport(RenderAPI::BackBufferFormat bb, RenderAPI::ZBufferFormat z, RenderAPI::AAMode aa, bool fullscreen) const 
+{ 
+	return true;
+}

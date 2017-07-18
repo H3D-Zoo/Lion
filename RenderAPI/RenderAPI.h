@@ -2,7 +2,6 @@
 
 namespace RenderAPI
 {
-
 	class Device;
 	class Context;
 	class Logger;
@@ -62,6 +61,15 @@ namespace RenderAPI
 		Context* ContextPtr;
 	};
 
+	struct DriverVersion
+	{
+		unsigned int Product;
+		unsigned int Version;
+		unsigned int Subversion;
+		unsigned int BuildNumber;
+		unsigned int WHQLLevel;
+	};
+
 	/*
 	全局初始化/析构函数
 	*/
@@ -86,6 +94,18 @@ namespace RenderAPI
 
 		// 从文件中读取fx代码并编译，结果输出到compiledFXFile里
 		virtual bool CompileFXEffectFromFile(const char* sourceFXFile, const char* compiledFXFile) = 0;
+
+		virtual bool CheckMultiSampleSupport(BackBufferFormat, ZBufferFormat, AAMode, bool fullscreen) const = 0;
+
+		virtual const char* GetDeviceDriver() const = 0;
+
+		virtual const char* GetDeviceName() const = 0;
+
+		virtual const char* GetDeviceDesc() const = 0;
+
+		virtual unsigned int GetVendorID() const = 0;
+
+		virtual DriverVersion GetDriverVersion() const = 0;
 	};
 
 	// RHI 初始化接口
@@ -544,9 +564,76 @@ namespace RenderAPI
 		unsigned int LinePitch;
 	};
 
+	//!对非2的幂texture的支持
+	enum ENONPOW2Support
+	{
+		//!完全支持
+		POW2_Support = 0,
+		//!有条件支持
+		POW2_Conditional = 1,
+		//!不支持
+		POW2_None = 2,
+	};
+
+	struct DeviceCaps
+	{
+		//!最大texture宽度
+		unsigned int MaxTextureWidth;
+		//!最大texture高度
+		unsigned int MaxTextureHeight;
+		//!最大各项异性程度
+		unsigned int MaxAnisotropy;
+		//!最大texture层数
+		unsigned int MaxTextureStage;
+		//!最大同时绑定的texture数
+		unsigned int MaxSimultaneousTextures;
+		//!用户裁减面最大数
+		unsigned int MaxUserClipPlanes;
+		//!一次绘制的最大图原数
+		unsigned int MaxPrimitiveCount;
+		//!最大顶点索引数
+		unsigned int MaxVertexIndex;
+		//!最大顶点数据流数
+		unsigned int MaxStreams;
+		//!最大顶点宽度
+		unsigned int MaxStreamStride;
+		//!最大VS寄存器常量
+		unsigned int MaxVertexShaderConsts;
+		//!最大同时render target数
+		unsigned int MaxMRTs;
+		//!VS最大指令数
+		unsigned int MaxVertexShaderInstruction;
+		//!PS最大指令数
+		unsigned int MaxPixelShaderInstruction;
+		//!最大vertex blend矩阵数
+		unsigned int MaxVertexBlendMatrix;
+		//!最大vertex blend索引数
+		unsigned int MaxVertexBlendMatrixIndex;
+		//!VS版本，是一个两位数数字
+		unsigned int VertexShaderVersion;
+		//!PS版本，是一个两位数数字
+		unsigned int PixelShaderVersion;
+		//!是否支持32位索引
+		bool SupportIndex32;
+		//!是否支持dynamic texture
+		bool SupportsDynamicTexture;
+		//支持贴图透明通道
+		bool SupportTextureAlphaChannel;
+		//!仅支持正方形贴图
+		bool SupportOnlySquareTexture;
+		//!非pow2贴图支持
+		ENONPOW2Support NonePOW2Support;
+		//!初始显存数
+		unsigned int InitVideoMemory;
+	};
+
 	class Context :public RObject
 	{
 	public:
+		virtual DeviceCaps GetDeviceCaps() = 0;
+
+		virtual unsigned int GetAvailableTextureMemory() = 0;
+
 		virtual void ClearRenderTarget(unsigned int color) = 0;
 
 		virtual void ClearDepthBuffer(float z) = 0;

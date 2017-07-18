@@ -11,4 +11,16 @@ public:
 
 	// 从文件中读取fx代码并编译，结果输出到compiledFXFile里
 	virtual bool CompileFXEffectFromFile(const char* sourceFXFile, const char* compiledFXFile);
+
+	virtual const char* GetDeviceDriver() const;
+
+	virtual const char* GetDeviceName() const;
+
+	virtual const char* GetDeviceDesc() const;
+
+	virtual unsigned int GetVendorID() const;
+
+	virtual RenderAPI::DriverVersion GetDriverVersion() const;
+
+	virtual bool CheckMultiSampleSupport(RenderAPI::BackBufferFormat bb, RenderAPI::ZBufferFormat z, RenderAPI::AAMode aa, bool fullscreen) const;
 };

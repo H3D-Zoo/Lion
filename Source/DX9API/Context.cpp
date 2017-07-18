@@ -5,6 +5,74 @@
 #include "VertexBuffer.h"
 #include "IndexBuffer.h"
 #include "EnumMapping.h"
+#include <ddraw.h>
+
+struct DDrawX
+{
+	DDrawX() : m_pDD7(NULL)
+	{
+		IDirectDraw2* pDD2;
+		CoInitialize(NULL);
+		HRESULT ddrval = CoCreateInstance(CLSID_DirectDraw, NULL, CLSCTX_ALL, IID_IDirectDraw2, (void**)&pDD2);
+		if (SUCCEEDED(ddrval))
+		{
+			ddrval = IDirectDraw2_Initialize(pDD2, NULL);
+			pDD2->QueryInterface(IID_IDirectDraw7, (LPVOID*)&m_pDD7);
+		}
+		pDD2->Release();
+	}
+
+	~DDrawX()
+	{
+		if (m_pDD7 != NULL)
+		{
+			m_pDD7->Release();
+		}
+	}
+
+	unsigned int GetAvailableVideoMemory()
+	{
+		if (m_pDD7 != NULL)
+		{
+			DDSCAPS2 ddsCaps2;
+
+			/* 没有用的调用，意义不明，注释掉
+			// video memory
+			ZeroMemory(&ddsCaps2, sizeof(ddsCaps2));
+			ddsCaps2.dwCaps = DDSCAPS_VIDEOMEMORY;
+			DWORD dwTotal = 0;
+			DWORD dwFree = 0;
+			m_pDD7->GetAvailableVidMem(&ddsCaps2, &dwTotal, &dwFree);
+			*/
+
+			// video memory (local)
+			ZeroMemory(&ddsCaps2, sizeof(ddsCaps2));
+			ddsCaps2.dwCaps = DDSCAPS_LOCALVIDMEM;
+			DWORD dwTotalLocal = 0;
+			DWORD dwFreeLocal = 0;
+			m_pDD7->GetAvailableVidMem(&ddsCaps2, &dwTotalLocal, &dwFreeLocal);
+
+			/* 没有用的调用，意义不明，注释掉
+			// video memory (non-local)
+			ZeroMemory(&ddsCaps2, sizeof(ddsCaps2));
+			ddsCaps2.dwCaps = DDSCAPS_NONLOCALVIDMEM;
+			DWORD dwTotalNonLocal = 0;
+			DWORD dwFreeNonLocal = 0;
+			m_pDD7->GetAvailableVidMem(&ddsCaps2, &dwTotalNonLocal, &dwFreeNonLocal);
+			*/
+
+			return dwTotalLocal;
+		}
+		else
+		{
+			return 0;
+		}
+	}
+
+private:
+	//by sssa2000 2008.03.11
+	IDirectDraw7* m_pDD7;
+};
 
 namespace
 {
@@ -193,6 +261,77 @@ Context::~Context()
 	m_pDevice = NULL;
 	m_pAPI = NULL;
 }
+
+RenderAPI::DeviceCaps Context::GetDeviceCaps()
+{
+	//获取D3D信息
+	D3DCAPS9 d3dcaps;
+	RenderAPI::DeviceCaps caps;
+	m_pDevice->GetDeviceCaps(&d3dcaps);
+
+	caps.MaxTextureWidth = d3dcaps.MaxTextureWidth;
+	caps.MaxTextureHeight = d3dcaps.MaxTextureHeight;
+	caps.MaxAnisotropy = d3dcaps.MaxAnisotropy;
+	caps.MaxTextureStage = d3dcaps.MaxTextureBlendStages;
+	caps.MaxSimultaneousTextures = d3dcaps.MaxSimultaneousTextures;
+	caps.MaxUserClipPlanes = d3dcaps.MaxUserClipPlanes;
+	caps.MaxPrimitiveCount = d3dcaps.MaxPrimitiveCount;
+	caps.MaxVertexIndex = d3dcaps.MaxVertexIndex;
+	caps.MaxStreams = d3dcaps.MaxStreams;
+	caps.MaxStreamStride = d3dcaps.MaxStreamStride;
+	caps.MaxVertexShaderConsts = d3dcaps.MaxVertexShaderConst;
+	caps.MaxMRTs = d3dcaps.NumSimultaneousRTs;
+	caps.MaxVertexShaderInstruction = d3dcaps.MaxVShaderInstructionsExecuted;
+	caps.MaxPixelShaderInstruction = d3dcaps.MaxPShaderInstructionsExecuted;
+	caps.MaxVertexBlendMatrix = d3dcaps.MaxVertexBlendMatrices;
+	caps.MaxVertexBlendMatrixIndex = d3dcaps.MaxVertexBlendMatrixIndex;
+
+
+	caps.VertexShaderVersion = D3DSHADER_VERSION_MAJOR(d3dcaps.VertexShaderVersion) * 10 + D3DSHADER_VERSION_MINOR(d3dcaps.VertexShaderVersion);
+	caps.PixelShaderVersion = D3DSHADER_VERSION_MAJOR(d3dcaps.PixelShaderVersion) * 10 + D3DSHADER_VERSION_MINOR(d3dcaps.PixelShaderVersion);
+
+	caps.SupportIndex32 = d3dcaps.MaxVertexIndex > 0x0000FFFF;
+	caps.SupportsDynamicTexture = (d3dcaps.Caps2&D3DCAPS2_DYNAMICTEXTURES) != 0;
+	caps.SupportTextureAlphaChannel = (d3dcaps.TextureCaps&D3DPTEXTURECAPS_ALPHA) != 0;
+	caps.SupportOnlySquareTexture = (d3dcaps.TextureCaps&D3DPTEXTURECAPS_SQUAREONLY) != 0;
+
+	if (d3dcaps.TextureCaps&D3DPTEXTURECAPS_POW2)
+	{
+		if (d3dcaps.TextureCaps&D3DPTEXTURECAPS_NONPOW2CONDITIONAL)
+		{
+			caps.NonePOW2Support = RenderAPI::POW2_Conditional;
+		}
+		else
+		{
+			caps.NonePOW2Support = RenderAPI::POW2_None;
+		}
+	}
+	else
+	{
+		if ((d3dcaps.TextureCaps&D3DPTEXTURECAPS_NONPOW2CONDITIONAL) == 0)
+		{
+			caps.NonePOW2Support = RenderAPI::POW2_Support;
+		}
+	}
+
+	caps.InitVideoMemory = 0;
+	if (m_pAPI->GetVendorID() != 0x8086)
+	{
+		DDrawX ddrawX;
+		caps.InitVideoMemory = ddrawX.GetAvailableVideoMemory();
+	}
+	if (caps.InitVideoMemory == 0)
+	{
+		caps.InitVideoMemory = GetAvailableTextureMemory();
+	}
+	return caps;
+}
+
+unsigned int Context::GetAvailableTextureMemory()
+{
+	return m_pDevice->GetAvailableTextureMem();
+}
+
 
 void Context::ClearRenderTarget(unsigned int color)
 {

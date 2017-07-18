@@ -1,11 +1,21 @@
 #include "Context.h"
 
+RenderAPI::DeviceCaps Context::GetDeviceCaps()
+{
+	return RenderAPI::DeviceCaps();
+}
+
+unsigned int Context::GetAvailableTextureMemory()
+{
+	return 0;
+}
+
 void Context::ClearRenderTarget(unsigned int color)
 {
 
 }
 
-void Context::ClearDepthBuffer( float z)
+void Context::ClearDepthBuffer(float z)
 {
 
 }

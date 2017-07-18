@@ -5,6 +5,7 @@
 #include <d3dx9.h>
 #include <ddraw.h>
 #include <d3dx9effect.h>
+#include <string>
 #include "BaseAPIGlobal.h"
 #include "RefCount.hpp"
 
@@ -39,9 +40,21 @@ public:
 	// 所以这个接口没人用
 	void Recreate();
 
-	virtual RenderAPI::CreationResult CreateDeviceAndContext(const RenderAPI::SwapChainDesc& desc, bool isFullscreen, bool useVerticalSync) ;
+	virtual RenderAPI::CreationResult CreateDeviceAndContext(const RenderAPI::SwapChainDesc& desc, bool isFullscreen, bool useVerticalSync);
 
-	virtual bool CompileFXEffectFromFile(const char* sourceFXFile, const char* compiledFXFile) ;
+	virtual bool CompileFXEffectFromFile(const char* sourceFXFile, const char* compiledFXFile);
+
+	virtual const char* GetDeviceDriver() const;
+
+	virtual const char* GetDeviceName() const;
+
+	virtual const char* GetDeviceDesc() const;
+
+	virtual unsigned int GetVendorID() const;
+
+	virtual bool CheckMultiSampleSupport(RenderAPI::BackBufferFormat, RenderAPI::ZBufferFormat, RenderAPI::AAMode, bool fullscreen) const;
+
+	virtual RenderAPI::DriverVersion GetDriverVersion() const;
 
 	virtual void Release();
 
@@ -66,6 +79,11 @@ private:
 	// 如果Ex创建成功，会把d3d9Ptr设为相同值
 	IDirect3D9Ex* m_d3d9ExPtr;
 	IDirect3D9* m_d3d9Ptr;
+	std::string m_deviceDriver;
+	std::string m_deviceName;
+	std::string m_deviceDesc;
+	unsigned int m_vendorID;
+	RenderAPI::DriverVersion m_driverVersion;
 	bool m_supportOcclusionQuery;
 
 public:

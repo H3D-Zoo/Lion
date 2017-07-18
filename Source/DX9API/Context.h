@@ -39,6 +39,10 @@ public:
 
 	~Context();
 
+	virtual RenderAPI::DeviceCaps GetDeviceCaps();
+
+	virtual unsigned int GetAvailableTextureMemory();
+
 	virtual void ClearRenderTarget(unsigned int color);
 
 	virtual void ClearDepthBuffer(float z);

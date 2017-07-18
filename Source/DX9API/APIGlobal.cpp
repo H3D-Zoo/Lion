@@ -107,6 +107,18 @@ bool APIGlobal::Init()
 		return false;
 	}
 
+	D3DADAPTER_IDENTIFIER9 info;
+	m_d3d9Ptr->GetAdapterIdentifier(D3DADAPTER_DEFAULT, 0, &info);
+
+	m_deviceDriver = info.Driver;
+	m_deviceName = info.DeviceName;
+	m_deviceDesc = info.Description;
+	m_vendorID = info.VendorId;
+	m_driverVersion.Product = HIWORD(info.DriverVersion.HighPart);
+	m_driverVersion.Version = LOWORD(info.DriverVersion.HighPart);
+	m_driverVersion.Subversion = HIWORD(info.DriverVersion.LowPart);
+	m_driverVersion.BuildNumber = LOWORD(info.DriverVersion.LowPart);
+	m_driverVersion.WHQLLevel = info.WHQLLevel;
 	return true;
 }
 
@@ -454,6 +466,45 @@ bool APIGlobal::CompileFXEffectFromFile(const char* sourceFXFile, const char* co
 
 	return GenerateFxoFileToDisk(pEffectBuffer, compiledFXFile);
 
+}
+
+const char * APIGlobal::GetDeviceDriver() const
+{
+	return m_deviceDriver.c_str();
+}
+
+const char * APIGlobal::GetDeviceName() const
+{
+	return m_deviceName.c_str();
+}
+
+const char * APIGlobal::GetDeviceDesc() const
+{
+	return m_deviceDesc.c_str();
+}
+
+unsigned int APIGlobal::GetVendorID() const
+{
+	return m_vendorID;
+}
+
+struct AAModeMapping
+{
+	D3DMULTISAMPLE_TYPE d3dAA;
+	RenderAPI::AAMode apiAA;
+};
+
+bool APIGlobal::CheckMultiSampleSupport(RenderAPI::BackBufferFormat bb, RenderAPI::ZBufferFormat z, RenderAPI::AAMode aa, bool fullscreen) const
+{
+	D3DFORMAT rtFormat = s_RTFormats[bb];
+	D3DFORMAT dsFormat = s_DSFormats[z];
+	D3DMULTISAMPLE_TYPE aaType = s_sampleTypes[aa];
+	return CheckDeviceMultiSampleType(rtFormat, dsFormat, fullscreen, aaType);
+}
+
+RenderAPI::DriverVersion APIGlobal::GetDriverVersion() const
+{
+	return m_driverVersion;
 }
 
 HRESULT STDMETHODCALLTYPE EffectInclude::Open(D3DXINCLUDE_TYPE, LPCSTR pFileName, LPCVOID /*pParentData*/, LPCVOID *ppData, UINT *pBytes)
