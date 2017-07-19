@@ -91,10 +91,12 @@ void APITestBed::Deinit()
 void APITestBed::Update()
 {
 	static unsigned int lastStamp = timeGetTime();
+	static unsigned int accStamp = 0;
 	m_particleInstance.Update(timeGetTime() - lastStamp);
+	accStamp += timeGetTime() - lastStamp;
 	lastStamp = timeGetTime();
-
-	float timeScale = timeGetTime()  * 0.001f;
+	
+	float timeScale = accStamp * 0.001f;
 	const float distance = 10;
 	static float rho = 0;
 	static float phi = 0;
@@ -108,7 +110,7 @@ void APITestBed::Update()
 	eye.x = sinr * cosp;
 	eye.z = cosr * cosp;
 	eye.y = sinp;
-
+	//eye.normalize();
 	eye *= distance;
 
 	m_matView = gml::mat44::look_at(eye, gml::vec3(0, 0, 0), gml::vec3::up());
@@ -495,7 +497,7 @@ void APITestBed::DrawRTTQuad()
 
 	RenderAPI::AlphaTestingState alphaState;
 	alphaState.IsEnable = true;
-	alphaState.Reference = 0.5;
+	alphaState.Reference = 128;
 	m_pContext->SetAlphaTestingState(alphaState);
 
 	m_pEffectSimpleTexture->SetTechniqueByName("SimpleTextureStencil");
