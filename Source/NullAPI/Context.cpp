@@ -125,7 +125,7 @@ void Context::EndScene()
 
 }
 
-void Context::Draw(RenderAPI::Primitive primitive, unsigned int startIndex, unsigned int primitiveCount)
+void Context::Draw(RenderAPI::Primitive primitive, unsigned int startVertex, unsigned int primitiveCount)
 {
 
 }
@@ -145,7 +145,7 @@ RenderAPI::DeviceState Context::CheckDeviceLost()
 	return RenderAPI::DEVICE_OK;
 }
 
-RenderAPI::DeviceState Context::ResetDevice()
+RenderAPI::DeviceState Context::ResetDevice(const RenderAPI::SwapChainDesc& desc, bool isFullscreen, bool useVerticalSync)
 {
 	return RenderAPI::DEVICE_OK;
 }

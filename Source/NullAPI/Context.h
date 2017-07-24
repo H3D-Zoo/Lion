@@ -63,7 +63,7 @@ public:
 
 	virtual RenderAPI::DeviceState CheckDeviceLost();
 
-	virtual RenderAPI::DeviceState ResetDevice();
+	virtual RenderAPI::DeviceState ResetDevice(const RenderAPI::SwapChainDesc& desc, bool isFullscreen, bool useVerticalSync);
 
 	virtual void Release();
 };

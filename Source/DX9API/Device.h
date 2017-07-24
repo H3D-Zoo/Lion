@@ -14,6 +14,10 @@ public:
 
 	~Device();
 
+	void ReleaseDefaultSwapChainWhenLost();
+
+	void ResetDefaultBackBuffer(unsigned int width, unsigned int height, RenderAPI::BackBufferFormat rtFormat, RenderAPI::ZBufferFormat dsFormat);
+
 	virtual RenderAPI::SwapChain* GetDefaultSwapChain();
 
 	virtual RenderAPI::SwapChain* CreateAdditionalSwapChain(const RenderAPI::SwapChainDesc&);

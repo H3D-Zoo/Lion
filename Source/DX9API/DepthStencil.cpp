@@ -83,6 +83,21 @@ void DepthStencil::AddRef()
 	++m_refCount;
 }
 
+void DepthStencil::ReleaseWhenDeviceLost()
+{
+	m_dsSurface->Release();
+	m_dsSurface = NULL;
+}
+
+void DepthStencil::Reset(unsigned int width, unsigned int height, RenderAPI::ZBufferFormat dsFormat, IDirect3DSurface9 * pSurface)
+{
+	m_width = width;
+	m_height = height;
+	m_format = dsFormat;
+	// 这时候应该是被释放状态	
+	m_dsSurface = pSurface;
+}
+
 IDirect3DSurface9 * DepthStencil::GetD3DSurface() const
 {
 	return m_dsSurface;

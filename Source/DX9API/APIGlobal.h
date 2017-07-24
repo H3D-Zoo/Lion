@@ -19,6 +19,7 @@ class Context;
 class APIGlobal : public BaseAPIGlobal
 {
 public:
+	static D3DPRESENT_PARAMETERS FillCreationParam(APIGlobal& self, HWND hWindow, unsigned int width, unsigned int height, bool isFullscreen, bool vsync, D3DFORMAT rtFormat, D3DFORMAT dsFormat, D3DMULTISAMPLE_TYPE mulsample);
 	APIGlobal();
 
 	bool Init();
@@ -30,8 +31,6 @@ public:
 	bool CheckFormatValidate(D3DFORMAT & renderTarget, D3DFORMAT depthStencil) const;
 
 	IDirect3DDevice9* CreateDevice(HWND hWindow, unsigned int width, unsigned int height, bool isFullscreen, bool vsync, D3DFORMAT rtFormat, D3DFORMAT dsFormat, D3DMULTISAMPLE_TYPE mulsample);
-
-	D3DPRESENT_PARAMETERS MakeCreationParam(HWND hWindow, unsigned int width, unsigned int height, bool isFullscreen, bool vsync, D3DFORMAT rtFormat, D3DFORMAT dsFormat, D3DMULTISAMPLE_TYPE mulsample);
 
 	bool IsSupportManaged();
 
@@ -92,10 +91,9 @@ public:
 	LPD3DPERF_EndEvent   D3DPerfEndEvent;
 	LPD3DPERF_SetMarker  D3DPerfSetMarker;
 
-
 	::Device* pDevice;
 	::Context* pContext;
-	D3DPRESENT_PARAMETERS CreationParam;
+	HWND hDeviceWindow;
 };
 
 class EffectInclude : public ID3DXInclude

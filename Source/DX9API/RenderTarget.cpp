@@ -86,4 +86,17 @@ void RenderTarget::Resize(unsigned int width, unsigned int height)
 	m_height = height;
 }
 
+void RenderTarget::ReleaseWhenDeviceLost()
+{
+	m_rtSurface->Release();
+	m_rtSurface = NULL;
+}
+
+void RenderTarget::Reset(unsigned int width, unsigned int height, RenderAPI::BackBufferFormat rtFormat, IDirect3DSurface9 * pSurface)
+{
+	Resize(width, height);
+	m_format = rtFormat;
+	m_rtSurface = pSurface;
+}
+
 IDirect3DSurface9 * RenderTarget::GetD3DSurface() const { return m_rtSurface; }

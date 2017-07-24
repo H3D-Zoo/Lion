@@ -1,5 +1,6 @@
 #include "Context.h"
 #include "APIGlobal.h"
+#include "Device.h"
 #include "RenderTarget.h"
 #include "DepthStencil.h"
 #include "VertexBuffer.h"
@@ -83,6 +84,7 @@ namespace
 		D3DPT_TRIANGLEFAN,
 		D3DPT_LINELIST,
 		D3DPT_LINESTRIP,
+		D3DPT_POINTLIST,
 	};
 
 	unsigned int s_cullMode[] =
@@ -576,10 +578,10 @@ void Context::EndScene()
 	m_pDevice->EndScene();
 }
 
-void Context::Draw(RenderAPI::Primitive primitive, unsigned int startIndex, unsigned int primitiveCount)
+void Context::Draw(RenderAPI::Primitive primitive, unsigned int startVertex, unsigned int primitiveCount)
 {
 	RebuildDecalration();
-	m_pDevice->DrawPrimitive(s_primitives[primitive], startIndex, primitiveCount);
+	m_pDevice->DrawPrimitive(s_primitives[primitive], startVertex, primitiveCount);
 }
 
 void Context::DrawIndexed(RenderAPI::Primitive primitive, unsigned int baseVertex, unsigned int startIndex, unsigned int primitiveCount)
@@ -599,7 +601,11 @@ RenderAPI::DeviceState Context::CheckDeviceLost()
 	if (m_pDeviceEx != NULL)
 	{
 		// D3D9EX的设备丢失要通过CheckDeviceState来进行
-		HRESULT hr = m_pDeviceEx->CheckDeviceState(m_pAPI->CreationParam.hDeviceWindow);
+		HRESULT hr = m_pDeviceEx->CheckDeviceState(m_pAPI->hDeviceWindow);
+		if (hr == D3DERR_DEVICELOST || hr == D3DERR_DRIVERINTERNALERROR)
+		{
+			m_pAPI->pDevice->ReleaseDefaultSwapChainWhenLost();
+		}
 		return DeviceStateMapping(hr);
 	}
 	else
@@ -610,28 +616,41 @@ RenderAPI::DeviceState Context::CheckDeviceLost()
 	}
 }
 
-RenderAPI::DeviceState Context::ResetDevice()
+RenderAPI::DeviceState Context::ResetDevice(const RenderAPI::SwapChainDesc& desc, bool isFullscreen, bool useVerticalSync)
 {
 	HRESULT hr = S_OK;
+	
+	D3DPRESENT_PARAMETERS CreationParam = APIGlobal::FillCreationParam(
+		*m_pAPI,
+		(HWND)desc.hWindow,
+		desc.backbufferWidth,
+		desc.backbufferHeight,
+		isFullscreen,
+		useVerticalSync,
+		s_RTFormats[desc.backbufferFormat],
+		s_DSFormats[desc.zbufferFormat],
+		s_sampleTypes[desc.aaMode]);
+
 	if (m_pDeviceEx != NULL)
 	{
 		D3DDISPLAYMODEEX* pfullScreenSetting = NULL;
 		D3DDISPLAYMODEEX fullScreenSetting;
-		if (m_pAPI->CreationParam.Windowed == FALSE)
+
+		if (CreationParam.Windowed == FALSE)
 		{
 			fullScreenSetting.Size = sizeof(fullScreenSetting);
-			fullScreenSetting.Width = m_pAPI->CreationParam.BackBufferWidth;
-			fullScreenSetting.Height = m_pAPI->CreationParam.BackBufferHeight;
-			fullScreenSetting.RefreshRate = m_pAPI->CreationParam.FullScreen_RefreshRateInHz;
-			fullScreenSetting.Format = m_pAPI->CreationParam.BackBufferFormat;
+			fullScreenSetting.Width = CreationParam.BackBufferWidth;
+			fullScreenSetting.Height = CreationParam.BackBufferHeight;
+			fullScreenSetting.RefreshRate = CreationParam.FullScreen_RefreshRateInHz;
+			fullScreenSetting.Format = CreationParam.BackBufferFormat;
 			fullScreenSetting.ScanLineOrdering = D3DSCANLINEORDERING_PROGRESSIVE;
 			pfullScreenSetting = &fullScreenSetting;
 		}
-		hr = ((IDirect3DDevice9Ex*)m_pDevice)->ResetEx(&(m_pAPI->CreationParam), pfullScreenSetting);
+		hr = ((IDirect3DDevice9Ex*)m_pDevice)->ResetEx(&(CreationParam), pfullScreenSetting);
 	}
 	else
 	{
-		hr = m_pDevice->Reset(&(m_pAPI->CreationParam));
+		hr = m_pDevice->Reset(&(CreationParam));
 	}
 
 	if (hr == D3DERR_INVALIDCALL)
@@ -640,7 +659,26 @@ RenderAPI::DeviceState Context::ResetDevice()
 	}
 	else
 	{
-		return DeviceStateMapping(hr);
+		RenderAPI::DeviceState state = DeviceStateMapping(hr);
+		if (state == RenderAPI::DEVICE_OK)
+		{
+			m_pAPI->pDevice->ResetDefaultBackBuffer(
+				desc.backbufferWidth,
+				desc.backbufferHeight,
+				desc.backbufferFormat,
+				desc.zbufferFormat
+			);
+
+			RenderAPI::SwapChain* pSwapChain = m_pAPI->pDevice->GetDefaultSwapChain();
+			RenderAPI::RenderTarget* pRenderTarget = pSwapChain->GetRenderTarget();
+			RenderAPI::DepthStencil* pDepthStencil = pSwapChain->GetDepthStencil();
+			m_backBufferManager.ResetDefaultRenderTarget(pRenderTarget);
+			m_backBufferManager.ResetDefaultDepthStencil(pDepthStencil);
+			pRenderTarget->Release();
+			pDepthStencil->Release();
+			pSwapChain->Release();
+		}
+		return state;
 	}
 }
 
@@ -743,7 +781,22 @@ BackBufferManager::~BackBufferManager()
 
 void BackBufferManager::SetRenderTarget(unsigned int index, RenderAPI::RenderTarget * rt)
 {
-	IDirect3DSurface9* rtSurface = ((::RenderTarget*)rt)->GetD3DSurface();
+	IDirect3DSurface9* rtSurface;
+	if (rt == NULL)
+	{
+		if (index == 0)
+		{
+			rtSurface = m_pDefaultRT;
+		}
+		else
+		{
+			rtSurface = NULL;
+		}
+	}
+	else
+	{
+		rtSurface = ((::RenderTarget*)rt)->GetD3DSurface();
+	}
 
 	if (index >= m_pCurrentRTs.size())
 	{
@@ -758,9 +811,18 @@ void BackBufferManager::SetRenderTarget(unsigned int index, RenderAPI::RenderTar
 	}
 }
 
-void BackBufferManager::SetDepthStencil(RenderAPI::DepthStencil * rt)
+void BackBufferManager::SetDepthStencil(RenderAPI::DepthStencil * ds)
 {
-	IDirect3DSurface9* dsSurface = ((::DepthStencil*)rt)->GetD3DSurface();
+	IDirect3DSurface9* dsSurface;
+	if (ds == NULL)
+	{
+		dsSurface = m_pDefaultDS;
+	}
+	else
+	{
+		dsSurface = ((::DepthStencil*)ds)->GetD3DSurface();
+	}
+
 	if (dsSurface != m_pCurrentDS)
 	{
 		m_pDevice->SetDepthStencilSurface(dsSurface);
@@ -776,6 +838,18 @@ bool BackBufferManager::IsDefaultRT()
 bool BackBufferManager::IsDefaultDS()
 {
 	return m_pDefaultDS == m_pCurrentDS;
+}
+
+void BackBufferManager::ResetDefaultDepthStencil(RenderAPI::DepthStencil * defRT)
+{
+	m_pCurrentRTs[0] = ((::RenderTarget*)defRT)->GetD3DSurface();
+	m_pDefaultRT = m_pCurrentRTs[0];
+}
+
+void BackBufferManager::ResetDefaultRenderTarget(RenderAPI::RenderTarget * defDS)
+{
+	m_pCurrentDS = ((::DepthStencil*)defDS)->GetD3DSurface();
+	m_pDefaultDS = m_pCurrentDS;
 }
 
 bool operator != (const RenderAPI::VertexElement& left, const RenderAPI::VertexElement& right)

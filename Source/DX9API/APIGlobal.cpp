@@ -252,7 +252,7 @@ void APIGlobal::DestroyD3D()
 	}
 }
 
-D3DPRESENT_PARAMETERS APIGlobal::MakeCreationParam(HWND hWindow, unsigned int width, unsigned int height, bool isFullscreen, bool vsync, D3DFORMAT rtFormat, D3DFORMAT dsFormat, D3DMULTISAMPLE_TYPE mulsample)
+D3DPRESENT_PARAMETERS APIGlobal::FillCreationParam(APIGlobal& self, HWND hWindow, unsigned int width, unsigned int height, bool isFullscreen, bool vsync, D3DFORMAT rtFormat, D3DFORMAT dsFormat, D3DMULTISAMPLE_TYPE mulsample)
 {
 	D3DPRESENT_PARAMETERS d3dpp;
 	ZeroMemory(&d3dpp, sizeof(d3dpp));
@@ -269,7 +269,7 @@ D3DPRESENT_PARAMETERS APIGlobal::MakeCreationParam(HWND hWindow, unsigned int wi
 	d3dpp.MultiSampleType = mulsample;
 	d3dpp.MultiSampleQuality = 0;
 
-	if (CheckDeviceMultiSampleType(rtFormat, dsFormat, isFullscreen, mulsample))
+	if (self.CheckDeviceMultiSampleType(rtFormat, dsFormat, isFullscreen, mulsample))
 	{
 		d3dpp.Flags &= ~D3DPRESENTFLAG_LOCKABLE_BACKBUFFER;
 	}
@@ -299,20 +299,7 @@ IDirect3DDevice9* APIGlobal::CreateDevice(HWND hWindow, unsigned int width, unsi
 	DWORD hardwareBehaviorFlag = D3DCREATE_HARDWARE_VERTEXPROCESSING | MT;
 	DWORD softwareBehaviorFlag = D3DCREATE_SOFTWARE_VERTEXPROCESSING | MT;
 
-	D3DPRESENT_PARAMETERS d3dpp = MakeCreationParam(hWindow, width, height, isFullscreen, vsync, rtFormat, dsFormat, mulsample);
-	ZeroMemory(&d3dpp, sizeof(d3dpp));
-	d3dpp.hDeviceWindow = hWindow;
-	d3dpp.BackBufferWidth = width;
-	d3dpp.BackBufferHeight = height;
-	d3dpp.Windowed = !isFullscreen;
-	d3dpp.SwapEffect = D3DSWAPEFFECT_DISCARD;
-	d3dpp.BackBufferFormat = rtFormat;
-	d3dpp.BackBufferCount = 1;
-	d3dpp.EnableAutoDepthStencil = TRUE;
-	d3dpp.AutoDepthStencilFormat = dsFormat;
-	d3dpp.PresentationInterval = vsync ? D3DPRESENT_INTERVAL_ONE : D3DPRESENT_INTERVAL_IMMEDIATE;
-	d3dpp.MultiSampleType = mulsample;
-	d3dpp.MultiSampleQuality = 0;
+	D3DPRESENT_PARAMETERS d3dpp = FillCreationParam(*this, hWindow, width, height, isFullscreen, vsync, rtFormat, dsFormat, mulsample);
 
 	if (CheckDeviceMultiSampleType(rtFormat, dsFormat, isFullscreen, mulsample))
 	{
@@ -409,20 +396,13 @@ RenderAPI::CreationResult APIGlobal::CreateDeviceAndContext(const RenderAPI::Swa
 			}
 
 			result.Success = true;
+			hDeviceWindow = (HWND)desc.hWindow;
 			LONG count = devicePtr->AddRef();
-			CreationParam = MakeCreationParam(
-				(HWND)desc.hWindow,
-				desc.backbufferWidth, desc.backbufferHeight,
-				isFullscreen, useVerticalSync,
-				rtFormat, dsFormat,
-				mulsample);
-
 			AddRef();
 			result.DevicePtr = new ::Device(this, devicePtr, newDesc, isFullscreen, useVerticalSync);
 			RenderAPI::SwapChain* swapChain = result.DevicePtr->GetDefaultSwapChain();
 			RenderAPI::RenderTarget* rt = swapChain->GetRenderTarget();
 			RenderAPI::DepthStencil* ds = swapChain->GetDepthStencil();
-
 			AddRef();
 			result.ContextPtr = new ::Context(this, devicePtr, rt, ds);
 			rt->Release();

@@ -493,6 +493,7 @@ namespace RenderAPI
 		PRIMITIVE_TriangleFan = 2,
 		PRIMITIVE_LineList = 3,
 		PRIMITIVE_LineStrip = 4,
+		PRIMITIVE_Point = 5,
 	};
 
 	enum DeviceState
@@ -680,7 +681,7 @@ namespace RenderAPI
 
 		virtual void EndScene() = 0;
 
-		virtual void Draw(Primitive primitive, unsigned int startIndex, unsigned int primitiveCount) = 0;
+		virtual void Draw(Primitive primitive, unsigned int startVertex, unsigned int primitiveCount) = 0;
 
 		virtual void DrawIndexed(RenderAPI::Primitive primitive, unsigned int baseVertex, unsigned int startIndex, unsigned int primitiveCount) = 0;
 
@@ -688,7 +689,7 @@ namespace RenderAPI
 
 		virtual DeviceState CheckDeviceLost() = 0;
 
-		virtual DeviceState ResetDevice() = 0;
+		virtual DeviceState ResetDevice(const SwapChainDesc& desc, bool isFullscreen, bool useVerticalSync) = 0;
 	};
 
 	class VertexBuffer : public RObject

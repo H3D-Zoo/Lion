@@ -27,6 +27,10 @@ public:
 
 	void AddRef();
 
+	void ReleaseWhenDeviceLost();
+
+	void Reset(unsigned int width, unsigned int height, RenderAPI::ZBufferFormat dsFormat, IDirect3DSurface9* pSurface);
+
 	IDirect3DSurface9* GetD3DSurface() const;
 
 private:

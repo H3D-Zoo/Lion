@@ -31,6 +31,10 @@ public:
 
 	void Resize(unsigned int width, unsigned int height);
 
+	void ReleaseWhenDeviceLost();
+
+	void Reset(unsigned int width, unsigned int height, RenderAPI::BackBufferFormat rtFormat, IDirect3DSurface9* pSurface);
+
 	IDirect3DSurface9* GetD3DSurface() const;
 
 private:

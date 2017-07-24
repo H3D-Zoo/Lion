@@ -23,6 +23,10 @@ public:
 
 	bool IsDefaultDS();
 
+	void ResetDefaultDepthStencil(RenderAPI::DepthStencil* defRT);
+
+	void ResetDefaultRenderTarget(RenderAPI::RenderTarget* defDS);
+
 private:
 	IDirect3DDevice9* m_pDevice;
 	std::vector<IDirect3DSurface9*> m_pCurrentRTs;
@@ -97,7 +101,7 @@ public:
 
 	virtual RenderAPI::DeviceState CheckDeviceLost();
 
-	virtual RenderAPI::DeviceState ResetDevice();
+	virtual RenderAPI::DeviceState ResetDevice(const RenderAPI::SwapChainDesc& desc, bool isFullscreen, bool useVerticalSync);
 
 	virtual void Release();
 

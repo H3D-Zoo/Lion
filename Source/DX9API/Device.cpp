@@ -53,6 +53,18 @@ Device::~Device()
 	m_pAPI = NULL;
 }
 
+void Device::ReleaseDefaultSwapChainWhenLost()
+{
+	m_pDefaultSwapChain->ReleaseSurfaceWhenLost();
+}
+
+void Device::ResetDefaultBackBuffer(unsigned int width, unsigned int height, RenderAPI::BackBufferFormat rtFormat, RenderAPI::ZBufferFormat dsFormat)
+{
+	IDirect3DSurface9* pDSSurafce = NULL;
+	m_pDevice->GetDepthStencilSurface(&pDSSurafce);
+	m_pDefaultSwapChain->ResetBackBuffers(width, height, rtFormat, dsFormat, pDSSurafce);
+}
+
 RenderAPI::SwapChain * Device::GetDefaultSwapChain()
 {
 	m_pDefaultSwapChain->AddRef();
