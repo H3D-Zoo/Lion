@@ -9,13 +9,13 @@
 class RenderTarget : public RenderAPI::RenderTarget
 {
 public:
-	RenderTarget(IDirect3DSurface9* rtSurface, RenderAPI::BackBufferFormat format, unsigned int width, unsigned int height);
+	RenderTarget(IDirect3DSurface9* rtSurface, RenderAPI::RenderTargetFormat format, unsigned int width, unsigned int height);
 
-	RenderTarget(IDirect3DTexture9* rtTexture, RenderAPI::BackBufferFormat format, unsigned int width, unsigned int height);
+	RenderTarget(IDirect3DTexture9* rtTexture, RenderAPI::RenderTargetFormat format, unsigned int width, unsigned int height);
 
 	~RenderTarget();
 
-	virtual RenderAPI::BackBufferFormat GetFormat() const;
+	virtual RenderAPI::RenderTargetFormat GetFormat() const;
 
 	virtual unsigned int GetWidth() const;
 
@@ -33,13 +33,13 @@ public:
 
 	void ReleaseWhenDeviceLost();
 
-	void Reset(unsigned int width, unsigned int height, RenderAPI::BackBufferFormat rtFormat, IDirect3DSurface9* pSurface);
+	void Reset(unsigned int width, unsigned int height, RenderAPI::RenderTargetFormat rtFormat, IDirect3DSurface9* pSurface);
 
 	IDirect3DSurface9* GetD3DSurface() const;
 
 private:
 	RefCount m_refCount;
-	RenderAPI::BackBufferFormat m_format;
+	RenderAPI::RenderTargetFormat m_format;
 	unsigned int m_width;
 	unsigned int m_height;
 	IDirect3DSurface9* m_rtSurface;

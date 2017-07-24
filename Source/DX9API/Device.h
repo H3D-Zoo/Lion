@@ -16,7 +16,7 @@ public:
 
 	void ReleaseDefaultSwapChainWhenLost();
 
-	void ResetDefaultBackBuffer(unsigned int width, unsigned int height, RenderAPI::BackBufferFormat rtFormat, RenderAPI::ZBufferFormat dsFormat);
+	void ResetDefaultBackBuffer(unsigned int width, unsigned int height, RenderAPI::RenderTargetFormat rtFormat, RenderAPI::DepthStencilFormat dsFormat);
 
 	virtual RenderAPI::SwapChain* GetDefaultSwapChain();
 
@@ -30,9 +30,9 @@ public:
 
 	virtual RenderAPI::FXEffect* CreateFXEffectFromFile(const char* effectFilePath);
 
-	virtual RenderAPI::RenderTarget* CreateRenderTarget(RenderAPI::BackBufferFormat format, unsigned int width, unsigned int height);
+	virtual RenderAPI::RenderTarget* CreateRenderTarget(RenderAPI::RenderTargetFormat format, unsigned int width, unsigned int height);
 
-	virtual RenderAPI::DepthStencil* CreateDepthStencil(RenderAPI::ZBufferFormat format, unsigned int width, unsigned int height);
+	virtual RenderAPI::DepthStencil* CreateDepthStencil(RenderAPI::DepthStencilFormat format, unsigned int width, unsigned int height);
 
 	virtual RenderAPI::OcclusionQuery* CreateOcclusionQuery();
 
@@ -42,7 +42,7 @@ public:
 
 private:
 	APIGlobal* m_pAPI;
-	::DepthStencil* CreateDepthStencilImplement(RenderAPI::ZBufferFormat format, unsigned int width, unsigned int height);
+	::DepthStencil* CreateDepthStencilImplement(RenderAPI::DepthStencilFormat format, unsigned int width, unsigned int height);
 	::SwapChain* m_pDefaultSwapChain;
 	IDirect3DDevice9* m_pDevice;
 };

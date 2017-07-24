@@ -31,10 +31,10 @@ public:
 
 	void ReleaseSurfaceWhenLost();
 
-	void ResetBackBuffers(unsigned int width, unsigned int height, RenderAPI::BackBufferFormat rtFormat, RenderAPI::ZBufferFormat dsFormat, IDirect3DSurface9* pDSSurafce);
+	void ResetBackBuffers(unsigned int width, unsigned int height, RenderAPI::RenderTargetFormat rtFormat, RenderAPI::DepthStencilFormat dsFormat, IDirect3DSurface9* pDSSurafce);
 
 private:
-	void InitRenderTarget(IDirect3DSwapChain9* swapChain, RenderAPI::BackBufferFormat format, unsigned int width, unsigned int height);
+	void InitRenderTarget(IDirect3DSwapChain9* swapChain, RenderAPI::RenderTargetFormat format, unsigned int width, unsigned int height);
 
 	RefCount m_refCount;
 	bool m_isFullscreen;

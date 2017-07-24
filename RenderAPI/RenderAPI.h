@@ -6,13 +6,13 @@ namespace RenderAPI
 	class Context;
 	class Logger;
 
-	enum BackBufferFormat
+	enum RenderTargetFormat
 	{
 		BACKBUFFER_XRGB8 = 0,
 		BACKBUFFER_ARGB8 = 1,
 	};
 
-	enum ZBufferFormat
+	enum DepthStencilFormat
 	{
 		ZBUFFER_D24S8 = 0,
 		ZBUFFER_D24X8 = 1,
@@ -44,8 +44,8 @@ namespace RenderAPI
 		void* hWindow;
 		unsigned int backbufferWidth;
 		unsigned int backbufferHeight;
-		BackBufferFormat backbufferFormat;
-		ZBufferFormat zbufferFormat;
+		RenderTargetFormat backbufferFormat;
+		DepthStencilFormat zbufferFormat;
 		AAMode aaMode;
 	};
 
@@ -95,7 +95,7 @@ namespace RenderAPI
 		// 从文件中读取fx代码并编译，结果输出到compiledFXFile里
 		virtual bool CompileFXEffectFromFile(const char* sourceFXFile, const char* compiledFXFile) = 0;
 
-		virtual bool CheckMultiSampleSupport(BackBufferFormat, ZBufferFormat, AAMode, bool fullscreen) const = 0;
+		virtual bool CheckMultiSampleSupport(RenderTargetFormat, DepthStencilFormat, AAMode, bool fullscreen) const = 0;
 
 		virtual const char* GetDeviceDriver() const = 0;
 
@@ -248,9 +248,9 @@ namespace RenderAPI
 
 		virtual FXEffect* CreateFXEffectFromFile(const char* effectFilePath) = 0;
 
-		virtual RenderTarget* CreateRenderTarget(BackBufferFormat format, unsigned int width, unsigned int height) = 0;
+		virtual RenderTarget* CreateRenderTarget(RenderTargetFormat format, unsigned int width, unsigned int height) = 0;
 
-		virtual DepthStencil* CreateDepthStencil(ZBufferFormat format, unsigned int width, unsigned int height) = 0;
+		virtual DepthStencil* CreateDepthStencil(DepthStencilFormat format, unsigned int width, unsigned int height) = 0;
 
 		virtual OcclusionQuery* CreateOcclusionQuery() = 0;
 
@@ -751,7 +751,7 @@ namespace RenderAPI
 	class RenderTarget : public RObject
 	{
 	public:
-		virtual BackBufferFormat GetFormat() const = 0;
+		virtual RenderTargetFormat GetFormat() const = 0;
 
 		virtual unsigned int GetWidth() const = 0;
 
@@ -765,7 +765,7 @@ namespace RenderAPI
 	class DepthStencil : public RObject
 	{
 	public:
-		virtual ZBufferFormat GetFormat() const = 0;
+		virtual DepthStencilFormat GetFormat() const = 0;
 
 		virtual unsigned int GetWidth() const = 0;
 

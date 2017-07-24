@@ -82,7 +82,7 @@ void SwapChain::ReleaseSurfaceWhenLost()
 	m_pDepthStencil->ReleaseWhenDeviceLost();
 }
 
-void SwapChain::ResetBackBuffers(unsigned int width, unsigned int height, RenderAPI::BackBufferFormat rtFormat, RenderAPI::ZBufferFormat dsFormat, IDirect3DSurface9* pDSSurafce)
+void SwapChain::ResetBackBuffers(unsigned int width, unsigned int height, RenderAPI::RenderTargetFormat rtFormat, RenderAPI::DepthStencilFormat dsFormat, IDirect3DSurface9* pDSSurafce)
 {
 	IDirect3DSurface9* pBackBuffer = NULL;
 	m_pSwapChain->GetBackBuffer(0, D3DBACKBUFFER_TYPE_MONO, &pBackBuffer);
@@ -90,7 +90,7 @@ void SwapChain::ResetBackBuffers(unsigned int width, unsigned int height, Render
 	m_pDepthStencil->Reset(width, height, dsFormat, pDSSurafce);
 }
 
-void SwapChain::InitRenderTarget(IDirect3DSwapChain9 * swapChain, RenderAPI::BackBufferFormat format, unsigned int width, unsigned int height)
+void SwapChain::InitRenderTarget(IDirect3DSwapChain9 * swapChain, RenderAPI::RenderTargetFormat format, unsigned int width, unsigned int height)
 {
 	IDirect3DSurface9* pBackBuffer = NULL;
 	m_pSwapChain->GetBackBuffer(0, D3DBACKBUFFER_TYPE_MONO, &pBackBuffer);

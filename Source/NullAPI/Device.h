@@ -20,9 +20,9 @@ public:
 
 	virtual RenderAPI::FXEffect* CreateFXEffectFromFile(const char* effectFilePath);
 
-	virtual RenderAPI::RenderTarget* CreateRenderTarget(RenderAPI::BackBufferFormat format, unsigned int width, unsigned int height);
+	virtual RenderAPI::RenderTarget* CreateRenderTarget(RenderAPI::RenderTargetFormat format, unsigned int width, unsigned int height);
 
-	virtual RenderAPI::DepthStencil* CreateDepthStencil(RenderAPI::ZBufferFormat format, unsigned int width, unsigned int height);
+	virtual RenderAPI::DepthStencil* CreateDepthStencil(RenderAPI::DepthStencilFormat format, unsigned int width, unsigned int height);
 
 	virtual RenderAPI::OcclusionQuery* CreateOcclusionQuery();
 

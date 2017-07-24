@@ -474,7 +474,7 @@ struct AAModeMapping
 	RenderAPI::AAMode apiAA;
 };
 
-bool APIGlobal::CheckMultiSampleSupport(RenderAPI::BackBufferFormat bb, RenderAPI::ZBufferFormat z, RenderAPI::AAMode aa, bool fullscreen) const
+bool APIGlobal::CheckMultiSampleSupport(RenderAPI::RenderTargetFormat bb, RenderAPI::DepthStencilFormat z, RenderAPI::AAMode aa, bool fullscreen) const
 {
 	D3DFORMAT rtFormat = s_RTFormats[bb];
 	D3DFORMAT dsFormat = s_DSFormats[z];

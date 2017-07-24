@@ -51,7 +51,7 @@ public:
 
 	virtual unsigned int GetVendorID() const;
 
-	virtual bool CheckMultiSampleSupport(RenderAPI::BackBufferFormat, RenderAPI::ZBufferFormat, RenderAPI::AAMode, bool fullscreen) const;
+	virtual bool CheckMultiSampleSupport(RenderAPI::RenderTargetFormat, RenderAPI::DepthStencilFormat, RenderAPI::AAMode, bool fullscreen) const;
 
 	virtual RenderAPI::DriverVersion GetDriverVersion() const;
 

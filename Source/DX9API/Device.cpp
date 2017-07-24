@@ -58,7 +58,7 @@ void Device::ReleaseDefaultSwapChainWhenLost()
 	m_pDefaultSwapChain->ReleaseSurfaceWhenLost();
 }
 
-void Device::ResetDefaultBackBuffer(unsigned int width, unsigned int height, RenderAPI::BackBufferFormat rtFormat, RenderAPI::ZBufferFormat dsFormat)
+void Device::ResetDefaultBackBuffer(unsigned int width, unsigned int height, RenderAPI::RenderTargetFormat rtFormat, RenderAPI::DepthStencilFormat dsFormat)
 {
 	IDirect3DSurface9* pDSSurafce = NULL;
 	m_pDevice->GetDepthStencilSurface(&pDSSurafce);
@@ -283,7 +283,7 @@ RenderAPI::FXEffect * Device::CreateFXEffectFromFile(const char * effectFilePath
 
 }
 
-RenderAPI::RenderTarget * Device::CreateRenderTarget(RenderAPI::BackBufferFormat format, unsigned int width, unsigned int height)
+RenderAPI::RenderTarget * Device::CreateRenderTarget(RenderAPI::RenderTargetFormat format, unsigned int width, unsigned int height)
 {
 	D3DFORMAT rtFormat = s_RTFormats[format];
 	IDirect3DTexture9* pTexture = NULL;
@@ -297,7 +297,7 @@ RenderAPI::RenderTarget * Device::CreateRenderTarget(RenderAPI::BackBufferFormat
 	return new RenderTarget(pTexture, format, width, height);
 }
 
-RenderAPI::DepthStencil * Device::CreateDepthStencil(RenderAPI::ZBufferFormat format, unsigned int width, unsigned int height)
+RenderAPI::DepthStencil * Device::CreateDepthStencil(RenderAPI::DepthStencilFormat format, unsigned int width, unsigned int height)
 {
 	return CreateDepthStencilImplement(format, width, height);
 }
@@ -320,7 +320,7 @@ void* Device::GetImplementPtr()
 	return m_pDevice;
 }
 
-::DepthStencil* Device::CreateDepthStencilImplement(RenderAPI::ZBufferFormat format, unsigned int width, unsigned int height)
+::DepthStencil* Device::CreateDepthStencilImplement(RenderAPI::DepthStencilFormat format, unsigned int width, unsigned int height)
 {
 	IDirect3DSurface9* pDSSurface = NULL;
 	HRESULT hr = m_pDevice->CreateDepthStencilSurface(width, height, s_DSFormats[format], D3DMULTISAMPLE_NONE, 0, TRUE, &pDSSurface, NULL);

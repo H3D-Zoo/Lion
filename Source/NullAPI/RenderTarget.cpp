@@ -11,7 +11,7 @@ namespace
 	};
 }
 
-RenderTarget::RenderTarget(RenderAPI::BackBufferFormat format, unsigned int width, unsigned int height, bool isTexture)
+RenderTarget::RenderTarget(RenderAPI::RenderTargetFormat format, unsigned int width, unsigned int height, bool isTexture)
 	: m_format(format)
 	, m_width(width)
 	, m_height(height)
@@ -32,7 +32,7 @@ RenderTarget::~RenderTarget()
 	}
 }
 
-RenderAPI::BackBufferFormat RenderTarget::GetFormat() const
+RenderAPI::RenderTargetFormat RenderTarget::GetFormat() const
 {
 	return m_format;
 }

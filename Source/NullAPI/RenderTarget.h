@@ -8,11 +8,11 @@ class Texture2D;
 class RenderTarget : public RenderAPI::RenderTarget
 {
 public:
-	RenderTarget(RenderAPI::BackBufferFormat format, unsigned int width, unsigned int height, bool isTexture);
+	RenderTarget(RenderAPI::RenderTargetFormat format, unsigned int width, unsigned int height, bool isTexture);
 
 	~RenderTarget();
 
-	virtual RenderAPI::BackBufferFormat GetFormat() const;
+	virtual RenderAPI::RenderTargetFormat GetFormat() const;
 
 	virtual unsigned int GetWidth() const;
 
@@ -32,7 +32,7 @@ public:
 
 private:
 	RefCount m_refCount;
-	RenderAPI::BackBufferFormat m_format;
+	RenderAPI::RenderTargetFormat m_format;
 	::Texture2D* m_texture;
 	unsigned int m_width;
 	unsigned int m_height;

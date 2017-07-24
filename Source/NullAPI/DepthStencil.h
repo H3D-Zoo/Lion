@@ -7,11 +7,11 @@ class Texture2D;
 class DepthStencil : public RenderAPI::DepthStencil
 {
 public:
-	DepthStencil(RenderAPI::ZBufferFormat format, unsigned int width, unsigned int height, bool isTexture);
+	DepthStencil(RenderAPI::DepthStencilFormat format, unsigned int width, unsigned int height, bool isTexture);
 
 	~DepthStencil();
 
-	virtual RenderAPI::ZBufferFormat GetFormat() const;
+	virtual RenderAPI::DepthStencilFormat GetFormat() const;
 
 	virtual unsigned int GetWidth() const;
 
@@ -27,7 +27,7 @@ public:
 
 private:
 	RefCount m_refCount;
-	RenderAPI::ZBufferFormat m_format;
+	RenderAPI::DepthStencilFormat m_format;
 	::Texture2D* m_texture;
 	unsigned int m_width;
 	unsigned int m_height;

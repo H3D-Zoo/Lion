@@ -65,7 +65,7 @@ RenderAPI::DriverVersion APIGlobal::GetDriverVersion() const
 	return version;
 }
 
-bool APIGlobal::CheckMultiSampleSupport(RenderAPI::BackBufferFormat bb, RenderAPI::ZBufferFormat z, RenderAPI::AAMode aa, bool fullscreen) const 
+bool APIGlobal::CheckMultiSampleSupport(RenderAPI::RenderTargetFormat bb, RenderAPI::DepthStencilFormat z, RenderAPI::AAMode aa, bool fullscreen) const 
 { 
 	return true;
 }

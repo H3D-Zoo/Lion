@@ -60,12 +60,12 @@ RenderAPI::FXEffect * Device::CreateFXEffectFromFile(const char * effectFilePath
 	return new FXEffect();
 }
 
-RenderAPI::RenderTarget * Device::CreateRenderTarget(RenderAPI::BackBufferFormat format, unsigned int width, unsigned int height)
+RenderAPI::RenderTarget * Device::CreateRenderTarget(RenderAPI::RenderTargetFormat format, unsigned int width, unsigned int height)
 {
 	return new RenderTarget(format, width, height, true);
 }
 
-RenderAPI::DepthStencil * Device::CreateDepthStencil(RenderAPI::ZBufferFormat format, unsigned int width, unsigned int height)
+RenderAPI::DepthStencil * Device::CreateDepthStencil(RenderAPI::DepthStencilFormat format, unsigned int width, unsigned int height)
 {
 	return new DepthStencil(format, width, height, true);
 }

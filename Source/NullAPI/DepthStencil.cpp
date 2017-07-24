@@ -12,7 +12,7 @@ namespace
 	};
 }
 
-DepthStencil::DepthStencil(RenderAPI::ZBufferFormat format, unsigned int width, unsigned int height, bool isTexture)
+DepthStencil::DepthStencil(RenderAPI::DepthStencilFormat format, unsigned int width, unsigned int height, bool isTexture)
 	: m_format(format)
 	, m_width(width)
 	, m_height(height)
@@ -33,7 +33,7 @@ DepthStencil::~DepthStencil()
 	}
 }
 
-RenderAPI::ZBufferFormat DepthStencil::GetFormat() const
+RenderAPI::DepthStencilFormat DepthStencil::GetFormat() const
 {
 	return m_format;
 }

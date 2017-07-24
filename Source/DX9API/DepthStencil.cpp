@@ -10,7 +10,7 @@ namespace
 	};
 }
 
-DepthStencil::DepthStencil(IDirect3DSurface9* dsSurface, RenderAPI::ZBufferFormat format, unsigned int width, unsigned int height)
+DepthStencil::DepthStencil(IDirect3DSurface9* dsSurface, RenderAPI::DepthStencilFormat format, unsigned int width, unsigned int height)
 	: m_format(format)
 	, m_width(width)
 	, m_height(height)
@@ -20,7 +20,7 @@ DepthStencil::DepthStencil(IDirect3DSurface9* dsSurface, RenderAPI::ZBufferForma
 
 }
 
-DepthStencil::DepthStencil(IDirect3DTexture9* dsTexture, RenderAPI::ZBufferFormat format, unsigned int width, unsigned int height)
+DepthStencil::DepthStencil(IDirect3DTexture9* dsTexture, RenderAPI::DepthStencilFormat format, unsigned int width, unsigned int height)
 	: m_format(format)
 	, m_width(width)
 	, m_height(height)
@@ -45,7 +45,7 @@ DepthStencil::~DepthStencil()
 	}
 }
 
-RenderAPI::ZBufferFormat DepthStencil::GetFormat() const
+RenderAPI::DepthStencilFormat DepthStencil::GetFormat() const
 {
 	return m_format;
 }
@@ -89,7 +89,7 @@ void DepthStencil::ReleaseWhenDeviceLost()
 	m_dsSurface = NULL;
 }
 
-void DepthStencil::Reset(unsigned int width, unsigned int height, RenderAPI::ZBufferFormat dsFormat, IDirect3DSurface9 * pSurface)
+void DepthStencil::Reset(unsigned int width, unsigned int height, RenderAPI::DepthStencilFormat dsFormat, IDirect3DSurface9 * pSurface)
 {
 	m_width = width;
 	m_height = height;

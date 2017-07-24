@@ -22,5 +22,5 @@ public:
 
 	virtual RenderAPI::DriverVersion GetDriverVersion() const;
 
-	virtual bool CheckMultiSampleSupport(RenderAPI::BackBufferFormat bb, RenderAPI::ZBufferFormat z, RenderAPI::AAMode aa, bool fullscreen) const;
+	virtual bool CheckMultiSampleSupport(RenderAPI::RenderTargetFormat bb, RenderAPI::DepthStencilFormat z, RenderAPI::AAMode aa, bool fullscreen) const;
 };

@@ -33,8 +33,8 @@ bool APITestBed::Init(HWND hWindow, HWND hWindowEditor, unsigned int backBufferW
 
 	m_textureSize.x = 1024;
 	m_textureSize.y = 1024;
-	m_pRenderTexture = m_pDevice->CreateRenderTarget(RenderAPI::BackBufferFormat::BACKBUFFER_XRGB8, 1024, 1024);
-	m_pRenderDepth = m_pDevice->CreateDepthStencil(RenderAPI::ZBufferFormat::ZBUFFER_D24S8, 1024, 1024);
+	m_pRenderTexture = m_pDevice->CreateRenderTarget(RenderAPI::BACKBUFFER_XRGB8, 1024, 1024);
+	m_pRenderDepth = m_pDevice->CreateDepthStencil(RenderAPI::ZBUFFER_D24S8, 1024, 1024);
 
 	const int kMatrixLength = sizeof(float) * 16;
 	m_matWorldBoxs.resize(100);

@@ -9,7 +9,7 @@ namespace
 	};
 }
 
-RenderTarget::RenderTarget(IDirect3DSurface9* rtSurface, RenderAPI::BackBufferFormat format, unsigned int width, unsigned int height)
+RenderTarget::RenderTarget(IDirect3DSurface9* rtSurface, RenderAPI::RenderTargetFormat format, unsigned int width, unsigned int height)
 	: m_format(format)
 	, m_width(width)
 	, m_height(height)
@@ -19,7 +19,7 @@ RenderTarget::RenderTarget(IDirect3DSurface9* rtSurface, RenderAPI::BackBufferFo
 
 }
 
-RenderTarget::RenderTarget(IDirect3DTexture9* rtTexture, RenderAPI::BackBufferFormat format, unsigned int width, unsigned int height)
+RenderTarget::RenderTarget(IDirect3DTexture9* rtTexture, RenderAPI::RenderTargetFormat format, unsigned int width, unsigned int height)
 	: m_format(format)
 	, m_width(width)
 	, m_height(height)
@@ -42,7 +42,7 @@ RenderTarget::~RenderTarget()
 	}
 }
 
-RenderAPI::BackBufferFormat RenderTarget::GetFormat() const
+RenderAPI::RenderTargetFormat RenderTarget::GetFormat() const
 {
 	return m_format;
 }
@@ -92,7 +92,7 @@ void RenderTarget::ReleaseWhenDeviceLost()
 	m_rtSurface = NULL;
 }
 
-void RenderTarget::Reset(unsigned int width, unsigned int height, RenderAPI::BackBufferFormat rtFormat, IDirect3DSurface9 * pSurface)
+void RenderTarget::Reset(unsigned int width, unsigned int height, RenderAPI::RenderTargetFormat rtFormat, IDirect3DSurface9 * pSurface)
 {
 	Resize(width, height);
 	m_format = rtFormat;
