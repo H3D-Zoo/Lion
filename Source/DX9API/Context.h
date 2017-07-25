@@ -124,6 +124,7 @@ private:
 		int Count;
 		std::vector<RenderAPI::VertexElement> Elements;
 		bool Set(const RenderAPI::VertexElement* s, int count);
+		bool Clear();
 	};
 
 	bool m_vertexDeclChanged;

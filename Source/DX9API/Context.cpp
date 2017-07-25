@@ -376,25 +376,48 @@ void Context::SetDepthStencil(RenderAPI::DepthStencil* depthStencil)
 void Context::SetVertexBuffers(RenderAPI::VertexBufferInfo* buffers, unsigned int bufferCount)
 {
 	m_vertexDeclCacheCount = bufferCount;
+	RenderAPI::VertexBuffer* pFirstBuffer = NULL;
 	for (unsigned int i = 0; i < bufferCount; i++)
 	{
-		IDirect3DVertexBuffer9* vertexBufferPtr = ((::VertexBuffer*)buffers[i].BufferPtr)->GetBufferPtr();
-		HRESULT hr = m_pDevice->SetStreamSource(i, vertexBufferPtr, buffers[i].Offset, buffers[i].BufferPtr->GetVertexStride());
-		SetVertexElements(i, buffers[i].BufferPtr->GetElementPtr(), buffers[i].BufferPtr->GetElementCount());
+		if (buffers[i].BufferPtr != NULL)
+		{
+			if (pFirstBuffer == NULL)
+			{
+				pFirstBuffer = buffers[i].BufferPtr;
+			}
+			IDirect3DVertexBuffer9* vertexBufferPtr = ((::VertexBuffer*)buffers[i].BufferPtr)->GetBufferPtr();
+			HRESULT hr = m_pDevice->SetStreamSource(i, vertexBufferPtr, buffers[i].Offset, buffers[i].BufferPtr->GetVertexStride());
+			SetVertexElements(i, buffers[i].BufferPtr->GetElementPtr(), buffers[i].BufferPtr->GetElementCount());
+		}
+		else
+		{
+			SetVertexElements(i, NULL, 0);
+		}
 	}
-	m_vertexCount = buffers[0].BufferPtr->GetVertexCount();
+
+	if (pFirstBuffer == NULL)
+	{
+		m_vertexCount = 0;
+	}
+	else
+	{
+		m_vertexCount = pFirstBuffer->GetVertexCount();
+	}
 }
 
 void Context::SetIndexBuffer(RenderAPI::IndexBuffer* buffer, unsigned int offset)
 {
-	IDirect3DIndexBuffer9* indexBufferPtr = ((::IndexBuffer*)buffer)->GetD3DIndexBuffer();
-	m_pDevice->SetIndices(indexBufferPtr);
-	m_indexBufferOffset = offset;
+	if (buffer != NULL)
+	{
+		IDirect3DIndexBuffer9* indexBufferPtr = ((::IndexBuffer*)buffer)->GetD3DIndexBuffer();
+		m_pDevice->SetIndices(indexBufferPtr);
+		m_indexBufferOffset = offset;
+	}
 }
 
 void Context::SetTexture(unsigned int slot, RenderAPI::Texture2D* texture)
 {
-	IDirect3DTexture9* pTexture = ((::Texture2D*)texture)->GetD3DTexture();
+	IDirect3DTexture9* pTexture = (texture == NULL) ? NULL : ((::Texture2D*)texture)->GetD3DTexture();
 	m_pDevice->SetTexture(slot, pTexture);
 }
 
@@ -619,7 +642,7 @@ RenderAPI::DeviceState Context::CheckDeviceLost()
 RenderAPI::DeviceState Context::ResetDevice(const RenderAPI::SwapChainDesc& desc, bool isFullscreen, bool useVerticalSync)
 {
 	HRESULT hr = S_OK;
-	
+
 	D3DPRESENT_PARAMETERS CreationParam = APIGlobal::FillCreationParam(
 		*m_pAPI,
 		(HWND)desc.hWindow,
@@ -700,7 +723,17 @@ void Context::SetVertexElements(int index, const RenderAPI::VertexElement * s, i
 	}
 
 	VertexDecl& decl = m_vertexDeclCache[index];
-	if (decl.Set(s, count) && !m_vertexDeclChanged)
+	bool changed = false;
+	if (s != NULL && count != 0)
+	{
+		changed = decl.Set(s, count);
+	}
+	else
+	{
+		changed = decl.Clear();
+	}
+
+	if (changed && !m_vertexDeclChanged)
 	{
 		m_vertexDeclChanged = true;
 	}
@@ -896,4 +929,12 @@ bool Context::VertexDecl::Set(const RenderAPI::VertexElement * s, int count)
 			return false;
 		}
 	}
+}
+
+bool Context::VertexDecl::Clear()
+{
+	if(Count == 0)
+		return false;
+	Elements.clear();
+	return true;
 }
