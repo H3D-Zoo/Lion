@@ -13,7 +13,7 @@ public:
 
 	virtual void ClearDepthBuffer(float z);
 
-	virtual void ClearStencilBuffer(unsigned int stencil) ;
+	virtual void ClearStencilBuffer(unsigned int stencil);
 
 	virtual void SetViewport(const RenderAPI::Viewport&);
 
@@ -29,11 +29,19 @@ public:
 
 	virtual void SetBlendState(const RenderAPI::BlendState& state);
 
+	virtual RenderAPI::BlendState GetBlendState() const;
+
 	virtual void SetAlphaTestingState(const RenderAPI::AlphaTestingState& state);
+
+	virtual RenderAPI::AlphaTestingState GetAlphaTestingState() const;
 
 	virtual void SetDepthTestingState(const RenderAPI::DepthTestingState& state);
 
+	virtual RenderAPI::DepthTestingState GetDepthTestingState() const;
+
 	virtual void SetStencilTestingState(const RenderAPI::StencilTestingState& state);
+
+	virtual RenderAPI::StencilTestingState GetStencilTestingState() const;
 
 	virtual void SetDepthWriting(bool enable);
 
@@ -42,6 +50,8 @@ public:
 	virtual void SetTextureSampler(unsigned int slot, const RenderAPI::TextureSampler& sampler);
 
 	virtual void SetScissorState(const RenderAPI::ScissorState& state);
+
+	virtual RenderAPI::ScissorState GetScissorState() const;
 
 	virtual void SetFillMode(RenderAPI::FillMode mode);
 
@@ -66,4 +76,11 @@ public:
 	virtual RenderAPI::DeviceState ResetDevice(const RenderAPI::SwapChainDesc& desc, bool isFullscreen, bool useVerticalSync);
 
 	virtual void Release();
+
+private:
+	RenderAPI::BlendState m_blendState;
+	RenderAPI::AlphaTestingState m_alphaTestState;
+	RenderAPI::DepthTestingState m_depthTestState;
+	RenderAPI::StencilTestingState m_stencilTestState;
+	RenderAPI::ScissorState m_scissorState;
 };

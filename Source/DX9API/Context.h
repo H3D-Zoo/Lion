@@ -67,11 +67,19 @@ public:
 
 	virtual void SetBlendState(const RenderAPI::BlendState& state);
 
+	virtual RenderAPI::BlendState GetBlendState() const;
+
 	virtual void SetAlphaTestingState(const RenderAPI::AlphaTestingState& state);
+
+	virtual RenderAPI::AlphaTestingState GetAlphaTestingState() const ;
 
 	virtual void SetDepthTestingState(const RenderAPI::DepthTestingState& state);
 
+	virtual RenderAPI::DepthTestingState GetDepthTestingState() const;
+
 	virtual void SetStencilTestingState(const RenderAPI::StencilTestingState& state);
+
+	virtual RenderAPI::StencilTestingState GetStencilTestingState() const;
 
 	virtual void SetDepthWriting(bool enable);
 
@@ -80,6 +88,8 @@ public:
 	virtual void SetTextureSampler(unsigned int slot, const RenderAPI::TextureSampler& sampler);
 
 	virtual void SetScissorState(const RenderAPI::ScissorState& state);
+
+	virtual RenderAPI::ScissorState GetScissorState() const;
 
 	virtual void SetFillMode(RenderAPI::FillMode mode);
 
@@ -134,4 +144,6 @@ private:
 	IDirect3DVertexDeclaration9* m_pVertexDeclaration;
 	typedef std::map<std::vector<D3DVERTEXELEMENT9>, IDirect3DVertexDeclaration9*> VertexDecalrationPool;
 	VertexDecalrationPool m_vertexDeclarationPool;
+
+	mutable RenderAPI::ScissorState m_scissorState;
 };

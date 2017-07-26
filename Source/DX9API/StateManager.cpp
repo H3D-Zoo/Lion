@@ -1,5 +1,5 @@
 #include "StateManager.h"
-
+#include "EnumMapping.h"
 
 FXStateManager::FXStateManager(IDirect3DDevice9 * pDevice) : StateManager(pDevice)
 {
@@ -146,7 +146,6 @@ StateManager::StateManager(IDirect3DDevice9* pDevice)
 	}
 
 #define GetRS(x) m_pDevice->GetRenderState(x, &(m_RSValues[x]));
-
 	GetRS(D3DRS_TEXTUREFACTOR);
 	GetRS(D3DRS_FILLMODE);
 	GetRS(D3DRS_CULLMODE);
@@ -181,9 +180,44 @@ StateManager::StateManager(IDirect3DDevice9* pDevice)
 	GetRS(D3DRS_DESTBLENDALPHA);
 #undef GetRS
 
+	//设置各种状态的默认值
+	m_blendState.IsEnable = m_RSValues[D3DRS_ALPHABLENDENABLE] == TRUE;
+	m_blendState.IsAlphaSeperate = m_RSValues[D3DRS_SEPARATEALPHABLENDENABLE] == TRUE;
+	m_blendState.ColorSrc = BlendFactorMapping(m_RSValues[D3DRS_SRCBLEND]);
+	m_blendState.ColorDst = BlendFactorMapping(m_RSValues[D3DRS_DESTBLEND]);
+	m_blendState.AlphaSrc = BlendFactorMapping(m_RSValues[D3DRS_SRCBLENDALPHA]);
+	m_blendState.AlphaDst = BlendFactorMapping(m_RSValues[D3DRS_DESTBLENDALPHA]);
+	m_blendState.ColorOp = BlendOperatorMapping(m_RSValues[D3DRS_BLENDOP]);
+	m_blendState.AlphaOp = BlendOperatorMapping(m_RSValues[D3DRS_BLENDOPALPHA]);
+
+	m_alphaTestState.IsEnable = m_RSValues[D3DRS_ALPHATESTENABLE] == TRUE;
+	m_alphaTestState.Function = CompareMethodMapping(m_RSValues[D3DRS_ALPHAFUNC]);
+	m_alphaTestState.Reference = m_RSValues[D3DRS_ALPHAREF] & 0xFF;
+
+	m_depthTestState.IsEnable = m_RSValues[D3DRS_ALPHATESTENABLE] == TRUE;
+	m_depthTestState.Function = CompareMethodMapping(m_RSValues[D3DRS_ZFUNC]);
+
+	m_stencilTestState.IsEnable = m_RSValues[D3DRS_STENCILENABLE] == TRUE;
+	m_stencilTestState.Reference = m_RSValues[D3DRS_STENCILREF] & 0xFF;
+	m_stencilTestState.TestMask = m_RSValues[D3DRS_STENCILMASK];
+	m_stencilTestState.WriteMask = m_RSValues[D3DRS_STENCILWRITEMASK];
+
+	m_stencilTestState.FrontSide.Function = CompareMethodMapping(m_RSValues[D3DRS_STENCILFUNC]);
+	m_stencilTestState.FrontSide.AllPass = StencilOpMapping(m_RSValues[D3DRS_CCW_STENCILPASS]);
+	m_stencilTestState.FrontSide.SPassZFail = StencilOpMapping(m_RSValues[D3DRS_STENCILZFAIL]);
+	m_stencilTestState.FrontSide.SFail = StencilOpMapping(m_RSValues[D3DRS_STENCILFAIL]);
+
+	m_stencilTestState.TwoSide = m_RSValues[D3DRS_TWOSIDEDSTENCILMODE] == TRUE;
+	if (m_stencilTestState.TwoSide)
+	{
+		m_stencilTestState.BackSide.Function = CompareMethodMapping(m_RSValues[D3DRS_CCW_STENCILFUNC]);;
+		m_stencilTestState.BackSide.AllPass = StencilOpMapping(m_RSValues[D3DRS_CCW_STENCILPASS]);
+		m_stencilTestState.BackSide.SPassZFail = StencilOpMapping(m_RSValues[D3DRS_CCW_STENCILZFAIL]);
+		m_stencilTestState.BackSide.SFail = StencilOpMapping(m_RSValues[D3DRS_CCW_STENCILFAIL]);
+	}
+
 #define GetTSS(slot, x) m_pDevice->GetTextureStageState(slot, x, &(m_TSSValues[slot][x]));
 #define GetSS(slot, x) m_pDevice->GetSamplerState(slot, x, &(m_SSValues[slot][x]));
-
 	for (int i = 0; i < TextureSlotCount; i++)
 	{
 		GetTSS(i, D3DTSS_COLOROP);
@@ -248,4 +282,211 @@ HRESULT StateManager::SetSS(unsigned int slot, D3DSAMPLERSTATETYPE type, DWORD v
 	{
 		return S_OK;
 	}
+}
+
+unsigned int s_blendOps[] =
+{
+	D3DBLENDOP_ADD,
+	D3DBLENDOP_SUBTRACT,
+	D3DBLENDOP_MIN,
+	D3DBLENDOP_MAX,
+};
+
+unsigned int s_blendFactors[] =
+{
+	D3DBLEND_ZERO,
+	D3DBLEND_ONE,
+	D3DBLEND_SRCCOLOR,
+	D3DBLEND_SRCALPHA,
+	D3DBLEND_DESTCOLOR,
+	D3DBLEND_DESTALPHA,
+	D3DBLEND_INVSRCCOLOR,
+	D3DBLEND_INVSRCALPHA,
+	D3DBLEND_INVDESTCOLOR,
+	D3DBLEND_INVDESTALPHA,
+};
+
+unsigned int s_compareMethods[] =
+{
+	D3DCMP_NEVER,
+	D3DCMP_ALWAYS,
+	D3DCMP_EQUAL,
+	D3DCMP_NOTEQUAL,
+	D3DCMP_LESS,
+	D3DCMP_LESSEQUAL,
+	D3DCMP_GREATER,
+	D3DCMP_GREATEREQUAL,
+};
+
+unsigned int s_stencilOps[] =
+{
+	D3DSTENCILOP_KEEP,
+	D3DSTENCILOP_ZERO,
+	D3DSTENCILOP_REPLACE,
+	D3DSTENCILOP_INCRSAT,
+	D3DSTENCILOP_DECRSAT,
+	D3DSTENCILOP_INVERT,
+	D3DSTENCILOP_INCR,
+	D3DSTENCILOP_DECR,
+};
+
+void StateManager::SetStencilTest(bool enable)
+{
+	SetRS(D3DRS_STENCILENABLE, enable ? TRUE : FALSE);
+	m_stencilTestState.IsEnable = enable;
+}
+
+void StateManager::SetStencilReference(unsigned int ref)
+{
+	SetRS(D3DRS_STENCILREF, ref);
+	m_stencilTestState.Reference = ref;
+}
+
+void StateManager::SetStencilReadMask(unsigned int mask)
+{
+	SetRS(D3DRS_STENCILMASK, mask);
+	m_stencilTestState.TestMask = mask;
+}
+
+void StateManager::SetStencilWriteMask(unsigned int mask)
+{
+	SetRS(D3DRS_STENCILWRITEMASK, mask);
+	m_stencilTestState.WriteMask = mask;
+}
+
+void StateManager::SetStencilTwoFace(bool enable)
+{
+	SetRS(D3DRS_TWOSIDEDSTENCILMODE, enable ? TRUE : FALSE);
+	m_stencilTestState.TwoSide = enable;
+}
+
+void StateManager::SetStencilFrontFunction(RenderAPI::CompareMethod func)
+{
+	SetRS(D3DRS_STENCILFUNC, s_compareMethods[func]);
+	m_stencilTestState.FrontSide.Function = func;
+}
+
+void StateManager::SetStencilFrontSFail(RenderAPI::StencilOp sop)
+{
+	SetRS(D3DRS_STENCILFAIL, s_stencilOps[sop]);
+	m_stencilTestState.FrontSide.SFail = sop;
+}
+
+void StateManager::SetStencilFrontSPassZFail(RenderAPI::StencilOp sop)
+{
+	SetRS(D3DRS_STENCILZFAIL, s_stencilOps[sop]);
+	m_stencilTestState.FrontSide.SPassZFail = sop;
+}
+
+void StateManager::SetStencilFrontAllPass(RenderAPI::StencilOp sop)
+{
+	SetRS(D3DRS_STENCILPASS, s_stencilOps[sop]);
+	m_stencilTestState.FrontSide.AllPass = sop;
+}
+
+void StateManager::SetStencilBackFunction(RenderAPI::CompareMethod func)
+{
+	SetRS(D3DRS_CCW_STENCILFUNC, s_compareMethods[func]);
+	m_stencilTestState.BackSide.Function = func;
+}
+
+void StateManager::SetStencilBackSFail(RenderAPI::StencilOp sop)
+{
+	SetRS(D3DRS_CCW_STENCILFAIL, s_stencilOps[sop]);
+	m_stencilTestState.BackSide.SFail = sop;
+}
+
+void StateManager::SetStencilBackSPassZFail(RenderAPI::StencilOp sop)
+{
+	SetRS(D3DRS_CCW_STENCILZFAIL, s_stencilOps[sop]);
+	m_stencilTestState.BackSide.SPassZFail = sop;
+}
+
+void StateManager::SetStencilBackAllPass(RenderAPI::StencilOp sop)
+{
+	SetRS(D3DRS_CCW_STENCILPASS, s_stencilOps[sop]);
+	m_stencilTestState.BackSide.AllPass = sop;
+}
+
+void StateManager::SetDepthTest(bool enable)
+{
+	SetRS(D3DRS_ZENABLE, enable ? TRUE : FALSE); // it depend , True because we use auto stencilMap when create Device.
+	m_depthTestState.IsEnable = enable;
+}
+
+void StateManager::SetDepthFunction(RenderAPI::CompareMethod func)
+{
+	SetRS(D3DRS_ZFUNC, s_compareMethods[func]);
+	m_depthTestState.Function = func;
+}
+
+void StateManager::SetAlphaTest(bool enable)
+{
+	SetRS(D3DRS_ALPHATESTENABLE, enable ? TRUE : FALSE);
+	m_alphaTestState.IsEnable = enable;
+}
+
+bool StateManager::IsScissorTestEnable() const
+{
+	return m_RSValues[D3DRS_SCISSORTESTENABLE] == TRUE;
+}
+
+void StateManager::SetAlphaFunction(RenderAPI::CompareMethod func)
+{
+	SetRS(D3DRS_ALPHAFUNC, s_compareMethods[func]);
+	m_alphaTestState.Function = func;
+}
+
+void StateManager::SetAlphaReference(unsigned char ref)
+{
+	SetRS(D3DRS_ALPHAREF, ref);
+	m_alphaTestState.Reference = ref;
+}
+
+void StateManager::SetAlphaBlending(bool enable)
+{
+	SetRS(D3DRS_ALPHABLENDENABLE, enable ? TRUE : FALSE);
+	m_blendState.IsEnable = enable;
+}
+
+void StateManager::SetSeperateAlphaBlending(bool enable)
+{
+	SetRS(D3DRS_SEPARATEALPHABLENDENABLE, enable ? TRUE : FALSE);
+	m_blendState.IsAlphaSeperate = enable;
+}
+
+void StateManager::SetBlendingOp(RenderAPI::BlendOperator blendOp)
+{
+	SetRS(D3DRS_BLENDOP, s_blendOps[blendOp]);
+	m_blendState.ColorOp = blendOp;
+}
+
+void StateManager::SetSrcBlending(RenderAPI::BlendFactor blendFactor)
+{
+	SetRS(D3DRS_SRCBLEND, s_blendFactors[blendFactor]);
+	m_blendState.ColorSrc = blendFactor;
+}
+
+void StateManager::SetDstBlending(RenderAPI::BlendFactor blendFactor)
+{
+	SetRS(D3DRS_DESTBLEND, s_blendFactors[blendFactor]);
+	m_blendState.ColorDst = blendFactor;
+}
+
+void StateManager::SetAlphaBlendingOp(RenderAPI::BlendOperator blendOp)
+{
+	SetRS(D3DRS_BLENDOPALPHA, s_blendOps[blendOp]);
+	m_blendState.AlphaOp = blendOp;
+}
+
+void StateManager::SetAlphaSrcBlending(RenderAPI::BlendFactor blendFactor)
+{
+	SetRS(D3DRS_SRCBLENDALPHA, s_blendFactors[blendFactor]);
+	m_blendState.AlphaSrc = blendFactor;
+}
+
+void StateManager::SetAlphaDstBlending(RenderAPI::BlendFactor blendFactor)
+{
+	SetRS(D3DRS_DESTBLENDALPHA, s_blendFactors[blendFactor]);
+	m_blendState.AlphaDst = blendFactor;
 }

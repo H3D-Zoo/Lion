@@ -158,47 +158,6 @@ namespace
 		D3DTA_TFACTOR,
 	};
 
-	unsigned int s_stencilOps[] =
-	{
-		D3DSTENCILOP_KEEP,
-		D3DSTENCILOP_ZERO,
-		D3DSTENCILOP_REPLACE,
-		D3DSTENCILOP_INCRSAT,
-		D3DSTENCILOP_DECRSAT,
-		D3DSTENCILOP_INVERT,
-		D3DSTENCILOP_INCR,
-		D3DSTENCILOP_DECR,
-	};
-
-	unsigned int s_blendOps[] =
-	{
-		D3DBLENDOP_ADD,
-		D3DBLENDOP_SUBTRACT,
-	};
-
-	unsigned int s_blendFactors[] =
-	{
-		D3DBLEND_ZERO,
-		D3DBLEND_ONE,
-		D3DBLEND_SRCCOLOR,
-		D3DBLEND_SRCALPHA,
-		D3DBLEND_DESTCOLOR,
-		D3DBLEND_DESTALPHA,
-		D3DBLEND_INVSRCCOLOR,
-	};
-
-	unsigned int s_compareMethods[] =
-	{
-		D3DCMP_NEVER,
-		D3DCMP_ALWAYS,
-		D3DCMP_EQUAL,
-		D3DCMP_NOTEQUAL,
-		D3DCMP_LESS,
-		D3DCMP_LESSEQUAL,
-		D3DCMP_GREATER,
-		D3DCMP_GREATEREQUAL,
-	};
-
 	struct DeclFormat
 	{
 		D3DDECLTYPE Type;
@@ -244,6 +203,13 @@ Context::Context(APIGlobal* pAPI, IDirect3DDevice9 * device, RenderAPI::RenderTa
 	{
 		m_pDeviceEx = (IDirect3DDevice9Ex*)m_pDevice;
 	}
+
+	RECT scissorRect;
+	m_pDevice->GetScissorRect(&scissorRect);
+	m_scissorState.Left = scissorRect.left;
+	m_scissorState.Right = scissorRect.right;
+	m_scissorState.Top = scissorRect.top;
+	m_scissorState.Bottom = scissorRect.bottom;
 }
 
 Context::~Context()
@@ -333,7 +299,6 @@ unsigned int Context::GetAvailableTextureMemory()
 {
 	return m_pDevice->GetAvailableTextureMem();
 }
-
 
 void Context::ClearRenderTarget(unsigned int color)
 {
@@ -429,18 +394,18 @@ void Context::SetBlendState(const RenderAPI::BlendState& state)
 		if (state.IsAlphaSeperate)
 		{
 			m_renderStateManager.SetSeperateAlphaBlending(TRUE);
-			m_renderStateManager.SetAlphaBlendingOp(s_blendOps[state.AlphaOp]);
-			m_renderStateManager.SetAlphaSrcBlending(s_blendFactors[state.AlphaSrc]);
-			m_renderStateManager.SetAlphaDstBlending(s_blendFactors[state.AlphaDst]);
+			m_renderStateManager.SetAlphaBlendingOp(state.AlphaOp);
+			m_renderStateManager.SetAlphaSrcBlending(state.AlphaSrc);
+			m_renderStateManager.SetAlphaDstBlending(state.AlphaDst);
 		}
 		else
 		{
 			m_renderStateManager.SetSeperateAlphaBlending(FALSE);
 		}
 
-		m_renderStateManager.SetBlendingOp(s_blendOps[state.ColorOp]);
-		m_renderStateManager.SetSrcBlending(s_blendFactors[state.ColorSrc]);
-		m_renderStateManager.SetDstBlending(s_blendFactors[state.ColorDst]);
+		m_renderStateManager.SetBlendingOp(state.ColorOp);
+		m_renderStateManager.SetSrcBlending(state.ColorSrc);
+		m_renderStateManager.SetDstBlending(state.ColorDst);
 	}
 	else
 	{
@@ -448,12 +413,17 @@ void Context::SetBlendState(const RenderAPI::BlendState& state)
 	}
 }
 
+RenderAPI::BlendState Context::GetBlendState() const
+{
+	return m_renderStateManager.GetBlendState();
+}
+
 void Context::SetAlphaTestingState(const RenderAPI::AlphaTestingState& state)
 {
 	if (state.IsEnable)
 	{
 		m_renderStateManager.SetAlphaTest(TRUE);
-		m_renderStateManager.SetAlphaFunction(s_compareMethods[state.Function]);
+		m_renderStateManager.SetAlphaFunction(state.Function);
 		m_renderStateManager.SetAlphaReference(state.Reference);
 	}
 	else
@@ -462,18 +432,28 @@ void Context::SetAlphaTestingState(const RenderAPI::AlphaTestingState& state)
 	}
 }
 
+RenderAPI::AlphaTestingState Context::GetAlphaTestingState() const
+{
+	return m_renderStateManager.GetAlphaTestingState();
+}
+
 void Context::SetDepthTestingState(const RenderAPI::DepthTestingState& state)
 {
 	if (state.IsEnable)
 	{
 		m_renderStateManager.SetDepthTest(D3DZB_TRUE);
-		m_renderStateManager.SetDepthFunction(s_compareMethods[state.Function]);
+		m_renderStateManager.SetDepthFunction(state.Function);
 	}
 	else
 	{
 		m_renderStateManager.SetDepthTest(D3DZB_FALSE);
 		//m_renderStateManager.SetDepthFunction(s_compareMethods[RenderAPI::COMPARE_Always]);
 	}
+}
+
+RenderAPI::DepthTestingState Context::GetDepthTestingState() const
+{
+	return m_renderStateManager.GetDepthTestingState();
 }
 
 void Context::SetStencilTestingState(const RenderAPI::StencilTestingState& state)
@@ -487,25 +467,30 @@ void Context::SetStencilTestingState(const RenderAPI::StencilTestingState& state
 		if (state.TwoSide)
 		{
 			m_renderStateManager.SetStencilTwoFace(TRUE);
-			m_renderStateManager.SetStencilBackFunction(s_compareMethods[state.BackSide.Function]);
-			m_renderStateManager.SetStencilBackSFail(s_stencilOps[state.BackSide.SFail]);
-			m_renderStateManager.SetStencilBackSPassZFail(s_stencilOps[state.BackSide.SPassZFail]);
-			m_renderStateManager.SetStencilBackAllPass(s_stencilOps[state.BackSide.AllPass]);
+			m_renderStateManager.SetStencilBackFunction(state.BackSide.Function);
+			m_renderStateManager.SetStencilBackSFail(state.BackSide.SFail);
+			m_renderStateManager.SetStencilBackSPassZFail(state.BackSide.SPassZFail);
+			m_renderStateManager.SetStencilBackAllPass(state.BackSide.AllPass);
 		}
 		else
 		{
 			m_renderStateManager.SetStencilTwoFace(FALSE);
 		}
 
-		m_renderStateManager.SetStencilFrontFunction(s_compareMethods[state.FrontSide.Function]);
-		m_renderStateManager.SetStencilFrontSFail(s_stencilOps[state.FrontSide.SFail]);
-		m_renderStateManager.SetStencilFrontSPassZFail(s_stencilOps[state.FrontSide.SPassZFail]);
-		m_renderStateManager.SetStencilFrontAllPass(s_stencilOps[state.FrontSide.AllPass]);
+		m_renderStateManager.SetStencilFrontFunction(state.FrontSide.Function);
+		m_renderStateManager.SetStencilFrontSFail(state.FrontSide.SFail);
+		m_renderStateManager.SetStencilFrontSPassZFail(state.FrontSide.SPassZFail);
+		m_renderStateManager.SetStencilFrontAllPass(state.FrontSide.AllPass);
 	}
 	else
 	{
 		m_renderStateManager.SetStencilTest(FALSE);
 	}
+}
+
+RenderAPI::StencilTestingState Context::GetStencilTestingState() const
+{
+	return m_renderStateManager.GetStencilTestingState();
 }
 
 void Context::SetDepthWriting(bool enable)
@@ -563,12 +548,19 @@ void Context::SetScissorState(const RenderAPI::ScissorState& state)
 		scissorRect.right = state.Right;
 		scissorRect.top = state.Top;
 		scissorRect.bottom = state.Bottom;
+		m_scissorState = state;
 		m_pDevice->SetScissorRect(&scissorRect);
 	}
 	else
 	{
 		m_renderStateManager.SetScissorTest(FALSE);
 	}
+}
+
+RenderAPI::ScissorState Context::GetScissorState() const
+{
+	m_scissorState.IsEnable = m_renderStateManager.IsScissorTestEnable();
+	return m_scissorState;
 }
 
 void Context::SetFillMode(RenderAPI::FillMode mode)
@@ -933,7 +925,7 @@ bool Context::VertexDecl::Set(const RenderAPI::VertexElement * s, int count)
 
 bool Context::VertexDecl::Clear()
 {
-	if(Count == 0)
+	if (Count == 0)
 		return false;
 	Elements.clear();
 	return true;

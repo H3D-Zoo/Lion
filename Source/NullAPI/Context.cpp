@@ -57,22 +57,42 @@ void Context::SetTexture(unsigned int slot, RenderAPI::Texture2D* texture)
 
 void Context::SetBlendState(const RenderAPI::BlendState& state)
 {
+	m_blendState = state;
+}
 
+RenderAPI::BlendState Context::GetBlendState() const
+{
+	return m_blendState;
 }
 
 void Context::SetAlphaTestingState(const RenderAPI::AlphaTestingState& state)
 {
+	m_alphaTestState = state;
+}
 
+RenderAPI::AlphaTestingState Context::GetAlphaTestingState() const
+{
+	return m_alphaTestState;
 }
 
 void Context::SetDepthTestingState(const RenderAPI::DepthTestingState& state)
 {
+	m_depthTestState = state;
+}
 
+RenderAPI::DepthTestingState Context::GetDepthTestingState() const
+{
+	return m_depthTestState;
 }
 
 void Context::SetStencilTestingState(const RenderAPI::StencilTestingState& state)
 {
+	m_stencilTestState = state;
+}
 
+RenderAPI::StencilTestingState Context::GetStencilTestingState() const
+{
+	return m_stencilTestState;
 }
 
 void Context::SetDepthWriting(bool enable)
@@ -92,7 +112,12 @@ void Context::SetTextureSampler(unsigned int slot, const RenderAPI::TextureSampl
 
 void Context::SetScissorState(const RenderAPI::ScissorState& state)
 {
+	m_scissorState = state;
+}
 
+RenderAPI::ScissorState Context::GetScissorState() const
+{
+	return m_scissorState;
 }
 
 void Context::SetFillMode(RenderAPI::FillMode mode)

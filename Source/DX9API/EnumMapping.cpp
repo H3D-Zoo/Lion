@@ -94,3 +94,55 @@ RenderAPI::DeviceState DeviceStateMapping(unsigned int rst)
 	}
 
 }
+
+RenderAPI::BlendFactor BlendFactorMapping(unsigned int factor)
+{
+	switch (factor)
+	{
+	default:
+	case D3DBLEND_ZERO:return RenderAPI::BLEND_Zero;
+	case D3DBLEND_ONE: return RenderAPI::BLEND_One;
+	case D3DBLEND_SRCCOLOR: return RenderAPI::BLEND_SrcColor;
+	case D3DBLEND_SRCALPHA: return RenderAPI::BLEND_SrcAlpha;
+	case D3DBLEND_DESTCOLOR: return RenderAPI::BLEND_DstColor;
+	case D3DBLEND_DESTALPHA: return RenderAPI::BLEND_DstAlpha;
+	case D3DBLEND_INVSRCCOLOR: return RenderAPI::BLEND_InvSrcColor;
+	}
+}
+
+RenderAPI::BlendOperator BlendOperatorMapping(unsigned int factor)
+{
+	return RenderAPI::BlendOperator();
+}
+
+RenderAPI::CompareMethod CompareMethodMapping(unsigned int method)
+{
+	switch (method)
+	{
+	case D3DCMP_NEVER: return RenderAPI::COMPARE_Never;
+	default:
+	case D3DCMP_ALWAYS: return RenderAPI::COMPARE_Always;
+	case D3DCMP_EQUAL: return RenderAPI::COMPARE_Equal;
+	case D3DCMP_NOTEQUAL: return RenderAPI::COMPARE_NotEqual;
+	case D3DCMP_LESS: return RenderAPI::COMPARE_Less;
+	case D3DCMP_LESSEQUAL: return RenderAPI::COMPARE_LessEqual;
+	case D3DCMP_GREATER: return RenderAPI::COMPARE_Greater;
+	case D3DCMP_GREATEREQUAL: return RenderAPI::COMPARE_GreaterEqual;
+	}
+}
+
+RenderAPI::StencilOp StencilOpMapping(unsigned int sop)
+{
+	switch (sop)
+	{
+	default:
+	case D3DSTENCILOP_KEEP: return RenderAPI::STENCIL_Keep;
+	case D3DSTENCILOP_ZERO: return RenderAPI::STENCIL_Zero;
+	case D3DSTENCILOP_REPLACE: return RenderAPI::STENCIL_Replace;
+	case D3DSTENCILOP_INCRSAT: return RenderAPI::STENCIL_IncreaseSaturate;
+	case D3DSTENCILOP_DECRSAT: return RenderAPI::STENCIL_DecreaseSaturate;
+	case D3DSTENCILOP_INVERT: return RenderAPI::STENCIL_Invert;
+	case D3DSTENCILOP_INCR: return RenderAPI::STENCIL_IncreaseRevert;
+	case D3DSTENCILOP_DECR: return RenderAPI::STENCIL_DecreaseRevert;
+	}
+}

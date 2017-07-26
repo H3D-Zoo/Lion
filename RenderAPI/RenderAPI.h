@@ -279,6 +279,8 @@ namespace RenderAPI
 	{
 		BLENDOP_Add = 0,
 		BLENDOP_Sub = 1,
+		BLENDOP_Min = 2,
+		BLENDOP_Max = 2,
 	};
 
 	struct BlendState
@@ -628,7 +630,7 @@ namespace RenderAPI
 		unsigned int InitVideoMemory;
 	};
 
-	class Context :public RObject
+	class Context : public RObject
 	{
 	public:
 		virtual DeviceCaps GetDeviceCaps() = 0;
@@ -655,11 +657,19 @@ namespace RenderAPI
 
 		virtual void SetBlendState(const BlendState& state) = 0;
 
+		virtual BlendState GetBlendState() const = 0;
+
 		virtual void SetAlphaTestingState(const AlphaTestingState& state) = 0;
+
+		virtual AlphaTestingState GetAlphaTestingState() const = 0;
 
 		virtual void SetDepthTestingState(const DepthTestingState& state) = 0;
 
+		virtual DepthTestingState GetDepthTestingState() const = 0;
+
 		virtual void SetStencilTestingState(const StencilTestingState& state) = 0;
+
+		virtual StencilTestingState GetStencilTestingState() const = 0;
 
 		virtual void SetDepthWriting(bool enable) = 0;
 
@@ -668,6 +678,8 @@ namespace RenderAPI
 		virtual void SetTextureSampler(unsigned int slot, const TextureSampler& sampler) = 0;
 
 		virtual void SetScissorState(const ScissorState& state) = 0;
+
+		virtual ScissorState GetScissorState() const = 0;
 
 		virtual void SetFillMode(FillMode mode) = 0;
 

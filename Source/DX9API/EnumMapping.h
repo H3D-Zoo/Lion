@@ -21,3 +21,7 @@ extern D3DMULTISAMPLE_TYPE s_sampleTypes[MSFormatCount];
 
 bool IsLocalFileExist(const std::string & fileName);
 RenderAPI::DeviceState DeviceStateMapping(unsigned int rst);
+RenderAPI::BlendFactor BlendFactorMapping(unsigned int factor);
+RenderAPI::BlendOperator BlendOperatorMapping(unsigned int op);
+RenderAPI::CompareMethod CompareMethodMapping(unsigned int method);
+RenderAPI::StencilOp StencilOpMapping(unsigned int sop);

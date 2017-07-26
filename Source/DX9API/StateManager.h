@@ -1,5 +1,6 @@
 #pragma once
 #include <vector>
+#include "../../RenderAPI/RenderAPI.h"
 #include "DX9Include.h"
 #include "RefCount.hpp"
 
@@ -28,62 +29,62 @@ public:
 	RSDefine(CullMode, D3DRS_CULLMODE);
 
 	RSDefine(ScissorTest, D3DRS_SCISSORTESTENABLE);
-
-	RSDefine(StencilTest, D3DRS_STENCILENABLE);
-
-	RSDefine(StencilReference, D3DRS_STENCILREF);
-
-	RSDefine(StencilReadMask, D3DRS_STENCILMASK);
-
-	RSDefine(StencilWriteMask, D3DRS_STENCILWRITEMASK);
-
-	RSDefine(StencilTwoFace, D3DRS_TWOSIDEDSTENCILMODE);
-
-	RSDefine(StencilFrontFunction, D3DRS_STENCILFUNC);
-
-	RSDefine(StencilFrontSFail, D3DRS_STENCILFAIL);
-
-	RSDefine(StencilFrontSPassZFail, D3DRS_STENCILZFAIL);
-
-	RSDefine(StencilFrontAllPass, D3DRS_STENCILPASS);
-
-	RSDefine(StencilBackFunction, D3DRS_CCW_STENCILFUNC);
-
-	RSDefine(StencilBackSFail, D3DRS_CCW_STENCILFAIL);
-
-	RSDefine(StencilBackSPassZFail, D3DRS_CCW_STENCILZFAIL);
-
-	RSDefine(StencilBackAllPass, D3DRS_CCW_STENCILPASS);
-
-	RSDefine(DepthTest, D3DRS_ZENABLE); // it depend , True because we use auto stencilMap when create Device.
-
+	
+	void SetStencilTest(bool enable);
+	
+	void SetStencilReference(unsigned int ref);
+	
+	void SetStencilReadMask(unsigned int mask);
+	
+	void SetStencilWriteMask(unsigned int mask);
+	
+	void SetStencilTwoFace(bool enable);
+	
+	void SetStencilFrontFunction(RenderAPI::CompareMethod func);
+	
+	void SetStencilFrontSFail(RenderAPI::StencilOp sop);
+	
+	void SetStencilFrontSPassZFail(RenderAPI::StencilOp sop);
+	
+	void SetStencilFrontAllPass(RenderAPI::StencilOp sop);
+	
+	void SetStencilBackFunction(RenderAPI::CompareMethod func);
+	
+	void SetStencilBackSFail(RenderAPI::StencilOp sop);
+	
+	void SetStencilBackSPassZFail(RenderAPI::StencilOp sop);
+	
+	void SetStencilBackAllPass(RenderAPI::StencilOp sop);
+	
+	void SetDepthTest(bool enable);
+	
 	RSDefine(DepthWrite, D3DRS_ZWRITEENABLE);
-
-	RSDefine(DepthFunction, D3DRS_ZFUNC);
-
+	
+	void SetDepthFunction(RenderAPI::CompareMethod func);
+	
 	RSDefine(DepthBias, D3DRS_DEPTHBIAS);
+	
+	void SetAlphaTest(bool enable);
+	
+	void SetAlphaFunction(RenderAPI::CompareMethod func);
 
-	RSDefine(AlphaTest, D3DRS_ALPHATESTENABLE);
+	void SetAlphaReference(unsigned char ref);
 
-	RSDefine(AlphaFunction, D3DRS_ALPHAFUNC);
+	void SetAlphaBlending(bool enable);
+	
+	void SetSeperateAlphaBlending(bool enable);
+	
+	void SetBlendingOp(RenderAPI::BlendOperator blendOp);
 
-	RSDefine(AlphaReference, D3DRS_ALPHAREF);
+	void SetSrcBlending(RenderAPI::BlendFactor blendFactor);
 
-	RSDefine(AlphaBlending, D3DRS_ALPHABLENDENABLE);
+	void SetDstBlending(RenderAPI::BlendFactor blendFactor);
 
-	RSDefine(SeperateAlphaBlending, D3DRS_SEPARATEALPHABLENDENABLE);
+	void SetAlphaBlendingOp(RenderAPI::BlendOperator blendOp);
 
-	RSDefine(BlendingOp, D3DRS_BLENDOP);
+	void SetAlphaSrcBlending(RenderAPI::BlendFactor blendFactor);
 
-	RSDefine(SrcBlending, D3DRS_SRCBLEND);
-
-	RSDefine(DstBlending, D3DRS_DESTBLEND);
-
-	RSDefine(AlphaBlendingOp, D3DRS_BLENDOPALPHA);
-
-	RSDefine(AlphaSrcBlending, D3DRS_SRCBLENDALPHA);
-
-	RSDefine(AlphaDstBlending, D3DRS_DESTBLENDALPHA);
+	void SetAlphaDstBlending(RenderAPI::BlendFactor blendFactor);
 
 	TSSDefine(TextureColorOp, D3DTSS_COLOROP);
 
@@ -109,6 +110,16 @@ public:
 
 	SSDefine(SamplerBorderColor, D3DSAMP_BORDERCOLOR);
 
+	RenderAPI::BlendState GetBlendState() const { return m_blendState; }
+
+	RenderAPI::AlphaTestingState GetAlphaTestingState() const { return m_alphaTestState; }
+
+	RenderAPI::DepthTestingState GetDepthTestingState() const { return m_depthTestState; }
+
+	RenderAPI::StencilTestingState GetStencilTestingState() const { return m_stencilTestState; }
+
+	bool IsScissorTestEnable() const;
+
 protected:
 	IDirect3DDevice9* m_pDevice;
 
@@ -124,6 +135,10 @@ protected:
 	std::vector<DWORD> m_TSSValues[TextureSlotCount];
 	std::vector<DWORD> m_SSValues[TextureSlotCount];
 
+	RenderAPI::BlendState m_blendState;
+	RenderAPI::AlphaTestingState m_alphaTestState;
+	RenderAPI::DepthTestingState m_depthTestState;
+	RenderAPI::StencilTestingState m_stencilTestState;
 };
 
 class FXStateManager : public ID3DXEffectStateManager, public StateManager
