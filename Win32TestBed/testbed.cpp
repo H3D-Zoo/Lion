@@ -410,9 +410,9 @@ void APITestBed::DrawBox(RenderAPI::TextureAddress address, bool alphaBlending)
 			{
 				RenderAPI::BlendState abstate;
 				abstate.IsEnable = true;
-				abstate.ColorSrc = RenderAPI::BLEND_One;
-				abstate.ColorDst = RenderAPI::BLEND_InvSrcColor;
-				abstate.ColorOp = RenderAPI::BLENDOP_Sub;
+				abstate.SrcBlend = RenderAPI::BLEND_One;
+				abstate.DstBlend = RenderAPI::BLEND_InvSrcColor;
+				abstate.BlendOp = RenderAPI::BLENDOP_Sub;
 				m_pContext->SetBlendState(abstate);
 			}
 			else

@@ -27,13 +27,15 @@ public:
 
 	void ResetDefaultRenderTarget(RenderAPI::RenderTarget* defDS);
 
+	void SetMaxTextureStage(unsigned int maxStage);
+
 private:
 	IDirect3DDevice9* m_pDevice;
 	std::vector<IDirect3DSurface9*> m_pCurrentRTs;
 	IDirect3DSurface9* m_pCurrentDS;
 	IDirect3DSurface9* m_pDefaultRT;
 	IDirect3DSurface9* m_pDefaultDS;
-
+	unsigned int m_maxTextureStage;
 };
 
 class Context :public RenderAPI::Context
@@ -55,6 +57,8 @@ public:
 
 	virtual void SetViewport(const RenderAPI::Viewport&);
 
+	virtual RenderAPI::Viewport GetViewport();
+
 	virtual void SetRenderTarget(unsigned int index, RenderAPI::RenderTarget* renderTarget);
 
 	virtual void SetDepthStencil(RenderAPI::DepthStencil* depthStencil);
@@ -68,6 +72,10 @@ public:
 	virtual void SetBlendState(const RenderAPI::BlendState& state);
 
 	virtual RenderAPI::BlendState GetBlendState() const;
+
+	virtual void SetAlphaSeparateBlendState(const RenderAPI::BlendState& state);
+
+	virtual RenderAPI::BlendState GetAlphaSeparateBlendState() const;
 
 	virtual void SetAlphaTestingState(const RenderAPI::AlphaTestingState& state);
 
@@ -91,11 +99,15 @@ public:
 
 	virtual RenderAPI::ScissorState GetScissorState() const;
 
+	virtual void SetColorWriteMask(bool r, bool g, bool b, bool a);
+
 	virtual void SetFillMode(RenderAPI::FillMode mode);
 
 	virtual void SetCullMode(RenderAPI::CullMode mode);
 
 	virtual void SetDepthBias(float bias);
+
+	virtual void SetSlopScaleDepthBias(float bias);
 
 	virtual void SetTextureFactor(unsigned int factor);
 
@@ -106,6 +118,8 @@ public:
 	virtual void Draw(RenderAPI::Primitive primitive, unsigned int startIndex, unsigned int primitiveCount);
 
 	virtual void DrawIndexed(RenderAPI::Primitive primitive, unsigned int baseVertex, unsigned int startIndex, unsigned int primitiveCount);
+
+	virtual bool UpdateTexture(RenderAPI::Texture2D* src, RenderAPI::Texture2D* dst);
 
 	virtual RenderAPI::DeviceState Context::Present();
 

@@ -29,6 +29,8 @@ public:
 	RSDefine(CullMode, D3DRS_CULLMODE);
 
 	RSDefine(ScissorTest, D3DRS_SCISSORTESTENABLE);
+
+	RSDefine(ColorWriteEnable, D3DRS_COLORWRITEENABLE);
 	
 	void SetStencilTest(bool enable);
 	
@@ -63,6 +65,8 @@ public:
 	void SetDepthFunction(RenderAPI::CompareMethod func);
 	
 	RSDefine(DepthBias, D3DRS_DEPTHBIAS);
+
+	RSDefine(SlopScaleDepthBias, D3DRS_SLOPESCALEDEPTHBIAS);
 	
 	void SetAlphaTest(bool enable);
 	
@@ -72,7 +76,7 @@ public:
 
 	void SetAlphaBlending(bool enable);
 	
-	void SetSeperateAlphaBlending(bool enable);
+	void SetSeparateAlphaBlending(bool enable);
 	
 	void SetBlendingOp(RenderAPI::BlendOperator blendOp);
 
@@ -112,6 +116,8 @@ public:
 
 	RenderAPI::BlendState GetBlendState() const { return m_blendState; }
 
+	RenderAPI::BlendState GetAlphaSeparateBlendState() const { return m_alphaSeparateBlendState; }
+
 	RenderAPI::AlphaTestingState GetAlphaTestingState() const { return m_alphaTestState; }
 
 	RenderAPI::DepthTestingState GetDepthTestingState() const { return m_depthTestState; }
@@ -136,6 +142,7 @@ protected:
 	std::vector<DWORD> m_SSValues[TextureSlotCount];
 
 	RenderAPI::BlendState m_blendState;
+	RenderAPI::BlendState m_alphaSeparateBlendState;
 	RenderAPI::AlphaTestingState m_alphaTestState;
 	RenderAPI::DepthTestingState m_depthTestState;
 	RenderAPI::StencilTestingState m_stencilTestState;

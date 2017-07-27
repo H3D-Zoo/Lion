@@ -17,6 +17,8 @@ public:
 
 	virtual void SetViewport(const RenderAPI::Viewport&);
 
+	virtual RenderAPI::Viewport GetViewport();
+
 	virtual void SetRenderTarget(unsigned int index, RenderAPI::RenderTarget* renderTarget);
 
 	virtual void SetDepthStencil(RenderAPI::DepthStencil* depthStencil);
@@ -30,6 +32,10 @@ public:
 	virtual void SetBlendState(const RenderAPI::BlendState& state);
 
 	virtual RenderAPI::BlendState GetBlendState() const;
+
+	virtual void SetAlphaSeparateBlendState(const RenderAPI::BlendState& state);
+
+	virtual RenderAPI::BlendState GetAlphaSeparateBlendState() const;
 
 	virtual void SetAlphaTestingState(const RenderAPI::AlphaTestingState& state);
 
@@ -53,11 +59,15 @@ public:
 
 	virtual RenderAPI::ScissorState GetScissorState() const;
 
+	virtual void SetColorWriteMask(bool r, bool g, bool b, bool a);
+
 	virtual void SetFillMode(RenderAPI::FillMode mode);
 
 	virtual void SetCullMode(RenderAPI::CullMode mode);
 
 	virtual void SetDepthBias(float bias);
+
+	virtual void SetSlopScaleDepthBias(float bias);
 
 	virtual void SetTextureFactor(unsigned int factor);
 
@@ -69,6 +79,8 @@ public:
 
 	virtual void DrawIndexed(RenderAPI::Primitive primitive, unsigned int baseVertex, unsigned int startIndex, unsigned int primitiveCount);
 
+	virtual bool UpdateTexture(RenderAPI::Texture2D* src, RenderAPI::Texture2D* dst);
+
 	virtual RenderAPI::DeviceState Present();
 
 	virtual RenderAPI::DeviceState CheckDeviceLost();
@@ -79,8 +91,10 @@ public:
 
 private:
 	RenderAPI::BlendState m_blendState;
+	RenderAPI::BlendState m_alphaSepareteBlendState;
 	RenderAPI::AlphaTestingState m_alphaTestState;
 	RenderAPI::DepthTestingState m_depthTestState;
 	RenderAPI::StencilTestingState m_stencilTestState;
 	RenderAPI::ScissorState m_scissorState;
+	RenderAPI::Viewport m_viewport;
 };

@@ -25,9 +25,14 @@ void Context::ClearStencilBuffer(unsigned int stencil)
 
 }
 
-void Context::SetViewport(const RenderAPI::Viewport&)
+void Context::SetViewport(const RenderAPI::Viewport& vp)
 {
+	m_viewport = vp;
+}
 
+RenderAPI::Viewport Context::GetViewport()
+{
+	return m_viewport;
 }
 
 void Context::SetRenderTarget(unsigned int index, RenderAPI::RenderTarget* renderTarget)
@@ -63,6 +68,16 @@ void Context::SetBlendState(const RenderAPI::BlendState& state)
 RenderAPI::BlendState Context::GetBlendState() const
 {
 	return m_blendState;
+}
+
+void Context::SetAlphaSeparateBlendState(const RenderAPI::BlendState & state)
+{
+	m_alphaSepareteBlendState = state;
+}
+
+RenderAPI::BlendState Context::GetAlphaSeparateBlendState() const
+{
+	return m_alphaSepareteBlendState;
 }
 
 void Context::SetAlphaTestingState(const RenderAPI::AlphaTestingState& state)
@@ -120,6 +135,11 @@ RenderAPI::ScissorState Context::GetScissorState() const
 	return m_scissorState;
 }
 
+void Context::SetColorWriteMask(bool r, bool g, bool b, bool a)
+{
+
+}
+
 void Context::SetFillMode(RenderAPI::FillMode mode)
 {
 
@@ -133,6 +153,10 @@ void Context::SetCullMode(RenderAPI::CullMode mode)
 void Context::SetDepthBias(float bias)
 {
 
+}
+
+void Context::SetSlopScaleDepthBias(float bias)
+{
 }
 
 void Context::SetTextureFactor(unsigned int factor)
@@ -158,6 +182,11 @@ void Context::Draw(RenderAPI::Primitive primitive, unsigned int startVertex, uns
 void Context::DrawIndexed(RenderAPI::Primitive primitive, unsigned int baseVertex, unsigned int startIndex, unsigned int primitiveCount)
 {
 
+}
+
+bool Context::UpdateTexture(RenderAPI::Texture2D * src, RenderAPI::Texture2D * dst)
+{
+	return true;
 }
 
 RenderAPI::DeviceState Context::Present()

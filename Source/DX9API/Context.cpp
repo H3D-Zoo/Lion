@@ -210,6 +210,9 @@ Context::Context(APIGlobal* pAPI, IDirect3DDevice9 * device, RenderAPI::RenderTa
 	m_scissorState.Right = scissorRect.right;
 	m_scissorState.Top = scissorRect.top;
 	m_scissorState.Bottom = scissorRect.bottom;
+
+	RenderAPI::DeviceCaps caps = GetDeviceCaps();
+	m_backBufferManager.SetMaxTextureStage(caps.MaxTextureStage);
 }
 
 Context::~Context()
@@ -328,6 +331,21 @@ void Context::SetViewport(const RenderAPI::Viewport& vp)
 	m_pDevice->SetViewport(&d3dViewPort);
 }
 
+RenderAPI::Viewport Context::GetViewport()
+{
+	D3DVIEWPORT9 vp;
+	m_pDevice->GetViewport(&vp);
+
+	RenderAPI::Viewport viewport;
+	viewport.Left = vp.X;
+	viewport.Top = vp.Y;
+	viewport.Width = vp.Width;
+	viewport.Height = vp.Height;
+	viewport.MinZ = vp.MinZ;
+	viewport.MaxZ = vp.MaxZ;
+	return viewport;
+}
+
 void Context::SetRenderTarget(unsigned int index, RenderAPI::RenderTarget* renderTarget)
 {
 	m_backBufferManager.SetRenderTarget(index, renderTarget);
@@ -391,21 +409,10 @@ void Context::SetBlendState(const RenderAPI::BlendState& state)
 	if (state.IsEnable)
 	{
 		m_renderStateManager.SetAlphaBlending(TRUE);
-		if (state.IsAlphaSeperate)
-		{
-			m_renderStateManager.SetSeperateAlphaBlending(TRUE);
-			m_renderStateManager.SetAlphaBlendingOp(state.AlphaOp);
-			m_renderStateManager.SetAlphaSrcBlending(state.AlphaSrc);
-			m_renderStateManager.SetAlphaDstBlending(state.AlphaDst);
-		}
-		else
-		{
-			m_renderStateManager.SetSeperateAlphaBlending(FALSE);
-		}
 
-		m_renderStateManager.SetBlendingOp(state.ColorOp);
-		m_renderStateManager.SetSrcBlending(state.ColorSrc);
-		m_renderStateManager.SetDstBlending(state.ColorDst);
+		m_renderStateManager.SetBlendingOp(state.BlendOp);
+		m_renderStateManager.SetSrcBlending(state.SrcBlend);
+		m_renderStateManager.SetDstBlending(state.DstBlend);
 	}
 	else
 	{
@@ -413,9 +420,29 @@ void Context::SetBlendState(const RenderAPI::BlendState& state)
 	}
 }
 
+void Context::SetAlphaSeparateBlendState(const RenderAPI::BlendState& state)
+{
+	if (state.IsEnable)
+	{
+		m_renderStateManager.SetSeparateAlphaBlending(TRUE);
+		m_renderStateManager.SetAlphaBlendingOp(state.BlendOp);
+		m_renderStateManager.SetAlphaSrcBlending(state.SrcBlend);
+		m_renderStateManager.SetAlphaDstBlending(state.DstBlend);
+	}
+	else
+	{
+		m_renderStateManager.SetSeparateAlphaBlending(FALSE);
+	}
+}
+
 RenderAPI::BlendState Context::GetBlendState() const
 {
 	return m_renderStateManager.GetBlendState();
+}
+
+RenderAPI::BlendState Context::GetAlphaSeparateBlendState() const
+{
+	return m_renderStateManager.GetAlphaSeparateBlendState();
 }
 
 void Context::SetAlphaTestingState(const RenderAPI::AlphaTestingState& state)
@@ -563,6 +590,20 @@ RenderAPI::ScissorState Context::GetScissorState() const
 	return m_scissorState;
 }
 
+void Context::SetColorWriteMask(bool r, bool g, bool b, bool a)
+{
+	unsigned int mask = 0;
+	if (r)
+		mask |= D3DCOLORWRITEENABLE_RED;
+	if (g)
+		mask |= D3DCOLORWRITEENABLE_GREEN;
+	if (b)
+		mask |= D3DCOLORWRITEENABLE_BLUE;
+	if (a)
+		mask |= D3DCOLORWRITEENABLE_ALPHA;
+	m_renderStateManager.SetColorWriteEnable(mask);
+}
+
 void Context::SetFillMode(RenderAPI::FillMode mode)
 {
 	m_renderStateManager.SetFillMode(s_fillMode[mode]);
@@ -576,6 +617,11 @@ void Context::SetCullMode(RenderAPI::CullMode mode)
 void Context::SetDepthBias(float bias)
 {
 	m_renderStateManager.SetDepthBias((DWORD)bias);
+}
+
+void Context::SetSlopScaleDepthBias(float bias)
+{
+	m_renderStateManager.SetSlopScaleDepthBias((DWORD)bias);
 }
 
 void Context::SetTextureFactor(unsigned int factor)
@@ -603,6 +649,17 @@ void Context::DrawIndexed(RenderAPI::Primitive primitive, unsigned int baseVerte
 {
 	RebuildDecalration();
 	m_pDevice->DrawIndexedPrimitive(s_primitives[primitive], baseVertex, 0, m_vertexCount, startIndex, primitiveCount);
+}
+
+bool Context::UpdateTexture(RenderAPI::Texture2D * src, RenderAPI::Texture2D * dst)
+{
+	if (src == NULL || dst == NULL)
+	{
+		return false;
+	}
+	IDirect3DTexture9* pSrcTexture = ((::Texture2D*)src)->GetD3DTexture();
+	IDirect3DTexture9* pDstTexture = ((::Texture2D*)dst)->GetD3DTexture();
+	return S_OK == m_pDevice->UpdateTexture(pSrcTexture, pDstTexture);
 }
 
 RenderAPI::DeviceState Context::Present()
@@ -823,6 +880,20 @@ void BackBufferManager::SetRenderTarget(unsigned int index, RenderAPI::RenderTar
 		rtSurface = ((::RenderTarget*)rt)->GetD3DSurface();
 	}
 
+	::Texture2D* texture = (::Texture2D*)(rt->GetTexturePtr());
+	if (texture != NULL)
+	{
+		IDirect3DBaseTexture9* pTexture;
+		for (unsigned int i = 0; i < m_maxTextureStage; i++)
+		{
+			m_pDevice->GetTexture(i, &pTexture);
+			if (pTexture == texture->GetD3DTexture())
+			{
+				m_pDevice->SetTexture(i, NULL);
+			}
+		}
+	}
+
 	if (index >= m_pCurrentRTs.size())
 	{
 		m_pCurrentRTs.resize(index + 1);
@@ -875,6 +946,11 @@ void BackBufferManager::ResetDefaultRenderTarget(RenderAPI::RenderTarget * defDS
 {
 	m_pCurrentDS = ((::DepthStencil*)defDS)->GetD3DSurface();
 	m_pDefaultDS = m_pCurrentDS;
+}
+
+void BackBufferManager::SetMaxTextureStage(unsigned int maxStage)
+{
+	m_maxTextureStage = maxStage;
 }
 
 bool operator != (const RenderAPI::VertexElement& left, const RenderAPI::VertexElement& right)

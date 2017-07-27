@@ -182,13 +182,15 @@ StateManager::StateManager(IDirect3DDevice9* pDevice)
 
 	//设置各种状态的默认值
 	m_blendState.IsEnable = m_RSValues[D3DRS_ALPHABLENDENABLE] == TRUE;
-	m_blendState.IsAlphaSeperate = m_RSValues[D3DRS_SEPARATEALPHABLENDENABLE] == TRUE;
-	m_blendState.ColorSrc = BlendFactorMapping(m_RSValues[D3DRS_SRCBLEND]);
-	m_blendState.ColorDst = BlendFactorMapping(m_RSValues[D3DRS_DESTBLEND]);
-	m_blendState.AlphaSrc = BlendFactorMapping(m_RSValues[D3DRS_SRCBLENDALPHA]);
-	m_blendState.AlphaDst = BlendFactorMapping(m_RSValues[D3DRS_DESTBLENDALPHA]);
-	m_blendState.ColorOp = BlendOperatorMapping(m_RSValues[D3DRS_BLENDOP]);
-	m_blendState.AlphaOp = BlendOperatorMapping(m_RSValues[D3DRS_BLENDOPALPHA]);
+	m_blendState.SrcBlend = BlendFactorMapping(m_RSValues[D3DRS_SRCBLEND]);
+	m_blendState.DstBlend = BlendFactorMapping(m_RSValues[D3DRS_DESTBLEND]);	
+	m_blendState.BlendOp = BlendOperatorMapping(m_RSValues[D3DRS_BLENDOP]);
+
+	m_alphaSeparateBlendState.IsEnable = m_RSValues[D3DRS_SEPARATEALPHABLENDENABLE] == TRUE;
+	m_alphaSeparateBlendState.SrcBlend = BlendFactorMapping(m_RSValues[D3DRS_SRCBLENDALPHA]);
+	m_alphaSeparateBlendState.DstBlend = BlendFactorMapping(m_RSValues[D3DRS_DESTBLENDALPHA]);
+	m_blendState.BlendOp = BlendOperatorMapping(m_RSValues[D3DRS_BLENDOPALPHA]);
+	
 
 	m_alphaTestState.IsEnable = m_RSValues[D3DRS_ALPHATESTENABLE] == TRUE;
 	m_alphaTestState.Function = CompareMethodMapping(m_RSValues[D3DRS_ALPHAFUNC]);
@@ -449,28 +451,28 @@ void StateManager::SetAlphaBlending(bool enable)
 	m_blendState.IsEnable = enable;
 }
 
-void StateManager::SetSeperateAlphaBlending(bool enable)
+void StateManager::SetSeparateAlphaBlending(bool enable)
 {
 	SetRS(D3DRS_SEPARATEALPHABLENDENABLE, enable ? TRUE : FALSE);
-	m_blendState.IsAlphaSeperate = enable;
+	m_alphaSeparateBlendState.IsEnable = enable;
 }
 
 void StateManager::SetBlendingOp(RenderAPI::BlendOperator blendOp)
 {
 	SetRS(D3DRS_BLENDOP, s_blendOps[blendOp]);
-	m_blendState.ColorOp = blendOp;
+	m_blendState.BlendOp = blendOp;
 }
 
 void StateManager::SetSrcBlending(RenderAPI::BlendFactor blendFactor)
 {
 	SetRS(D3DRS_SRCBLEND, s_blendFactors[blendFactor]);
-	m_blendState.ColorSrc = blendFactor;
+	m_blendState.SrcBlend = blendFactor;
 }
 
 void StateManager::SetDstBlending(RenderAPI::BlendFactor blendFactor)
 {
 	SetRS(D3DRS_DESTBLEND, s_blendFactors[blendFactor]);
-	m_blendState.ColorDst = blendFactor;
+	m_blendState.DstBlend = blendFactor;
 }
 
 void StateManager::SetAlphaBlendingOp(RenderAPI::BlendOperator blendOp)
@@ -482,11 +484,11 @@ void StateManager::SetAlphaBlendingOp(RenderAPI::BlendOperator blendOp)
 void StateManager::SetAlphaSrcBlending(RenderAPI::BlendFactor blendFactor)
 {
 	SetRS(D3DRS_SRCBLENDALPHA, s_blendFactors[blendFactor]);
-	m_blendState.AlphaSrc = blendFactor;
+	m_alphaSeparateBlendState.SrcBlend = blendFactor;
 }
 
 void StateManager::SetAlphaDstBlending(RenderAPI::BlendFactor blendFactor)
 {
 	SetRS(D3DRS_DESTBLENDALPHA, s_blendFactors[blendFactor]);
-	m_blendState.AlphaDst = blendFactor;
+	m_alphaSeparateBlendState.DstBlend = blendFactor;
 }

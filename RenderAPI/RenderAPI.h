@@ -287,23 +287,15 @@ namespace RenderAPI
 	{
 		BlendState()
 			: IsEnable(false)
-			, IsAlphaSeperate(false)
-			, ColorSrc(BLEND_One)
-			, ColorDst(BLEND_Zero)
-			, AlphaSrc(BLEND_One)
-			, AlphaDst(BLEND_Zero)
-			, ColorOp(BLENDOP_Add)
-			, AlphaOp(BLENDOP_Add)
+			, SrcBlend(BLEND_One)
+			, DstBlend(BLEND_Zero)
+			, BlendOp(BLENDOP_Add)
 		{	}
 
-
 		bool IsEnable;
-		bool IsAlphaSeperate;
-		BlendFactor ColorSrc;
-		BlendFactor ColorDst;
-		BlendFactor AlphaSrc;
-		BlendFactor AlphaDst;
-		BlendOperator ColorOp;
+		BlendFactor SrcBlend;
+		BlendFactor DstBlend;
+		BlendOperator BlendOp;
 		BlendOperator AlphaOp;
 	};
 
@@ -645,6 +637,8 @@ namespace RenderAPI
 
 		virtual void SetViewport(const Viewport&) = 0;
 
+		virtual Viewport GetViewport() = 0;
+
 		virtual void SetRenderTarget(unsigned int index, RenderTarget* renderTarget) = 0;
 
 		virtual void SetDepthStencil(DepthStencil* depthStencil) = 0;
@@ -658,6 +652,10 @@ namespace RenderAPI
 		virtual void SetBlendState(const BlendState& state) = 0;
 
 		virtual BlendState GetBlendState() const = 0;
+
+		virtual void SetAlphaSeparateBlendState(const BlendState& state) = 0;
+
+		virtual BlendState GetAlphaSeparateBlendState() const = 0;
 
 		virtual void SetAlphaTestingState(const AlphaTestingState& state) = 0;
 
@@ -681,11 +679,15 @@ namespace RenderAPI
 
 		virtual ScissorState GetScissorState() const = 0;
 
+		virtual void SetColorWriteMask(bool r, bool g, bool b, bool a) = 0;
+
 		virtual void SetFillMode(FillMode mode) = 0;
 
 		virtual void SetCullMode(CullMode mode) = 0;
 
 		virtual void SetDepthBias(float bias) = 0;
+
+		virtual void SetSlopScaleDepthBias(float bias) = 0;
 
 		virtual void SetTextureFactor(unsigned int factor) = 0;
 
@@ -696,6 +698,8 @@ namespace RenderAPI
 		virtual void Draw(Primitive primitive, unsigned int startVertex, unsigned int primitiveCount) = 0;
 
 		virtual void DrawIndexed(RenderAPI::Primitive primitive, unsigned int baseVertex, unsigned int startIndex, unsigned int primitiveCount) = 0;
+
+		virtual bool UpdateTexture(Texture2D* src, Texture2D* dst) = 0;
 
 		virtual DeviceState Present() = 0;
 
