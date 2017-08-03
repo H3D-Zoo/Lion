@@ -525,31 +525,33 @@ void Context::SetDepthWriting(bool enable)
 	m_renderStateManager.SetDepthWrite(enable ? TRUE : FALSE);
 }
 
-void Context::SetTextureBlendingState(unsigned int slot, const RenderAPI::TextureBlendingState& state)
+void Context::SetTextureColorBlendingState(unsigned int slot, const RenderAPI::TextureBlendingState& state)
 {
-	if (state.ColorOp == RenderAPI::TEXOP_Disable)
+	if (state.BlendOp == RenderAPI::TEXOP_Disable)
 	{
 		m_renderStateManager.SetTextureColorOp(slot, D3DTOP_DISABLE);
 	}
 	else
 	{
-		m_renderStateManager.SetTextureColorOp(slot, s_texColorOps[state.ColorOp]);
-		m_renderStateManager.SetTextureColorArg1(slot, s_texBlendingArgs[state.ColorArg0]);
-		m_renderStateManager.SetTextureColorArg2(slot, s_texBlendingArgs[state.ColorArg1]);
-	}
-
-	if (state.AlphaOp == RenderAPI::TEXOP_Disable)
-	{
-		m_renderStateManager.SetTextureAlphaOp(slot, D3DTOP_DISABLE);
-	}
-	else
-	{
-		m_renderStateManager.SetTextureAlphaOp(slot, s_texColorOps[state.AlphaOp]);
-		m_renderStateManager.SetTextureAlphaArg1(slot, s_texBlendingArgs[state.AlphaArg0]);
-		m_renderStateManager.SetTextureAlphaArg2(slot, s_texBlendingArgs[state.AlphaArg1]);
+		m_renderStateManager.SetTextureColorOp(slot, s_texColorOps[state.BlendOp]);
+		m_renderStateManager.SetTextureColorArg1(slot, s_texBlendingArgs[state.Argument0]);
+		m_renderStateManager.SetTextureColorArg2(slot, s_texBlendingArgs[state.Argument1]);
 	}
 }
 
+void Context::SetTextureAlphaBlendingState(unsigned int slot, const RenderAPI::TextureBlendingState& state)
+{
+	if (state.BlendOp == RenderAPI::TEXOP_Disable)
+	{
+		m_renderStateManager.SetTextureColorOp(slot, D3DTOP_DISABLE);
+	}
+	else
+	{
+		m_renderStateManager.SetTextureAlphaOp(slot, s_texColorOps[state.BlendOp]);
+		m_renderStateManager.SetTextureAlphaArg1(slot, s_texBlendingArgs[state.Argument0]);
+		m_renderStateManager.SetTextureAlphaArg2(slot, s_texBlendingArgs[state.Argument1]);
+	}
+}
 void Context::SetTextureSampler(unsigned int slot, const RenderAPI::TextureSampler& sampler)
 {
 	SamplerFilter& filter = s_samplerFilters[sampler.Filter];

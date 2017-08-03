@@ -115,7 +115,12 @@ void Context::SetDepthWriting(bool enable)
 
 }
 
-void Context::SetTextureBlendingState(unsigned int slot, const RenderAPI::TextureBlendingState& state)
+void Context::SetTextureColorBlendingState(unsigned int slot, const RenderAPI::TextureBlendingState& state)
+{
+
+}
+
+void Context::SetTextureAlphaBlendingState(unsigned int slot, const RenderAPI::TextureBlendingState& state)
 {
 
 }

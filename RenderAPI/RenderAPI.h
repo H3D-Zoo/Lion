@@ -410,20 +410,14 @@ namespace RenderAPI
 	struct TextureBlendingState
 	{
 		TextureBlendingState()
-			: ColorOp(TEXOP_Disable)
-			, AlphaOp(TEXOP_Disable)
-			, ColorArg0(TEXARG_Texture)
-			, ColorArg1(TEXARG_Current)
-			, AlphaArg0(TEXARG_Texture)
-			, AlphaArg1(TEXARG_Current)
+			: BlendOp(TEXOP_Disable)
+			, Argument0(TEXARG_Texture)
+			, Argument1(TEXARG_Current)
 		{	}
 
-		TextureOp  ColorOp;
-		TextureOp  AlphaOp;
-		TextureArg ColorArg0;
-		TextureArg ColorArg1;
-		TextureArg AlphaArg0;
-		TextureArg AlphaArg1;
+		TextureOp  BlendOp;
+		TextureArg Argument0;
+		TextureArg Argument1;
 	};
 
 	enum SamplerFilter
@@ -673,7 +667,9 @@ namespace RenderAPI
 
 		virtual void SetDepthWriting(bool enable) = 0;
 
-		virtual void SetTextureBlendingState(unsigned int slot, const TextureBlendingState& state) = 0;
+		virtual void SetTextureColorBlendingState(unsigned int slot, const TextureBlendingState& state) = 0;
+
+		virtual void SetTextureAlphaBlendingState(unsigned int slot, const TextureBlendingState& state) = 0;
 
 		virtual void SetTextureSampler(unsigned int slot, const TextureSampler& sampler) = 0;
 

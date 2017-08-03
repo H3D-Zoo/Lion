@@ -51,7 +51,9 @@ public:
 
 	virtual void SetDepthWriting(bool enable);
 
-	virtual void SetTextureBlendingState(unsigned int slot, const RenderAPI::TextureBlendingState& state);
+	virtual void SetTextureColorBlendingState(unsigned int slot, const RenderAPI::TextureBlendingState& state);
+
+	virtual void SetTextureAlphaBlendingState(unsigned int slot, const RenderAPI::TextureBlendingState& state);
 
 	virtual void SetTextureSampler(unsigned int slot, const RenderAPI::TextureSampler& sampler);
 
