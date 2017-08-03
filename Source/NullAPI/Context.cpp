@@ -194,7 +194,7 @@ RenderAPI::DeviceState Context::Present()
 	return RenderAPI::DEVICE_OK;
 }
 
-RenderAPI::DeviceState Context::CheckDeviceLost()
+RenderAPI::DeviceState Context::GetState()
 {
 	return RenderAPI::DEVICE_OK;
 }

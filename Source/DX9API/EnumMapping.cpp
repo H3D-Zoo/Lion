@@ -75,11 +75,11 @@ RenderAPI::DeviceState DeviceStateMapping(unsigned int rst)
 	{
 		return RenderAPI::DEVICE_OK;
 	}
-	else if (rst == D3DERR_DEVICELOST)
+	else if (rst == D3DERR_DEVICELOST || rst == D3DERR_DEVICEHUNG)
 	{
 		return RenderAPI::DEVICE_Lost;
 	}
-	else if (rst == D3DERR_DEVICENOTRESET)
+	else if (rst == D3DERR_DEVICENOTRESET || rst == S_PRESENT_MODE_CHANGED)
 	{
 		return RenderAPI::DEVICE_NeedReset;
 	}
@@ -88,11 +88,18 @@ RenderAPI::DeviceState DeviceStateMapping(unsigned int rst)
 		// 这个返回值是需要重新创建d3d9对象
 		return RenderAPI::DEVICE_NeedRecreate;
 	}
-	else
+	else if (rst == S_PRESENT_OCCLUDED)
+	{
+		return RenderAPI::DEVICE_Busy;
+	}
+	else if (rst == D3DERR_OUTOFVIDEOMEMORY || E_OUTOFMEMORY)
+	{
+		return RenderAPI::DEVICE_OutOfMemory;
+	}
+	else//D3DERR_DEVICEREMOVED
 	{
 		return RenderAPI::DEVICE_Error;
 	}
-
 }
 
 RenderAPI::BlendFactor BlendFactorMapping(unsigned int factor)

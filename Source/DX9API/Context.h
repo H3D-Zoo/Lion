@@ -123,7 +123,7 @@ public:
 
 	virtual RenderAPI::DeviceState Context::Present();
 
-	virtual RenderAPI::DeviceState CheckDeviceLost();
+	virtual RenderAPI::DeviceState GetState();
 
 	virtual RenderAPI::DeviceState ResetDevice(const RenderAPI::SwapChainDesc& desc, bool isFullscreen, bool useVerticalSync);
 

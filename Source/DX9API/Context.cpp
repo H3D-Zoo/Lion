@@ -668,10 +668,12 @@ RenderAPI::DeviceState Context::Present()
 	return DeviceStateMapping(hr);
 }
 
-RenderAPI::DeviceState Context::CheckDeviceLost()
+RenderAPI::DeviceState Context::GetState()
 {
 	if (m_pDeviceEx != NULL)
 	{
+		// We recommend not to call CheckDeviceState every frame. 
+		// Instead, call CheckDeviceState only if the IDirect3DDevice9Ex::PresentEx method returns a failure code.
 		// D3D9EX的设备丢失要通过CheckDeviceState来进行
 		HRESULT hr = m_pDeviceEx->CheckDeviceState(m_pAPI->hDeviceWindow);
 		if (hr == D3DERR_DEVICELOST || hr == D3DERR_DRIVERINTERNALERROR)
@@ -727,7 +729,7 @@ RenderAPI::DeviceState Context::ResetDevice(const RenderAPI::SwapChainDesc& desc
 
 	if (hr == D3DERR_INVALIDCALL)
 	{
-		return CheckDeviceLost();
+		return GetState();
 	}
 	else
 	{

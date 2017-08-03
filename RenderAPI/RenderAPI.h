@@ -496,7 +496,9 @@ namespace RenderAPI
 		DEVICE_Lost = 1,
 		DEVICE_NeedReset = 2,
 		DEVICE_NeedRecreate = 3,
-		DEVICE_Error = 4,
+		DEVICE_Busy = 4,
+		DEVICE_OutOfMemory = 5,
+		DEVICE_Error = 6,
 	};
 
 	struct ScissorState
@@ -637,7 +639,7 @@ namespace RenderAPI
 
 		virtual void SetViewport(const Viewport&) = 0;
 
-		virtual Viewport GetViewport() = 0;
+		virtual RenderAPI::Viewport GetViewport() = 0;
 
 		virtual void SetRenderTarget(unsigned int index, RenderTarget* renderTarget) = 0;
 
@@ -703,7 +705,7 @@ namespace RenderAPI
 
 		virtual DeviceState Present() = 0;
 
-		virtual DeviceState CheckDeviceLost() = 0;
+		virtual DeviceState GetState() = 0;
 
 		virtual DeviceState ResetDevice(const SwapChainDesc& desc, bool isFullscreen, bool useVerticalSync) = 0;
 	};

@@ -177,7 +177,7 @@ void APITestBed::Update()
 		m_pContext->EndScene();
 	}
 	m_editorSwapChain->Present();
-	if (m_pContext->CheckDeviceLost() == RenderAPI::DEVICE_Lost)
+	if (m_pContext->GetState() == RenderAPI::DEVICE_Lost)
 	{
 		throw nullptr;
 	}
