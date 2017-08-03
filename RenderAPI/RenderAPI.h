@@ -704,6 +704,8 @@ namespace RenderAPI
 		virtual DeviceState GetState() = 0;
 
 		virtual DeviceState ResetDevice(const SwapChainDesc& desc, bool isFullscreen, bool useVerticalSync) = 0;
+
+		virtual void EvictManagedResources() = 0;
 	};
 
 	class VertexBuffer : public RObject

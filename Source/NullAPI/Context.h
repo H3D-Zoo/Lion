@@ -89,6 +89,8 @@ public:
 
 	virtual RenderAPI::DeviceState ResetDevice(const RenderAPI::SwapChainDesc& desc, bool isFullscreen, bool useVerticalSync);
 
+	virtual void EvictManagedResources();
+
 	virtual void Release();
 
 private:

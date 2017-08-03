@@ -758,6 +758,11 @@ RenderAPI::DeviceState Context::ResetDevice(const RenderAPI::SwapChainDesc& desc
 	}
 }
 
+void Context::EvictManagedResources()
+{
+	m_pDevice->EvictManagedResources();
+}
+
 void Context::Release()
 {
 	delete this;

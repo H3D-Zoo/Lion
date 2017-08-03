@@ -209,6 +209,11 @@ RenderAPI::DeviceState Context::ResetDevice(const RenderAPI::SwapChainDesc& desc
 	return RenderAPI::DEVICE_OK;
 }
 
+void Context::EvictManagedResources()
+{
+
+}
+
 void Context::Release()
 {
 	delete this;
