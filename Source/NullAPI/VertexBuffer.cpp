@@ -55,6 +55,11 @@ void VertexBuffer::Unlock()
 
 }
 
+bool VertexBuffer::NeedRecreateWhenDeviceLost() 
+{
+	return false;
+}
+
 void VertexBuffer::Release()
 {
 	delete this;

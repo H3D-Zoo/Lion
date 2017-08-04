@@ -1,8 +1,9 @@
 #include "VertexBuffer.h"
 #include "EnumMapping.h"
 
-VertexBuffer::VertexBuffer(IDirect3DVertexBuffer9* vertexBuffer, RenderAPI::ResourceUsage usage, unsigned int vertexCount, unsigned int vertexSize, RenderAPI::VertexElement * elements, unsigned int elementCount)
+VertexBuffer::VertexBuffer(IDirect3DVertexBuffer9* vertexBuffer, RenderAPI::ResourceUsage usage, unsigned int vertexCount, unsigned int vertexSize, RenderAPI::VertexElement * elements, unsigned int elementCount, bool recreateWhenDeviceLost)
 	: m_usage(usage)
+	, m_recreateWhenDeviceLost(recreateWhenDeviceLost)
 	, m_vertexCount(vertexCount)
 	, m_vertexStride(vertexSize)
 	, m_bufferLength(vertexCount * vertexSize)
@@ -71,6 +72,11 @@ void* VertexBuffer::DiscardLock()
 void VertexBuffer::Unlock()
 {
 	m_pVertexBuffer->Unlock();
+}
+
+bool VertexBuffer::NeedRecreateWhenDeviceLost() 
+{
+	return m_recreateWhenDeviceLost;
 }
 
 void VertexBuffer::Release()

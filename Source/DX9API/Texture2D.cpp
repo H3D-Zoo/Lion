@@ -4,20 +4,10 @@
 #include "DepthStencil.h"
 #include "EnumMapping.h"
 
-Texture2D::Texture2D(IDirect3DTexture9* texture, RenderAPI::TextureFormat format, RenderAPI::ResourceUsage usage, unsigned int width, unsigned int height)
+Texture2D::Texture2D(IDirect3DTexture9* texture, RenderAPI::TextureFormat format, RenderAPI::ResourceUsage usage, unsigned int width, unsigned int height, bool recreateWhenDeviceLost)
 	: m_texFormat(format)
 	, m_usage(usage)
-	, m_pTexture(texture)
-	, m_pTempTextureForUpdate(NULL)
-	, m_texWidth(width)
-	, m_texHeight(height)
-{
-
-}
-
-Texture2D::Texture2D(IDirect3DTexture9* texture, RenderAPI::TextureFormat format, RenderAPI::ResourceUsage usage, unsigned int width, unsigned int height, void* initialData)
-	: m_texFormat(format)
-	, m_usage(usage)
+	, m_recreateWhenDeviceLost(recreateWhenDeviceLost)
 	, m_pTexture(texture)
 	, m_pTempTextureForUpdate(NULL)
 	, m_texWidth(width)
@@ -58,7 +48,10 @@ void Texture2D::Resize(unsigned int width, unsigned int height)
 	m_texHeight = height;
 }
 
-IDirect3DTexture9 * Texture2D::GetD3DTexture() { return m_pTexture; }
+IDirect3DTexture9 * Texture2D::GetD3DTexture()
+{
+	return m_pTexture;
+}
 
 inline IDirect3DTexture9 ** Texture2D::TextureForUpdate(unsigned int index)
 {
@@ -139,4 +132,9 @@ void Texture2D::UnlockRect(unsigned int layer)
 void Texture2D::GenerateMipmaps()
 {
 	m_pTexture->GenerateMipSubLevels();
+}
+
+bool Texture2D::NeedRecreateWhenDeviceLost()
+{
+	return m_recreateWhenDeviceLost;
 }

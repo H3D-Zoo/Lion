@@ -6,7 +6,7 @@
 class VertexBuffer : public RenderAPI::VertexBuffer
 {
 public:
-	VertexBuffer(IDirect3DVertexBuffer9* vertexBuffer, RenderAPI::ResourceUsage usage, unsigned int vertexCount, unsigned int vertexSize, RenderAPI::VertexElement* elements, unsigned int elementCount);
+	VertexBuffer(IDirect3DVertexBuffer9* vertexBuffer, RenderAPI::ResourceUsage usage, unsigned int vertexCount, unsigned int vertexSize, RenderAPI::VertexElement* elements, unsigned int elementCount, bool recreateWhenDeviceLost);
 
 	~VertexBuffer();
 
@@ -27,6 +27,8 @@ public:
 	virtual void* DiscardLock();
 
 	virtual void Unlock();
+	
+	virtual bool NeedRecreateWhenDeviceLost();
 
 	virtual void Release();
 
@@ -34,6 +36,7 @@ public:
 
 private:
 	RenderAPI::ResourceUsage m_usage;
+	const bool m_recreateWhenDeviceLost;
 	unsigned int m_vertexCount;
 	unsigned int m_vertexStride;
 	unsigned int m_bufferLength;

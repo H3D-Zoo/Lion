@@ -41,6 +41,11 @@ void Texture2D::GenerateMipmaps()
 {
 }
 
+bool Texture2D::NeedRecreateWhenDeviceLost() 
+{
+	return false;
+}
+
 void Texture2D::Release()
 {
 	delete this;

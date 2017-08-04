@@ -26,6 +26,8 @@ public:
 
 	virtual void Unlock();
 
+	virtual bool NeedRecreateWhenDeviceLost();
+
 	virtual void Release();
 
 private:

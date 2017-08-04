@@ -160,7 +160,7 @@ RenderAPI::VertexBuffer* Device::CreateVertexBuffer(RenderAPI::ResourceUsage usa
 		}
 	}
 
-	return new VertexBuffer(pVertexBuffer, usage, vertexCount, vertexSize, elements, elementCount);
+	return new VertexBuffer(pVertexBuffer, usage, vertexCount, vertexSize, elements, elementCount, pool != D3DPOOL_MANAGED);
 
 }
 
@@ -198,7 +198,7 @@ RenderAPI::IndexBuffer* Device::CreateIndexBuffer(RenderAPI::ResourceUsage usage
 		}
 	}
 
-	return new IndexBuffer(pIndexBuffer, usage, format, indexCount);
+	return new IndexBuffer(pIndexBuffer, usage, format, indexCount, pool != D3DPOOL_MANAGED);
 }
 
 RenderAPI::Texture2D * Device::CreateTexture2D(RenderAPI::ResourceUsage usage, RenderAPI::TextureFormat format, unsigned int width, unsigned int height, void* initialData, int dataLinePitch, int dataHeight)
@@ -234,7 +234,7 @@ RenderAPI::Texture2D * Device::CreateTexture2D(RenderAPI::ResourceUsage usage, R
 		return NULL;
 	}
 
-	::Texture2D* texture = new ::Texture2D(pTexture, format, usage, width, height);
+	::Texture2D* texture = new ::Texture2D(pTexture, format, usage, width, height, pool != D3DPOOL_MANAGED);
 
 	if (initialData != NULL)
 	{

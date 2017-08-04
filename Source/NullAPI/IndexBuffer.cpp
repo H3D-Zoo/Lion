@@ -52,6 +52,11 @@ inline void IndexBuffer::Unlock()
 
 }
 
+bool IndexBuffer::NeedRecreateWhenDeviceLost() 
+{
+	return false;
+}
+
 void IndexBuffer::Release()
 {
 	delete this;

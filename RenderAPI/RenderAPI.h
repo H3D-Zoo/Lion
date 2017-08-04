@@ -728,6 +728,8 @@ namespace RenderAPI
 		virtual void* DiscardLock() = 0;
 
 		virtual void Unlock() = 0;
+
+		virtual bool NeedRecreateWhenDeviceLost() = 0;
 	};
 
 	class IndexBuffer : public RObject
@@ -746,6 +748,8 @@ namespace RenderAPI
 		virtual void* DiscardLock() = 0;
 
 		virtual void Unlock() = 0;
+
+		virtual bool NeedRecreateWhenDeviceLost() = 0;
 	};
 
 	class Texture2D : public RObject
@@ -762,6 +766,8 @@ namespace RenderAPI
 		virtual void UnlockRect(unsigned int layer) = 0;
 
 		virtual void GenerateMipmaps() = 0;
+
+		virtual bool NeedRecreateWhenDeviceLost() = 0;
 	};
 
 	class RenderTarget : public RObject

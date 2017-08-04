@@ -1,13 +1,20 @@
 #include "IndexBuffer.h"
 #include "EnumMapping.h"
 
-IndexBuffer::IndexBuffer(IDirect3DIndexBuffer9* indexBuffer, RenderAPI::ResourceUsage usage, RenderAPI::IndexFormat format, unsigned int count)
+IndexBuffer::IndexBuffer(IDirect3DIndexBuffer9* indexBuffer, RenderAPI::ResourceUsage usage, RenderAPI::IndexFormat format, unsigned int count, bool recreateWhenDeviceLost)
 	: m_usage(usage)
 	, m_indexFormat(format)
+	, m_recreateWhenDeviceLost(recreateWhenDeviceLost)
 	, m_indexCount(count)
 	, m_pIndexBuffer(indexBuffer)
 {
 	m_bufferLength = s_IndexLengths[format] * m_indexCount;
+}
+
+IndexBuffer::~IndexBuffer()
+{
+	m_pIndexBuffer->Release();
+	m_pIndexBuffer = NULL;
 }
 
 RenderAPI::ResourceUsage IndexBuffer::GetUsage() const
@@ -33,6 +40,11 @@ unsigned int IndexBuffer::GetLength() const
 void IndexBuffer::Release()
 {
 	delete this;
+}
+
+bool IndexBuffer::NeedRecreateWhenDeviceLost() 
+{
+	return m_recreateWhenDeviceLost;
 }
 
 IDirect3DIndexBuffer9 * IndexBuffer::GetD3DIndexBuffer()

@@ -9,9 +9,7 @@ class DepthStencil;
 class Texture2D : public RenderAPI::Texture2D
 {
 public:
-	Texture2D(IDirect3DTexture9* texture, RenderAPI::TextureFormat format, RenderAPI::ResourceUsage usage, unsigned int width, unsigned int height);
-
-	Texture2D(IDirect3DTexture9* texture, RenderAPI::TextureFormat format, RenderAPI::ResourceUsage usage, unsigned int width, unsigned int height, void* initialData);
+	Texture2D(IDirect3DTexture9* texture, RenderAPI::TextureFormat format, RenderAPI::ResourceUsage usage, unsigned int width, unsigned int height, bool recreateWhenDeviceLost);
 
 	~Texture2D();
 
@@ -27,6 +25,8 @@ public:
 
 	virtual void GenerateMipmaps();
 
+	virtual bool NeedRecreateWhenDeviceLost();
+
 	virtual void Release();
 
 	void Resize(unsigned int width, unsigned int height);
@@ -38,6 +38,7 @@ private:
 
 	RenderAPI::ResourceUsage m_usage;
 	RenderAPI::TextureFormat m_texFormat;
+	bool m_recreateWhenDeviceLost;
 	IDirect3DTexture9* m_pTexture;
 	std::vector<IDirect3DTexture9*> m_pTempTextureForUpdate;
 	unsigned int m_texWidth;

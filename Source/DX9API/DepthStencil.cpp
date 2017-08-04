@@ -30,7 +30,7 @@ DepthStencil::DepthStencil(IDirect3DTexture9* dsTexture, RenderAPI::DepthStencil
 
 	dsTexture->GetSurfaceLevel(0, &m_dsSurface);
 	m_dsSurface = m_dsSurface;
-	m_dsTexture = new Texture2D(dsTexture, s_dsTexFormats[format], RenderAPI::RESUSAGE_Default, width, height);
+	m_dsTexture = new Texture2D(dsTexture, s_dsTexFormats[format], RenderAPI::RESUSAGE_Default, width, height, true);
 }
 
 

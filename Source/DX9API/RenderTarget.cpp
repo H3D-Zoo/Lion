@@ -27,7 +27,7 @@ RenderTarget::RenderTarget(IDirect3DTexture9* rtTexture, RenderAPI::RenderTarget
 	, m_rtTexture(NULL)
 {
 	rtTexture->GetSurfaceLevel(0, &m_rtSurface);
-	m_rtTexture = new Texture2D(rtTexture, s_rtTexFormats[format], RenderAPI::RESUSAGE_Default, width, height);
+	m_rtTexture = new Texture2D(rtTexture, s_rtTexFormats[format], RenderAPI::RESUSAGE_Default, width, height, true);
 }
 
 RenderTarget::~RenderTarget()

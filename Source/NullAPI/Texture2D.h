@@ -19,7 +19,9 @@ public:
 
 	virtual void UnlockRect(unsigned int layer);
 
-	virtual void GenerateMipmaps();
+	virtual void GenerateMipmaps(); 
+	
+	virtual bool NeedRecreateWhenDeviceLost();
 
 	virtual void Release();
 
