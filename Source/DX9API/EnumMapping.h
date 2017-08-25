@@ -9,7 +9,7 @@ const int MSFormatCount = 6;
 const int TexFormatCount = 12;
 const int IndexLengthCount = 6;
 const int IndexFormatCount = 6;
-const int LockOptionCount = 3;
+const int LockOptionCount = 4;
 
 extern D3DFORMAT s_RTFormats[RTFormatCount];
 extern D3DFORMAT s_DSFormats[DSFormatCount];

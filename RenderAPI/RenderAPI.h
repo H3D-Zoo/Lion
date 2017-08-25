@@ -157,6 +157,8 @@ namespace RenderAPI
 		RESUSAGE_Default = 0,
 		RESUSAGE_Dynamic = 1,
 		RESUSAGE_Immuable = 2,
+		RESUSAGE_DefaultRW = 3,
+		RESUSAGE_DynamicRW = 4,
 	};
 
 	enum LockOption
@@ -164,6 +166,7 @@ namespace RenderAPI
 		LOCK_Normal = 0,
 		LOCK_Discard = 1,
 		LOCK_ReadOnly = 2,
+		LOCK_NoOverride = 3,
 	};
 
 	enum InputFormat

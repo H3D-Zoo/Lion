@@ -62,6 +62,7 @@ unsigned int s_lockOptions[LockOptionCount] =
 	0,
 	D3DLOCK_DISCARD,
 	D3DLOCK_READONLY,
+	D3DLOCK_NOOVERWRITE,
 };
 
 bool IsLocalFileExist(const std::string & fileName)

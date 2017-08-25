@@ -13,12 +13,14 @@
 
 namespace
 {
-	const int s_d3dUsageCount = 3;
+	const int s_d3dUsageCount = 5;
 	unsigned int s_d3dBufferUsage[s_d3dUsageCount] =
 	{
 		D3DUSAGE_WRITEONLY,
 		D3DUSAGE_WRITEONLY | D3DUSAGE_DYNAMIC,
 		D3DUSAGE_WRITEONLY,
+		0,
+		D3DUSAGE_DYNAMIC,
 	};
 
 	unsigned int s_d3dTextureUsage[s_d3dUsageCount] =
@@ -26,6 +28,8 @@ namespace
 		D3DUSAGE_AUTOGENMIPMAP,
 		D3DUSAGE_DYNAMIC | D3DUSAGE_AUTOGENMIPMAP,
 		D3DUSAGE_AUTOGENMIPMAP,
+		D3DUSAGE_AUTOGENMIPMAP,
+		D3DUSAGE_DYNAMIC | D3DUSAGE_AUTOGENMIPMAP,
 	};
 }
 
