@@ -21,13 +21,13 @@ public:
 		FillBoxIndices();
 
 		m_elements[0].Format = RenderAPI::INPUT_Float3;
-		m_elements[0].SemanticName = RenderAPI::SEMANTIC_POSITION;
+		m_elements[0].SemanticName = RenderAPI::SEMANTIC_Position;
 
 		m_elements[1].Format = RenderAPI::INPUT_Float2;
-		m_elements[1].SemanticName = RenderAPI::SEMANTIC_TEXCOORD;
+		m_elements[1].SemanticName = RenderAPI::SEMANTIC_Texcoord;
 
 		m_elements[2].Format = RenderAPI::INPUT_Color4;
-		m_elements[2].SemanticName = RenderAPI::SEMANTIC_COLOR;
+		m_elements[2].SemanticName = RenderAPI::SEMANTIC_Color;
 	}
 
 	RenderAPI::VertexElement* GetElementsPtr() { return &(m_elements[0]); }

@@ -269,8 +269,8 @@ void APITestBed::CreateQuadMesh()
 	};
 
 	RenderAPI::VertexElement elements[2];
-	elements[0].SemanticName = RenderAPI::SEMANTIC_POSITION;
-	elements[1].SemanticName = RenderAPI::SEMANTIC_TEXCOORD;
+	elements[0].SemanticName = RenderAPI::SEMANTIC_Position;
+	elements[1].SemanticName = RenderAPI::SEMANTIC_Texcoord;
 	elements[0].Format = RenderAPI::INPUT_Float3;
 	elements[1].Format = RenderAPI::INPUT_Float2;
 	elements[0].SemanticIndex = 0;

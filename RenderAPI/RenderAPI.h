@@ -185,17 +185,21 @@ namespace RenderAPI
 
 	enum Semantic
 	{
-		SEMANTIC_POSITION = 0,
-		SEMANTIC_COLOR = 1,
-		SEMANTIC_NORMAL = 2,
-		SEMANTIC_TEXCOORD = 3,
+		SEMANTIC_Position = 0,
+		SEMANTIC_Color = 1,
+		SEMANTIC_Normal = 2,
+		SEMANTIC_Texcoord = 3,
+		SEMANTIC_Tangent = 4,
+		SEMANTIC_Binormal = 5,
+		SEMANTIC_BlendWeight = 6,
+		SEMANTIC_BlendIndices = 7,
 	};
 
 	struct VertexElement
 	{
 		VertexElement()
 			: StreamIndex(0)
-			, SemanticName(SEMANTIC_POSITION)
+			, SemanticName(SEMANTIC_Position)
 			, SemanticIndex(0)
 			, AlignOffset(0xFFFFFFFF)
 			, Format(INPUT_Float4)

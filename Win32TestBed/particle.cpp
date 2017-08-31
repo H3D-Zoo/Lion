@@ -114,19 +114,19 @@ ParticleInstance::ParticleInstance()
 	}
 
 	m_sElements[0].Format = RenderAPI::INPUT_Float3;
-	m_sElements[0].SemanticName = RenderAPI::SEMANTIC_TEXCOORD;
+	m_sElements[0].SemanticName = RenderAPI::SEMANTIC_Texcoord;
 	m_sElements[0].SemanticIndex = 0;
 
 	m_sElements[1].Format = RenderAPI::INPUT_Float2;
-	m_sElements[1].SemanticName = RenderAPI::SEMANTIC_TEXCOORD;
+	m_sElements[1].SemanticName = RenderAPI::SEMANTIC_Texcoord;
 	m_sElements[1].SemanticIndex = 1;
 
 	m_dElements[0].Format = RenderAPI::INPUT_Float3;
-	m_dElements[0].SemanticName = RenderAPI::SEMANTIC_POSITION;
+	m_dElements[0].SemanticName = RenderAPI::SEMANTIC_Position;
 	m_dElements[0].SemanticIndex = 0;
 
 	m_dElements[1].Format = RenderAPI::INPUT_Color4;
-	m_dElements[1].SemanticName = RenderAPI::SEMANTIC_COLOR;
+	m_dElements[1].SemanticName = RenderAPI::SEMANTIC_Color;
 	m_dElements[1].SemanticIndex = 0;
 }
 

@@ -237,6 +237,10 @@ namespace
 		D3DDECLUSAGE_COLOR,
 		D3DDECLUSAGE_NORMAL,
 		D3DDECLUSAGE_TEXCOORD,
+		D3DDECLUSAGE_TANGENT,
+		D3DDECLUSAGE_BINORMAL,
+		D3DDECLUSAGE_BLENDWEIGHT,
+		D3DDECLUSAGE_BLENDINDICES
 	};
 }
 RenderAPI::VertexDeclaration* Device::CreateVertexDeclaration(const RenderAPI::VertexElement * elements, unsigned int elementCount)
