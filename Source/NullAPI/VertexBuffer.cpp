@@ -1,10 +1,9 @@
 #include "VertexBuffer.h"
 
-VertexBuffer::VertexBuffer(RenderAPI::ResourceUsage usage, unsigned int vertexCount, unsigned int vertexSize, RenderAPI::VertexElement* elements, unsigned int elementCount)
+VertexBuffer::VertexBuffer(RenderAPI::ResourceUsage usage, unsigned int vertexCount, unsigned int vertexSize)
 	: m_usage(usage)
 	, m_vertexCount(vertexCount)
 	, m_bufferLength(vertexCount * vertexSize)
-	, m_vertexElements(elements, elements + elementCount)
 {
 
 }
@@ -28,16 +27,6 @@ unsigned int VertexBuffer::GetVertexStride() const
 unsigned int VertexBuffer::GetLength() const
 {
 	return m_bufferLength;
-}
-
-const RenderAPI::VertexElement * VertexBuffer::GetElementPtr() const
-{
-	return &(m_vertexElements[0]);
-}
-
-unsigned int VertexBuffer::GetElementCount() const
-{
-	return m_vertexElements.size();
 }
 
 void* VertexBuffer::Lock(unsigned int offset, unsigned int lockLength, RenderAPI::LockOption lockOption)

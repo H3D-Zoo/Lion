@@ -4,7 +4,7 @@
 #include "Device.h"
 #include "Context.h"
 #include "AutoPtr.hpp"
-
+#pragma warning( disable : 4996 )
 
 namespace
 {

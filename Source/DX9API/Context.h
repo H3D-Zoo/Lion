@@ -67,6 +67,8 @@ public:
 
 	virtual void SetIndexBuffer(RenderAPI::IndexBuffer* buffer, unsigned int offset);
 
+	virtual void SetVertexDeclaration(RenderAPI::VertexDeclaration* decl);
+
 	virtual void SetTexture(unsigned int slot, RenderAPI::Texture2D* texture);
 
 	virtual void SetBlendState(const RenderAPI::BlendState& state);
@@ -119,7 +121,7 @@ public:
 
 	virtual void Draw(RenderAPI::Primitive primitive, unsigned int startIndex, unsigned int primitiveCount);
 
-	virtual void DrawIndexed(RenderAPI::Primitive primitive, unsigned int baseVertex, unsigned int startIndex, unsigned int primitiveCount);
+	virtual void DrawIndexed(RenderAPI::Primitive primitive, unsigned int baseVertex, unsigned int vertexCount, unsigned int startIndex, unsigned int primitiveCount);
 
 	virtual bool UpdateTexture(RenderAPI::Texture2D* src, RenderAPI::Texture2D* dst);
 
@@ -136,32 +138,11 @@ public:
 	ID3DXEffectStateManager* GetStateManager();
 
 private:
-	void SetVertexElements(int index, const RenderAPI::VertexElement* s, int count);
-	void RebuildDecalration();
-
 	APIGlobal* m_pAPI;
 	FXStateManager m_renderStateManager;
 	IDirect3DDevice9* m_pDevice;
 	IDirect3DDevice9Ex* m_pDeviceEx;
 	BackBufferManager m_backBufferManager;
-	unsigned int m_vertexCount;
 	unsigned int m_indexBufferOffset;
-
-	struct VertexDecl
-	{
-		int Count;
-		std::vector<RenderAPI::VertexElement> Elements;
-		bool Set(const RenderAPI::VertexElement* s, int count);
-		bool Clear();
-	};
-
-	bool m_vertexDeclChanged;
-	unsigned int m_vertexDeclCacheCount;
-	std::vector<VertexDecl> m_vertexDeclCache;
-	std::vector<D3DVERTEXELEMENT9> m_d3dDeclaration;
-	IDirect3DVertexDeclaration9* m_pVertexDeclaration;
-	typedef std::map<std::vector<D3DVERTEXELEMENT9>, IDirect3DVertexDeclaration9*> VertexDecalrationPool;
-	VertexDecalrationPool m_vertexDeclarationPool;
-
 	mutable RenderAPI::ScissorState m_scissorState;
 };

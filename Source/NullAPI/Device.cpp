@@ -2,6 +2,7 @@
 #include "Device.h"
 #include "VertexBuffer.h"
 #include "IndexBuffer.h"
+#include "VertexDeclaration.h"
 #include "Texture2D.h"
 #include "FXEffect.h"
 #include "RenderTarget.h"
@@ -25,14 +26,14 @@ RenderAPI::SwapChain * Device::CreateAdditionalSwapChain(const RenderAPI::SwapCh
 	return new ::SwapChain(swapChainDesc);
 }
 
-RenderAPI::VertexBuffer* Device::CreateVertexBuffer(RenderAPI::ResourceUsage usage, unsigned int vertexCount, unsigned int vertexSize, RenderAPI::VertexElement* elements, unsigned int elementCount, void * initialData)
+RenderAPI::VertexBuffer* Device::CreateVertexBuffer(RenderAPI::ResourceUsage usage, unsigned int vertexCount, unsigned int vertexSize, void * initialData)
 {
-	if (vertexCount == 0 || vertexSize == 0 || elementCount == 0 || elements == NULL)
+	if (vertexCount == 0 || vertexSize == 0)
 	{
 		return NULL;
 	}
 
-	return new VertexBuffer(usage, vertexCount, vertexSize, elements, elementCount);
+	return new VertexBuffer(usage, vertexCount, vertexSize);
 }
 
 RenderAPI::IndexBuffer* Device::CreateIndexBuffer(RenderAPI::ResourceUsage usage, RenderAPI::IndexFormat format, unsigned int indexCount, void * initialData)
@@ -43,6 +44,16 @@ RenderAPI::IndexBuffer* Device::CreateIndexBuffer(RenderAPI::ResourceUsage usage
 	}
 
 	return new IndexBuffer(usage, format, indexCount);
+}
+
+RenderAPI::VertexDeclaration * Device::CreateVertexDeclaration(const RenderAPI::VertexElement * elements, unsigned int elementCount)
+{ 
+	if (elementCount == 0)
+	{
+		return NULL;
+	}
+
+	return new VertexDeclaration(elements, elementCount);
 }
 
 RenderAPI::Texture2D * Device::CreateTexture2D(RenderAPI::ResourceUsage usage, RenderAPI::TextureFormat format, unsigned int width, unsigned int height, void* initialData, int dataLinePitch, int dataHeight)

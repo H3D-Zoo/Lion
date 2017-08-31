@@ -194,12 +194,14 @@ namespace RenderAPI
 	struct VertexElement
 	{
 		VertexElement()
-			: SemanticName(SEMANTIC_POSITION)
+			: StreamIndex(0)
+			, SemanticName(SEMANTIC_POSITION)
 			, SemanticIndex(0)
 			, AlignOffset(0xFFFFFFFF)
 			, Format(INPUT_Float4)
 		{ }
 
+		unsigned int StreamIndex;
 		Semantic SemanticName;
 		unsigned int SemanticIndex;
 		unsigned int AlignOffset;
@@ -229,6 +231,7 @@ namespace RenderAPI
 	class SwapChain;
 	class VertexBuffer;
 	class IndexBuffer;
+	class VertexDeclaration;
 	class Texture2D;
 	class FXEffect;
 	class RenderTarget;
@@ -243,9 +246,11 @@ namespace RenderAPI
 
 		virtual SwapChain* CreateAdditionalSwapChain(const SwapChainDesc&) = 0;
 
-		virtual VertexBuffer* CreateVertexBuffer(ResourceUsage usage, unsigned int vertexCount, unsigned int vertexSize, VertexElement* elements, unsigned int elementCount, void* initialData) = 0;
+		virtual VertexBuffer* CreateVertexBuffer(ResourceUsage usage, unsigned int vertexCount, unsigned int vertexSize, void* initialData) = 0;
 
 		virtual IndexBuffer* CreateIndexBuffer(ResourceUsage usage, IndexFormat format, unsigned int indexCount, void* initialData) = 0;
+
+		virtual VertexDeclaration* CreateVertexDeclaration(const VertexElement* elements, unsigned int elementCount) = 0;
 
 		virtual Texture2D* CreateTexture2D(ResourceUsage usage, TextureFormat format, unsigned int width, unsigned int height, void* initialData, int dataLinePitch, int dataHeight) = 0;
 
@@ -646,6 +651,8 @@ namespace RenderAPI
 
 		virtual void SetIndexBuffer(IndexBuffer* buffer, unsigned int offset) = 0;
 
+		virtual void SetVertexDeclaration(VertexDeclaration* decl) = 0;
+
 		virtual void SetTexture(unsigned int slot, RenderAPI::Texture2D* textures) = 0;
 
 		virtual void SetBlendState(const BlendState& state) = 0;
@@ -698,7 +705,7 @@ namespace RenderAPI
 
 		virtual void Draw(Primitive primitive, unsigned int startVertex, unsigned int primitiveCount) = 0;
 
-		virtual void DrawIndexed(RenderAPI::Primitive primitive, unsigned int baseVertex, unsigned int startIndex, unsigned int primitiveCount) = 0;
+		virtual void DrawIndexed(RenderAPI::Primitive primitive, unsigned int baseVertex, unsigned int vertexCount, unsigned int startIndex, unsigned int primitiveCount) = 0;
 
 		virtual bool UpdateTexture(Texture2D* src, Texture2D* dst) = 0;
 
@@ -722,10 +729,6 @@ namespace RenderAPI
 
 		virtual unsigned int GetLength() const = 0;
 
-		virtual const VertexElement* GetElementPtr() const = 0;
-
-		virtual unsigned int GetElementCount() const = 0;
-
 		virtual void* Lock(unsigned int offset, unsigned int lockLength, LockOption lockOption) = 0;
 
 		virtual void* DiscardLock() = 0;
@@ -733,6 +736,14 @@ namespace RenderAPI
 		virtual void Unlock() = 0;
 
 		virtual bool NeedRecreateWhenDeviceLost() = 0;
+	};
+
+	class VertexDeclaration : public RObject
+	{
+	public:
+		virtual const VertexElement* GetElements() const = 0;
+
+		virtual unsigned int GetElementCount() const = 0;
 	};
 
 	class IndexBuffer : public RObject

@@ -6,7 +6,7 @@
 class VertexBuffer : public RenderAPI::VertexBuffer
 {
 public:
-	VertexBuffer(IDirect3DVertexBuffer9* vertexBuffer, RenderAPI::ResourceUsage usage, unsigned int vertexCount, unsigned int vertexSize, RenderAPI::VertexElement* elements, unsigned int elementCount, bool recreateWhenDeviceLost);
+	VertexBuffer(IDirect3DVertexBuffer9* vertexBuffer, RenderAPI::ResourceUsage usage, unsigned int vertexCount, unsigned int vertexSize, bool recreateWhenDeviceLost);
 
 	~VertexBuffer();
 
@@ -17,10 +17,6 @@ public:
 	virtual unsigned int GetVertexStride() const;
 
 	virtual unsigned int GetLength() const;
-
-	virtual const RenderAPI::VertexElement* GetElementPtr() const;
-
-	virtual unsigned int GetElementCount() const;
 
 	virtual void* Lock(unsigned int offset, unsigned int lockLength, RenderAPI::LockOption lockOption);
 
@@ -40,6 +36,5 @@ private:
 	unsigned int m_vertexCount;
 	unsigned int m_vertexStride;
 	unsigned int m_bufferLength;
-	const std::vector<RenderAPI::VertexElement> m_vertexElements;
 	IDirect3DVertexBuffer9* m_pVertexBuffer;
 };

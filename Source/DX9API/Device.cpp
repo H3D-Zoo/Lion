@@ -3,6 +3,7 @@
 #include "Context.h"
 #include "VertexBuffer.h"
 #include "IndexBuffer.h"
+#include "VertexDeclaration.h"
 #include "Texture2D.h"
 #include "FXEffect.h"
 #include "RenderTarget.h"
@@ -130,9 +131,9 @@ RenderAPI::SwapChain * Device::CreateAdditionalSwapChain(const RenderAPI::SwapCh
 	}
 }
 
-RenderAPI::VertexBuffer* Device::CreateVertexBuffer(RenderAPI::ResourceUsage usage, unsigned int vertexCount, unsigned int vertexSize, RenderAPI::VertexElement * elements, unsigned int elementCount, void * initialData)
+RenderAPI::VertexBuffer* Device::CreateVertexBuffer(RenderAPI::ResourceUsage usage, unsigned int vertexCount, unsigned int vertexSize, void * initialData)
 {
-	if (vertexCount == 0 || vertexSize == 0 || elementCount == 0 || elements == NULL)
+	if (vertexCount == 0 || vertexSize == 0)
 	{
 		return NULL;
 	}
@@ -164,7 +165,7 @@ RenderAPI::VertexBuffer* Device::CreateVertexBuffer(RenderAPI::ResourceUsage usa
 		}
 	}
 
-	return new VertexBuffer(pVertexBuffer, usage, vertexCount, vertexSize, elements, elementCount, pool != D3DPOOL_MANAGED);
+	return new VertexBuffer(pVertexBuffer, usage, vertexCount, vertexSize, pool != D3DPOOL_MANAGED);
 
 }
 
@@ -203,6 +204,91 @@ RenderAPI::IndexBuffer* Device::CreateIndexBuffer(RenderAPI::ResourceUsage usage
 	}
 
 	return new IndexBuffer(pIndexBuffer, usage, format, indexCount, pool != D3DPOOL_MANAGED);
+}
+
+namespace
+{
+	struct DeclFormat
+	{
+		D3DDECLTYPE Type;
+		int Length;
+	};
+
+	DeclFormat s_declTypes[] =
+	{
+		{ D3DDECLTYPE_FLOAT1, sizeof(float) },
+		{ D3DDECLTYPE_FLOAT2, sizeof(float) * 2 },
+		{ D3DDECLTYPE_FLOAT3, sizeof(float) * 3 },
+		{ D3DDECLTYPE_FLOAT4, sizeof(float) * 4 },
+		{ D3DDECLTYPE_D3DCOLOR, sizeof(unsigned char) * 4 },
+		{ D3DDECLTYPE_UBYTE4, sizeof(unsigned char) * 4 },
+		{ D3DDECLTYPE_SHORT2, sizeof(short) * 2 },
+		{ D3DDECLTYPE_SHORT4, sizeof(short) * 4 },
+		{ D3DDECLTYPE_UBYTE4N, sizeof(unsigned char) * 4 },
+		{ D3DDECLTYPE_SHORT2N, sizeof(short) * 2 },
+		{ D3DDECLTYPE_SHORT4N, sizeof(short) * 4 },
+		{ D3DDECLTYPE_USHORT2N, sizeof(unsigned short) * 2 },
+		{ D3DDECLTYPE_USHORT4N, sizeof(unsigned short) * 4 },
+	};
+
+	D3DDECLUSAGE s_declUsages[] =
+	{
+		D3DDECLUSAGE_POSITION,
+		D3DDECLUSAGE_COLOR,
+		D3DDECLUSAGE_NORMAL,
+		D3DDECLUSAGE_TEXCOORD,
+	};
+}
+RenderAPI::VertexDeclaration* Device::CreateVertexDeclaration(const RenderAPI::VertexElement * elements, unsigned int elementCount)
+{
+	if (elementCount == 0)
+	{
+		return NULL;
+	}
+
+	//构建 Vertex Element 数组
+	std::vector<int> alignOffsets;
+	std::vector<RenderAPI::VertexElement> elementList(elements, elements + elementCount);
+	
+	std::vector<D3DVERTEXELEMENT9> d3dElements(elementCount + 1);	
+	for (unsigned int i = 0; i < elementCount; i++)
+	{
+		D3DVERTEXELEMENT9& element = d3dElements[i];
+		RenderAPI::VertexElement& ve = elementList[i];
+		DeclFormat& fmt = s_declTypes[ve.Format];
+
+		element.Stream = ve.StreamIndex;
+		while (alignOffsets.size() <= ve.StreamIndex)
+		{
+			alignOffsets.push_back(0);
+		}
+		int& offset = alignOffsets[ve.StreamIndex];
+		element.Offset = ve.AlignOffset = ve.AlignOffset == 0xFFFFFFFF ? offset : ve.AlignOffset;
+		element.Type = fmt.Type;
+		element.Method = D3DDECLMETHOD_DEFAULT;
+		element.Usage = s_declUsages[ve.SemanticName];
+		element.UsageIndex = ve.SemanticIndex;
+
+		offset += fmt.Length;
+	}
+
+	D3DVERTEXELEMENT9& elementEnd = d3dElements[elementCount];
+	elementEnd.Stream = 0xFF;
+	elementEnd.Offset = 0;
+	elementEnd.Type = D3DDECLTYPE_UNUSED;
+	elementEnd.Method = 0;
+	elementEnd.Usage = 0;
+	elementEnd.UsageIndex = 0;
+
+	IDirect3DVertexDeclaration9* pVertexDeclaration = NULL;	
+	if (S_OK == m_pDevice->CreateVertexDeclaration(&(d3dElements[0]), &pVertexDeclaration))
+	{
+		return new VertexDeclaration(pVertexDeclaration, elementList);
+	}
+	else
+	{
+		return NULL;
+	}
 }
 
 RenderAPI::Texture2D * Device::CreateTexture2D(RenderAPI::ResourceUsage usage, RenderAPI::TextureFormat format, unsigned int width, unsigned int height, void* initialData, int dataLinePitch, int dataHeight)

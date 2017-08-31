@@ -55,6 +55,11 @@ void Context::SetIndexBuffer(RenderAPI::IndexBuffer* buffer, unsigned int offset
 
 }
 
+void Context::SetVertexDeclaration(RenderAPI::VertexDeclaration * decl) 
+{
+
+}
+
 void Context::SetTexture(unsigned int slot, RenderAPI::Texture2D* texture)
 {
 
@@ -184,7 +189,7 @@ void Context::Draw(RenderAPI::Primitive primitive, unsigned int startVertex, uns
 
 }
 
-void Context::DrawIndexed(RenderAPI::Primitive primitive, unsigned int baseVertex, unsigned int startIndex, unsigned int primitiveCount)
+void Context::DrawIndexed(RenderAPI::Primitive primitive, unsigned int baseVertex, unsigned int vertexCount, unsigned int startIndex, unsigned int primitiveCount)
 {
 
 }

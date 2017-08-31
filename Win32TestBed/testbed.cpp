@@ -64,13 +64,6 @@ template<class T> void Release(T& pointer)
 void APITestBed::Deinit()
 {
 	Release(m_pParticleTexture);
-	Release(m_pBoxVertexBuffer);
-	Release(m_pBoxIndexBuffer);
-	Release(m_pParticleVBS);
-	Release(m_pParticleVBD);
-	Release(m_pParticleIB);
-	Release(m_pQuadVB);
-	Release(m_pQuadIB);
 	Release(m_pRenderTexture);
 	Release(m_pRenderDepth);
 	Release(m_pEffectTintColor);
@@ -95,7 +88,7 @@ void APITestBed::Update()
 	m_particleInstance.Update(timeGetTime() - lastStamp);
 	accStamp += timeGetTime() - lastStamp;
 	lastStamp = timeGetTime();
-	
+
 	float timeScale = accStamp * 0.001f;
 	const float distance = 10;
 	static float rho = 0;
@@ -253,12 +246,12 @@ bool APITestBed::CreateDeviceAndContext(HWND hWindow, HWND hWindowEditor, unsign
 void APITestBed::CreateMesh()
 {
 	BoxMesh boxMesh;
-	m_pBoxVertexBuffer = m_pDevice->CreateVertexBuffer(RenderAPI::RESUSAGE_Default, boxMesh.GetVertexCount(), sizeof(BoxVertex), boxMesh.GetElementsPtr(), boxMesh.GetElementCount(), boxMesh.GetVerticesPtr());
-	m_pBoxIndexBuffer = m_pDevice->CreateIndexBuffer(RenderAPI::RESUSAGE_Immuable, RenderAPI::INDEX_Int16, boxMesh.GetIndexCount(), boxMesh.GetIndicesPtr());
-
-	m_boxVBInfos.resize(1);
-	m_boxVBInfos[0].BufferPtr = m_pBoxVertexBuffer;
-	m_boxVBInfos[0].Offset = 0;
+	auto pBoxVertexBuffer = m_pDevice->CreateVertexBuffer(RenderAPI::RESUSAGE_Default, boxMesh.GetVertexCount(), sizeof(BoxVertex), boxMesh.GetVerticesPtr());
+	Box.index = m_pDevice->CreateIndexBuffer(RenderAPI::RESUSAGE_Immuable, RenderAPI::INDEX_Int16, boxMesh.GetIndexCount(), boxMesh.GetIndicesPtr());
+	Box.declaration = m_pDevice->CreateVertexDeclaration(boxMesh.GetElementsPtr(), boxMesh.GetElementCount());
+	Box.vertex.resize(1);
+	Box.vertex[0].BufferPtr = pBoxVertexBuffer;
+	Box.vertex[0].Offset = 0;
 }
 
 void APITestBed::CreateQuadMesh()
@@ -286,19 +279,37 @@ void APITestBed::CreateQuadMesh()
 	unsigned short quadIndices[] = { 0, 2, 1, 0, 3, 2 };
 
 
-	m_pQuadVB = m_pDevice->CreateVertexBuffer(RenderAPI::RESUSAGE_Immuable, 4, sizeof(QuadVertex), elements, 2, quadVertices);
-	m_pQuadIB = m_pDevice->CreateIndexBuffer(RenderAPI::RESUSAGE_Immuable, RenderAPI::INDEX_Int16, 6, quadIndices);
+	auto pQuadVB = m_pDevice->CreateVertexBuffer(RenderAPI::RESUSAGE_Immuable, 4, sizeof(QuadVertex), quadVertices);
+	Quad.index = m_pDevice->CreateIndexBuffer(RenderAPI::RESUSAGE_Immuable, RenderAPI::INDEX_Int16, 6, quadIndices);
+	Quad.declaration = m_pDevice->CreateVertexDeclaration(elements, 2);
+	Quad.vertex.resize(1);
+	Quad.vertex[0].BufferPtr = pQuadVB;
+	Quad.vertex[0].Offset = 0;
 }
 
 void APITestBed::CreatePartcleMesh()
 {
-	m_pParticleVBS = m_pDevice->CreateVertexBuffer(RenderAPI::RESUSAGE_Immuable, m_particleInstance.kParticleVertexCount, sizeof(ParticleVertexS), m_particleInstance.GetSElementsPtr(), m_particleInstance.GetSElementCount(), m_particleInstance.GetSVerticesPtr());
-	m_pParticleVBD = m_pDevice->CreateVertexBuffer(RenderAPI::RESUSAGE_Dynamic, m_particleInstance.kParticleVertexCount, sizeof(ParticleVertexD), m_particleInstance.GetDElementsPtr(), m_particleInstance.GetDElementCount(), nullptr);
-	m_pParticleIB = m_pDevice->CreateIndexBuffer(RenderAPI::RESUSAGE_Immuable, RenderAPI::INDEX_Int16, m_particleInstance.kParticleIndexCount, m_particleInstance.GetIndicesPtr());
+	auto pParticleVBS = m_pDevice->CreateVertexBuffer(RenderAPI::RESUSAGE_Immuable, m_particleInstance.kParticleVertexCount, sizeof(ParticleVertexS), m_particleInstance.GetSVerticesPtr());
+	auto pParticleVBD = m_pDevice->CreateVertexBuffer(RenderAPI::RESUSAGE_Dynamic, m_particleInstance.kParticleVertexCount, sizeof(ParticleVertexD), nullptr);
+	Particle.index = m_pDevice->CreateIndexBuffer(RenderAPI::RESUSAGE_Immuable, RenderAPI::INDEX_Int16, m_particleInstance.kParticleIndexCount, m_particleInstance.GetIndicesPtr());
 
-	m_particleVBInfos.resize(2);
-	m_particleVBInfos[0].BufferPtr = m_pParticleVBD;
-	m_particleVBInfos[1].BufferPtr = m_pParticleVBS;
+	std::vector<RenderAPI::VertexElement> elements;
+	for (unsigned int i = 0; i < m_particleInstance.GetSElementCount(); i++)
+	{
+		elements.push_back(m_particleInstance.GetSElementsPtr()[i]);
+	}
+	for (unsigned int i = 0; i < m_particleInstance.GetDElementCount(); i++)
+	{
+		elements.push_back(m_particleInstance.GetDElementsPtr()[i]);
+		elements.back().StreamIndex = 1;
+	}
+
+	Particle.declaration = m_pDevice->CreateVertexDeclaration(&(elements[0]), elements.size());
+	Particle.vertex.resize(2);
+	Particle.vertex[0].BufferPtr = pParticleVBS;
+	Particle.vertex[1].BufferPtr = pParticleVBD;
+	Particle.vertex[0].Offset = 0;
+	Particle.vertex[1].Offset = 0;
 }
 
 void APITestBed::CreateMaterial()
@@ -399,9 +410,7 @@ void APITestBed::DrawBox(RenderAPI::TextureAddress address, bool alphaBlending)
 			if (!m_pEffectTintColor->BeginPass(i))
 				continue;
 
-
-			m_pContext->SetVertexBuffers(&(m_boxVBInfos[0]), m_boxVBInfos.size());
-			m_pContext->SetIndexBuffer(m_pBoxIndexBuffer, 0);
+			Box.Set(m_pContext);
 			m_pContext->SetTexture(0, m_pBoxTexture);
 			m_pContext->SetTextureSampler(0, sampler);
 			m_pEffectTintColor->SetMatrix("g_matView", (float*)m_matView.m);
@@ -439,7 +448,7 @@ void APITestBed::DrawBox(RenderAPI::TextureAddress address, bool alphaBlending)
 					}
 					m_pEffectTintColor->SetMatrix("g_matWorld", (float*)m_matWorldBoxs[i * 10 + j].m);
 					m_pEffectTintColor->CommitChange();
-					m_pContext->DrawIndexed(RenderAPI::PRIMITIVE_TriangleList, 0, 0, faceCount);
+					m_pContext->DrawIndexed(RenderAPI::PRIMITIVE_TriangleList, 0, 0, 0, faceCount);
 				}
 			}
 			m_pEffectTintColor->EndPass();
@@ -475,8 +484,7 @@ void APITestBed::DrawParticle(const gml::mat44& matProj)
 			m_pEffectParticle->SetValue("g_cameraX", (float*)m_matInvView.row[0], sizeof(gml::vec4));
 			m_pEffectParticle->SetValue("g_cameraY", (float*)m_matInvView.row[1], sizeof(gml::vec4));
 			m_pEffectParticle->SetTexture("g_particleTexture", m_pParticleTexture);
-			m_pContext->SetVertexBuffers(&(m_particleVBInfos[0]), m_particleVBInfos.size());
-			m_pContext->SetIndexBuffer(m_pParticleIB, 0);
+			Particle.Set(m_pContext);
 			m_pEffectParticle->CommitChange();
 			UploadParticlesAndCommitDrawcalls();
 
@@ -488,12 +496,9 @@ void APITestBed::DrawParticle(const gml::mat44& matProj)
 
 void APITestBed::DrawRTTQuad()
 {
-
 	m_pContext->ClearStencilBuffer(0);
 
-	RenderAPI::VertexBufferInfo vbInfo;
-	vbInfo.BufferPtr = m_pQuadVB;
-	vbInfo.Offset = 0;
+	int numQuadVB = Quad.vertex[0].BufferPtr->GetVertexCount();
 
 	RenderAPI::AlphaTestingState alphaState;
 	alphaState.IsEnable = true;
@@ -511,9 +516,8 @@ void APITestBed::DrawRTTQuad()
 			m_pEffectSimpleTexture->SetValue("g_texelOffset", &(m_texelOffsetOffScreen[0]), sizeof(gml::vec4));
 			m_pEffectSimpleTexture->SetTexture("g_texture", m_pRenderTexture->GetTexturePtr());
 			m_pEffectSimpleTexture->CommitChange();
-			m_pContext->SetVertexBuffers(&vbInfo, 1);
-			m_pContext->SetIndexBuffer(m_pQuadIB, 0);
-			m_pContext->DrawIndexed(RenderAPI::PRIMITIVE_TriangleList, 0, 0, 2);
+			Quad.Set(m_pContext);
+			m_pContext->DrawIndexed(RenderAPI::PRIMITIVE_TriangleList, 0, 0, 0, 2);
 			m_pEffectSimpleTexture->EndPass();
 		}
 		m_pEffectSimpleTexture->End();
@@ -532,9 +536,8 @@ void APITestBed::DrawRTTQuad()
 				continue;
 			m_pEffectSimpleTexture->SetTexture("g_texture", m_pRenderTexture->GetTexturePtr());
 			m_pEffectSimpleTexture->CommitChange();
-			m_pContext->SetVertexBuffers(&vbInfo, 1);
-			m_pContext->SetIndexBuffer(m_pQuadIB, 0);
-			m_pContext->DrawIndexed(RenderAPI::PRIMITIVE_TriangleList, 0, 0, 2);
+			Quad.Set(m_pContext);
+			m_pContext->DrawIndexed(RenderAPI::PRIMITIVE_TriangleList, 0, 0, 0, 2);
 			m_pEffectSimpleTexture->EndPass();
 
 		}
@@ -553,14 +556,37 @@ void APITestBed::UploadParticlesAndCommitDrawcalls()
 	{
 		const float kParticleSize = 0.1f;
 		const float range = 1.5f;
-		ParticleVertexD* vertices = (ParticleVertexD*)m_pParticleVBD->DiscardLock();
+		auto dvb = Particle.vertex[1].BufferPtr;
+		ParticleVertexD* vertices = (ParticleVertexD*)dvb->DiscardLock();
 		if (vertices != nullptr)
 		{
 			filledCount += m_particleInstance.FillVertexBuffer(vertices, filledCount);
-			m_pParticleVBD->Unlock();
+			dvb->Unlock();
 		}
 
-		m_pContext->DrawIndexed(RenderAPI::PRIMITIVE_TriangleList, 0, 0, filledCount * 2);
+		m_pContext->DrawIndexed(RenderAPI::PRIMITIVE_TriangleList, 0, 0, 0, filledCount * 2);
 	}
 
+}
+
+void APITestBed::Mesh::Set(RenderAPI::Context* pContext)
+{
+	pContext->SetVertexBuffers(&(vertex[0]), vertex.size());
+	pContext->SetIndexBuffer(index, 0);
+	pContext->SetVertexDeclaration(declaration);
+}
+
+void APITestBed::Mesh::Release()
+{
+
+	auto curr = vertex.begin();
+	auto end = vertex.end();
+	while (curr != end)
+	{
+		::Release(curr->BufferPtr);
+		curr++;
+	}
+	vertex.clear();
+	::Release(index);
+	::Release(declaration);
 }

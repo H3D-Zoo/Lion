@@ -5,6 +5,7 @@
 #include "DepthStencil.h"
 #include "VertexBuffer.h"
 #include "IndexBuffer.h"
+#include "VertexDeclaration.h"
 #include "EnumMapping.h"
 #include <ddraw.h>
 
@@ -157,37 +158,6 @@ namespace
 		D3DTA_CURRENT,
 		D3DTA_TFACTOR,
 	};
-
-	struct DeclFormat
-	{
-		D3DDECLTYPE Type;
-		int Length;
-	};
-
-	DeclFormat s_declTypes[] =
-	{
-		{ D3DDECLTYPE_FLOAT1, sizeof(float) },
-		{ D3DDECLTYPE_FLOAT2, sizeof(float) * 2},
-		{ D3DDECLTYPE_FLOAT3, sizeof(float) * 3 },
-		{ D3DDECLTYPE_FLOAT4, sizeof(float) * 4 },
-		{ D3DDECLTYPE_D3DCOLOR, sizeof(unsigned char) * 4},
-		{ D3DDECLTYPE_UBYTE4, sizeof(unsigned char) * 4 },
-		{ D3DDECLTYPE_SHORT2, sizeof(short) * 2},
-		{ D3DDECLTYPE_SHORT4, sizeof(short) * 4 },
-		{ D3DDECLTYPE_UBYTE4N, sizeof(unsigned char) * 4},
-		{ D3DDECLTYPE_SHORT2N, sizeof(short) * 2},
-		{ D3DDECLTYPE_SHORT4N, sizeof(short) * 4},
-		{ D3DDECLTYPE_USHORT2N, sizeof(unsigned short) * 2 },
-		{ D3DDECLTYPE_USHORT4N, sizeof(unsigned short) * 4 },
-	};
-
-	D3DDECLUSAGE s_declUsages[] =
-	{
-		D3DDECLUSAGE_POSITION,
-		D3DDECLUSAGE_COLOR,
-		D3DDECLUSAGE_NORMAL,
-		D3DDECLUSAGE_TEXCOORD,
-	};
 }
 
 Context::Context(APIGlobal* pAPI, IDirect3DDevice9 * device, RenderAPI::RenderTarget* defRT, RenderAPI::DepthStencil* defDS)
@@ -195,8 +165,6 @@ Context::Context(APIGlobal* pAPI, IDirect3DDevice9 * device, RenderAPI::RenderTa
 	, m_pDevice(device)
 	, m_backBufferManager(device, defRT, defDS)
 	, m_renderStateManager(device)
-	, m_vertexDeclChanged(false)
-	, m_pVertexDeclaration(NULL)
 {
 	m_pAPI->pContext = this;
 	if (m_pAPI->IsSupportD3D9EX())
@@ -217,15 +185,6 @@ Context::Context(APIGlobal* pAPI, IDirect3DDevice9 * device, RenderAPI::RenderTa
 
 Context::~Context()
 {
-	VertexDecalrationPool::iterator itCur = m_vertexDeclarationPool.begin();
-	VertexDecalrationPool::iterator itEnd = m_vertexDeclarationPool.end();
-
-	for (; itCur != itEnd; ++itCur)
-	{
-		itCur->second->Release();
-	}
-	m_vertexDeclarationPool.clear();
-
 	m_pDevice->Release();
 	m_pAPI->Release();
 	m_pDeviceEx = NULL;
@@ -358,33 +317,13 @@ void Context::SetDepthStencil(RenderAPI::DepthStencil* depthStencil)
 
 void Context::SetVertexBuffers(RenderAPI::VertexBufferInfo* buffers, unsigned int bufferCount)
 {
-	m_vertexDeclCacheCount = bufferCount;
-	RenderAPI::VertexBuffer* pFirstBuffer = NULL;
 	for (unsigned int i = 0; i < bufferCount; i++)
 	{
 		if (buffers[i].BufferPtr != NULL)
 		{
-			if (pFirstBuffer == NULL)
-			{
-				pFirstBuffer = buffers[i].BufferPtr;
-			}
 			IDirect3DVertexBuffer9* vertexBufferPtr = ((::VertexBuffer*)buffers[i].BufferPtr)->GetBufferPtr();
 			HRESULT hr = m_pDevice->SetStreamSource(i, vertexBufferPtr, buffers[i].Offset, buffers[i].BufferPtr->GetVertexStride());
-			SetVertexElements(i, buffers[i].BufferPtr->GetElementPtr(), buffers[i].BufferPtr->GetElementCount());
 		}
-		else
-		{
-			SetVertexElements(i, NULL, 0);
-		}
-	}
-
-	if (pFirstBuffer == NULL)
-	{
-		m_vertexCount = 0;
-	}
-	else
-	{
-		m_vertexCount = pFirstBuffer->GetVertexCount();
 	}
 }
 
@@ -395,6 +334,15 @@ void Context::SetIndexBuffer(RenderAPI::IndexBuffer* buffer, unsigned int offset
 		IDirect3DIndexBuffer9* indexBufferPtr = ((::IndexBuffer*)buffer)->GetD3DIndexBuffer();
 		m_pDevice->SetIndices(indexBufferPtr);
 		m_indexBufferOffset = offset;
+	}
+}
+
+void Context::SetVertexDeclaration(RenderAPI::VertexDeclaration * decl)
+{
+	if (decl != NULL)
+	{
+		IDirect3DVertexDeclaration9* pDeclaration = ((::VertexDeclaration*)decl)->GetD3DVertexDeclarationPtr();
+		m_pDevice->SetVertexDeclaration(pDeclaration);
 	}
 }
 
@@ -643,14 +591,12 @@ void Context::EndScene()
 
 void Context::Draw(RenderAPI::Primitive primitive, unsigned int startVertex, unsigned int primitiveCount)
 {
-	RebuildDecalration();
 	m_pDevice->DrawPrimitive(s_primitives[primitive], startVertex, primitiveCount);
 }
 
-void Context::DrawIndexed(RenderAPI::Primitive primitive, unsigned int baseVertex, unsigned int startIndex, unsigned int primitiveCount)
+void Context::DrawIndexed(RenderAPI::Primitive primitive, unsigned int baseVertex, unsigned int vertexCount, unsigned int startIndex, unsigned int primitiveCount)
 {
-	RebuildDecalration();
-	m_pDevice->DrawIndexedPrimitive(s_primitives[primitive], baseVertex, 0, m_vertexCount, startIndex, primitiveCount);
+	m_pDevice->DrawIndexedPrimitive(s_primitives[primitive], baseVertex, 0, vertexCount, startIndex, primitiveCount);
 }
 
 bool Context::UpdateTexture(RenderAPI::Texture2D * src, RenderAPI::Texture2D * dst)
@@ -773,82 +719,9 @@ ID3DXEffectStateManager* Context::GetStateManager()
 	return &m_renderStateManager;
 }
 
-void Context::SetVertexElements(int index, const RenderAPI::VertexElement * s, int count)
-{
-	if (m_vertexDeclCache.size() <= (unsigned int)index)
-	{
-		m_vertexDeclCache.resize(index + 1);
-	}
-
-	VertexDecl& decl = m_vertexDeclCache[index];
-	bool changed = false;
-	if (s != NULL && count != 0)
-	{
-		changed = decl.Set(s, count);
-	}
-	else
-	{
-		changed = decl.Clear();
-	}
-
-	if (changed && !m_vertexDeclChanged)
-	{
-		m_vertexDeclChanged = true;
-	}
-}
-
 bool operator<(const D3DVERTEXELEMENT9& left, const D3DVERTEXELEMENT9& right)
 {
 	return memcmp(&left, &right, sizeof(D3DVERTEXELEMENT9)) < 0;
-}
-
-void Context::RebuildDecalration()
-{
-	if (m_vertexDeclChanged)
-	{
-		m_d3dDeclaration.clear();
-		std::vector<VertexDecl>::iterator itCur = m_vertexDeclCache.begin();
-		std::vector<VertexDecl>::iterator itEnd = m_vertexDeclCache.end();
-
-		for (unsigned int i = 0; itCur != itEnd && i < m_vertexDeclCacheCount; ++itCur, ++i)
-		{
-			D3DVERTEXELEMENT9 element;
-			element.Stream = i;
-			int offset = 0;
-			VertexDecl& decl = *itCur;
-			std::vector<RenderAPI::VertexElement>::iterator itCurS = decl.Elements.begin();
-			std::vector<RenderAPI::VertexElement>::iterator itEndS = decl.Elements.end();
-			for (int i = 0; itCurS != itEndS && i < decl.Count; ++itCurS, i++)
-			{
-				element.Offset = (itCurS->AlignOffset == 0xFFFFFFFF) ? offset : itCurS->AlignOffset;
-				DeclFormat& fmt = s_declTypes[itCurS->Format];
-				element.Type = fmt.Type;
-				offset += fmt.Length;
-				element.Method = D3DDECLMETHOD_DEFAULT;
-				element.Usage = s_declUsages[itCurS->SemanticName];
-				element.UsageIndex = itCurS->SemanticIndex;
-
-				m_d3dDeclaration.push_back(element);
-			}
-		}
-		D3DVERTEXELEMENT9 endElement = D3DDECL_END();
-		m_d3dDeclaration.push_back(endElement);
-
-		VertexDecalrationPool::iterator findIter = m_vertexDeclarationPool.find(m_d3dDeclaration);
-		if (findIter != m_vertexDeclarationPool.end())
-		{
-			m_pVertexDeclaration = findIter->second;
-			m_pDevice->SetVertexDeclaration(m_pVertexDeclaration);
-		}
-		else
-		{
-			m_pDevice->CreateVertexDeclaration(&(m_d3dDeclaration[0]), &m_pVertexDeclaration);
-			m_pDevice->SetVertexDeclaration(m_pVertexDeclaration);
-			m_vertexDeclarationPool[m_d3dDeclaration] = m_pVertexDeclaration;
-		}
-
-		m_vertexDeclChanged = false;
-	}
 }
 
 BackBufferManager::BackBufferManager(IDirect3DDevice9 * device, RenderAPI::RenderTarget * defRT, RenderAPI::DepthStencil * defDS)
@@ -968,50 +841,4 @@ bool operator != (const RenderAPI::VertexElement& left, const RenderAPI::VertexE
 		left.SemanticIndex != right.SemanticIndex ||
 		left.AlignOffset != right.AlignOffset ||
 		left.Format != right.Format);
-}
-
-bool Context::VertexDecl::Set(const RenderAPI::VertexElement * s, int count)
-{
-	if (Elements.size() < (unsigned int)count)
-	{
-		Elements.resize(count);
-		memcpy(&(Elements[0]), s, sizeof(RenderAPI::VertexElement) * count);
-		Count = count;
-		return true;
-	}
-	else
-	{
-		bool same = false;
-		if (Count == count)
-		{
-			same = true;
-			for (int i = 0; i < Count; i++)
-			{
-				if (Elements[i] != s[i])
-				{
-					same = false;
-					break;
-				}
-			}
-		}
-
-		if (!same)
-		{
-			memcpy(&(Elements[0]), s, sizeof(RenderAPI::VertexElement) * count);
-			Count = count;
-			return true;
-		}
-		else
-		{
-			return false;
-		}
-	}
-}
-
-bool Context::VertexDecl::Clear()
-{
-	if (Count == 0)
-		return false;
-	Elements.clear();
-	return true;
 }

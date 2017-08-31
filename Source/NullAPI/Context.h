@@ -27,6 +27,8 @@ public:
 
 	virtual void SetIndexBuffer(RenderAPI::IndexBuffer* buffer, unsigned int offset);
 
+	virtual void SetVertexDeclaration(RenderAPI::VertexDeclaration* decl);
+
 	virtual void SetTexture(unsigned int slot, RenderAPI::Texture2D* texture);
 
 	virtual void SetBlendState(const RenderAPI::BlendState& state);
@@ -79,7 +81,7 @@ public:
 
 	virtual void Draw(RenderAPI::Primitive primitive, unsigned int startIndex, unsigned int primitiveCount);
 
-	virtual void DrawIndexed(RenderAPI::Primitive primitive, unsigned int baseVertex, unsigned int startIndex, unsigned int primitiveCount);
+	virtual void DrawIndexed(RenderAPI::Primitive primitive, unsigned int baseVertex, unsigned int vertexCount, unsigned int startIndex, unsigned int primitiveCount);
 
 	virtual bool UpdateTexture(RenderAPI::Texture2D* src, RenderAPI::Texture2D* dst);
 

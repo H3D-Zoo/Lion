@@ -29,6 +29,7 @@ set(RENDERAPI_IMPL_INCLUDE_FILES
 	./DepthStencil.h
 	./VertexBuffer.h
 	./IndexBuffer.h
+	./VertexDeclaration.h
 	./Texture2D.h
 	./FXEffect.h
 	./OcclusionQuery.h
@@ -43,6 +44,7 @@ set(RENDERAPI_IMPL_SOURCE_FILES
 	 ./DepthStencil.cpp
 	 ./VertexBuffer.cpp
 	 ./IndexBuffer.cpp
+	 ./VertexDeclaration.cpp
 	 ./Texture2D.cpp
 	 ./FXEffect.cpp
 	 ./OcclusionQuery.cpp

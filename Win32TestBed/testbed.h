@@ -41,15 +41,18 @@ private:
 
 	RenderAPI::Viewport m_bbViewport;
 
-	RenderAPI::VertexBuffer* m_pParticleVBS = nullptr;
-	RenderAPI::VertexBuffer* m_pParticleVBD = nullptr;
-	RenderAPI::IndexBuffer* m_pParticleIB = nullptr;
+	struct Mesh
+	{
+		std::vector<RenderAPI::VertexBufferInfo> vertex;
+		RenderAPI::IndexBuffer* index;
+		RenderAPI::VertexDeclaration* declaration;
+		void Set(RenderAPI::Context*);
+		void Release();
+	};
 
-	RenderAPI::VertexBuffer* m_pBoxVertexBuffer = nullptr;
-	RenderAPI::IndexBuffer* m_pBoxIndexBuffer = nullptr;
-
-	RenderAPI::VertexBuffer* m_pQuadVB = nullptr;
-	RenderAPI::IndexBuffer* m_pQuadIB = nullptr;
+	Mesh Particle;
+	Mesh Box;
+	Mesh Quad;
 
 	RenderAPI::FXEffect* m_pEffectTintColor = nullptr;
 	RenderAPI::FXEffect* m_pEffectParticle = nullptr;
@@ -60,9 +63,6 @@ private:
 
 	RenderAPI::RenderTarget* m_pRenderTexture = nullptr;
 	RenderAPI::DepthStencil* m_pRenderDepth = nullptr;
-
-	std::vector<RenderAPI::VertexBufferInfo> m_boxVBInfos;
-	std::vector<RenderAPI::VertexBufferInfo> m_particleVBInfos;
 
 	ParticleInstance m_particleInstance;
 
