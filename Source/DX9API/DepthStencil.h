@@ -9,8 +9,6 @@ class DepthStencil : public RenderAPI::DepthStencil
 public:
 	DepthStencil(IDirect3DSurface9* dsSurface, RenderAPI::DepthStencilFormat format, unsigned int width, unsigned int height);
 
-	DepthStencil(IDirect3DTexture9* dsSurface, RenderAPI::DepthStencilFormat format, unsigned int width, unsigned int height);
-
 	~DepthStencil();
 
 	virtual RenderAPI::DepthStencilFormat GetFormat() const;
@@ -18,10 +16,6 @@ public:
 	virtual unsigned int GetWidth() const;
 
 	virtual unsigned int GetHeight() const;
-
-	virtual bool IsTexture2D() const;
-
-	virtual RenderAPI::Texture2D* GetTexturePtr();
 
 	virtual void Release();
 
@@ -39,5 +33,4 @@ private:
 	unsigned int m_width;
 	unsigned int m_height;
 	IDirect3DSurface9* m_dsSurface;
-	::Texture2D* m_dsTexture;
 };

@@ -63,7 +63,7 @@ void VertexBuffer::Unlock()
 	m_pVertexBuffer->Unlock();
 }
 
-bool VertexBuffer::NeedRecreateWhenDeviceLost() 
+bool VertexBuffer::NeedRecreateWhenDeviceLost() const
 {
 	return m_recreateWhenDeviceLost;
 }

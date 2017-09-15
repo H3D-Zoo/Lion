@@ -6,7 +6,7 @@
 #include <ddraw.h>
 #include <d3dx9effect.h>
 #include <string>
-#include "BaseAPIGlobal.h"
+#include "BaseAPIInstance.h"
 #include "RefCount.hpp"
 
 typedef int (WINAPI *LPD3DPERF_BeginEvent)(D3DCOLOR col, LPCWSTR wszName);
@@ -16,11 +16,11 @@ typedef void (WINAPI *LPD3DPERF_SetMarker)(D3DCOLOR col, LPCWSTR wszName);
 class Device;
 class Context;
 
-class APIGlobal : public BaseAPIGlobal
+class APIInstance : public BaseAPIInstance
 {
 public:
-	static D3DPRESENT_PARAMETERS FillCreationParam(APIGlobal& self, HWND hWindow, unsigned int width, unsigned int height, bool isFullscreen, bool vsync, D3DFORMAT rtFormat, D3DFORMAT dsFormat, D3DMULTISAMPLE_TYPE mulsample);
-	APIGlobal();
+	static D3DPRESENT_PARAMETERS FillCreationParam(APIInstance& self, HWND hWindow, unsigned int width, unsigned int height, bool isFullscreen, bool vsync, D3DFORMAT rtFormat, D3DFORMAT dsFormat, D3DMULTISAMPLE_TYPE mulsample);
+	APIInstance();
 
 	bool Init();
 
@@ -43,6 +43,8 @@ public:
 
 	virtual bool CompileFXEffectFromFile(const char* sourceFXFile, const char* compiledFXFile);
 
+	virtual RenderAPI::RenderTargetFormat GetDefaultRenderTargetFormat();
+
 	virtual const char* GetDeviceDriver() const;
 
 	virtual const char* GetDeviceName() const;
@@ -54,6 +56,12 @@ public:
 	virtual bool CheckMultiSampleSupport(RenderAPI::RenderTargetFormat, RenderAPI::DepthStencilFormat, RenderAPI::AAMode, bool fullscreen) const;
 
 	virtual RenderAPI::DriverVersion GetDriverVersion() const;
+
+	virtual void PerfBegin(unsigned int color, const char* name);
+
+	virtual void PerfMark(unsigned int color, const char* name);
+
+	virtual void PerfEnd();
 
 	virtual void Release();
 

@@ -12,8 +12,8 @@ set(RENDERAPI_SOURCE_FILES_COMMON
 	${DIR_COMMON}/RefCount.hpp
 	${DIR_COMMON}/Logger.h
 	${DIR_COMMON}/Logger.cpp
-	${DIR_COMMON}/BaseAPIGlobal.h
-	${DIR_COMMON}/BaseAPIGlobal.cpp
+	${DIR_COMMON}/BaseAPIInstance.h
+	${DIR_COMMON}/BaseAPIInstance.cpp
 	${DIR_COMMON}/RenderAPIExport.def
 )
 
@@ -25,7 +25,7 @@ set(RENDERAPI_IMPL_INCLUDE_FILES
 	./DX9Include.h
 	./AutoPtr.hpp
 	./EnumMapping.h
-	./APIGlobal.h
+	./APIInstance.h
 	./Device.h
 	./Context.h
 	./SwapChain.h
@@ -35,6 +35,7 @@ set(RENDERAPI_IMPL_INCLUDE_FILES
 	./IndexBuffer.h
 	./VertexDeclaration.h
 	./Texture2D.h
+	./TextureCube.h
 	./FXEffect.h
 	./StateManager.h
 	./OcclusionQuery.h
@@ -42,7 +43,7 @@ set(RENDERAPI_IMPL_INCLUDE_FILES
 
 set(RENDERAPI_IMPL_SOURCE_FILES
 	./EnumMapping.cpp
-	./APIGlobal.cpp
+	./APIInstance.cpp
 	./Device.cpp
 	./Context.cpp
 	./SwapChain.cpp
@@ -52,6 +53,7 @@ set(RENDERAPI_IMPL_SOURCE_FILES
 	./IndexBuffer.cpp
 	./VertexDeclaration.cpp
 	./Texture2D.cpp
+	./TextureCube.cpp
 	./FXEffect.cpp
 	./StateManager.cpp
 	./OcclusionQuery.cpp

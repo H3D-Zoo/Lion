@@ -1,14 +1,5 @@
 #include "RenderTarget.h"
 
-namespace
-{
-	RenderAPI::TextureFormat s_rtTexFormats[] =
-	{
-		RenderAPI::TEX_XRGB,
-		RenderAPI::TEX_ARGB,
-	};
-}
-
 RenderTarget::RenderTarget(IDirect3DSurface9* rtSurface, RenderAPI::RenderTargetFormat format, unsigned int width, unsigned int height)
 	: m_format(format)
 	, m_width(width)
@@ -19,15 +10,15 @@ RenderTarget::RenderTarget(IDirect3DSurface9* rtSurface, RenderAPI::RenderTarget
 
 }
 
-RenderTarget::RenderTarget(IDirect3DTexture9* rtTexture, RenderAPI::RenderTargetFormat format, unsigned int width, unsigned int height)
-	: m_format(format)
+RenderTarget::RenderTarget(IDirect3DTexture9* rtTexture, RenderAPI::TextureFormat format, unsigned int width, unsigned int height)
+	: m_format(RenderAPI::RT_RenderTexture)
 	, m_width(width)
 	, m_height(height)
 	, m_rtSurface(NULL)
 	, m_rtTexture(NULL)
 {
 	rtTexture->GetSurfaceLevel(0, &m_rtSurface);
-	m_rtTexture = new Texture2D(rtTexture, s_rtTexFormats[format], RenderAPI::RESUSAGE_Default, width, height, true);
+	m_rtTexture = new Texture2D(rtTexture, format, RenderAPI::RESUSAGE_Default, width, height, true, true);
 }
 
 RenderTarget::~RenderTarget()
@@ -55,11 +46,6 @@ unsigned int RenderTarget::GetWidth() const
 unsigned int RenderTarget::GetHeight() const
 {
 	return m_height;
-}
-
-bool RenderTarget::IsTexture2D() const
-{
-	return false;
 }
 
 RenderAPI::Texture2D* RenderTarget::GetTexturePtr()
@@ -99,4 +85,7 @@ void RenderTarget::Reset(unsigned int width, unsigned int height, RenderAPI::Ren
 	m_rtSurface = pSurface;
 }
 
-IDirect3DSurface9 * RenderTarget::GetD3DSurface() const { return m_rtSurface; }
+IDirect3DSurface9 * RenderTarget::GetD3DSurface() const 
+{
+	return m_rtSurface;
+}

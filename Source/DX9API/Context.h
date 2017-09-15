@@ -6,7 +6,7 @@
 #include "StateManager.h"
 #include "DX9Include.h"
 
-class APIGlobal;
+class APIInstance;
 
 class BackBufferManager
 {
@@ -41,7 +41,7 @@ private:
 class Context :public RenderAPI::Context
 {
 public:
-	Context(APIGlobal* pAPIContext, IDirect3DDevice9* device, RenderAPI::RenderTarget* defRT, RenderAPI::DepthStencil* defDS);
+	Context(APIInstance* pAPIContext, IDirect3DDevice9* device, RenderAPI::RenderTarget* defRT, RenderAPI::DepthStencil* defDS);
 
 	~Context();
 
@@ -69,7 +69,7 @@ public:
 
 	virtual void SetVertexDeclaration(RenderAPI::VertexDeclaration* decl);
 
-	virtual void SetTexture(unsigned int slot, RenderAPI::Texture2D* texture);
+	virtual void SetTexture(unsigned int slot, RenderAPI::Texture* texture);
 
 	virtual void SetBlendState(const RenderAPI::BlendState& state);
 
@@ -125,6 +125,12 @@ public:
 
 	virtual bool UpdateTexture(RenderAPI::Texture2D* src, RenderAPI::Texture2D* dst);
 
+	virtual bool StretchTexture(RenderAPI::Texture2D* src, RenderAPI::Texture2D* dst, RenderAPI::StretchFilter filter);
+
+	virtual bool GetRenderTargetData(RenderAPI::RenderTarget* rt, RenderAPI::TextureSurface* surface);
+
+	virtual bool GetDepthStencilData(RenderAPI::DepthStencil* ds, RenderAPI::TextureSurface* surface);
+
 	virtual RenderAPI::DeviceState Context::Present();
 
 	virtual RenderAPI::DeviceState GetState();
@@ -138,7 +144,7 @@ public:
 	ID3DXEffectStateManager* GetStateManager();
 
 private:
-	APIGlobal* m_pAPI;
+	APIInstance* m_pAPI;
 	FXStateManager m_renderStateManager;
 	IDirect3DDevice9* m_pDevice;
 	IDirect3DDevice9Ex* m_pDeviceEx;

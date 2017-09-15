@@ -1,4 +1,4 @@
-#include "APIGlobal.h"
+#include "APIInstance.h"
 #include <string>
 #include "EnumMapping.h"
 #include "Device.h"
@@ -8,6 +8,7 @@
 
 namespace
 {
+	const int kMaxPerfNameLength = 256;
 	bool GenerateFxoFileToDisk(AutoR<ID3DXBuffer>& pBuffer, const char* path)
 	{
 		if (!pBuffer)
@@ -51,9 +52,9 @@ namespace
 	}
 }
 
-RenderAPI::APIGlobal* CreateAPIGlobal()
+RenderAPI::APIInstance* CreateAPIGlobal()
 {
-	::APIGlobal* pAPI = new ::APIGlobal();
+	::APIInstance* pAPI = new ::APIInstance();
 	if (pAPI->Init())
 	{
 		return pAPI;
@@ -64,11 +65,8 @@ RenderAPI::APIGlobal* CreateAPIGlobal()
 		return NULL;
 	}
 }
-void Deinitialize()
-{
-}
 
-APIGlobal::APIGlobal()
+APIInstance::APIInstance()
 	: m_hDLL(NULL)
 	, m_d3d9ExPtr(NULL)
 	, m_d3d9Ptr(NULL)
@@ -85,7 +83,7 @@ APIGlobal::APIGlobal()
 typedef HRESULT(WINAPI *LPDIRECT3DCREATE9EX)(UINT, IDirect3D9Ex**);
 typedef IDirect3D9* (WINAPI *LPDIRECT3DCREATE9)(UINT);
 
-bool APIGlobal::Init()
+bool APIInstance::Init()
 {
 	//  [1/25/2013 YiKaiming]
 	// verbose:load d3d9.dll manmually
@@ -122,20 +120,20 @@ bool APIGlobal::Init()
 	return true;
 }
 
-void APIGlobal::Deinit()
+void APIInstance::Deinit()
 {
 	DestroyD3D();
 	::FreeLibrary(m_hDLL);
 }
 
-bool APIGlobal::IsSupportD3D9EX()
+bool APIInstance::IsSupportD3D9EX()
 {
 	return m_d3d9ExPtr != NULL;
 }
 
-bool APIGlobal::IsSupportOcclusionQuery() { return m_supportOcclusionQuery; }
+bool APIInstance::IsSupportOcclusionQuery() { return m_supportOcclusionQuery; }
 
-bool APIGlobal::CheckFormatValidate(D3DFORMAT & renderTarget, D3DFORMAT depthStencil) const
+bool APIInstance::CheckFormatValidate(D3DFORMAT & renderTarget, D3DFORMAT depthStencil) const
 {
 	D3DDISPLAYMODE d3ddm;
 	m_d3d9Ptr->GetAdapterDisplayMode(D3DADAPTER_DEFAULT, &d3ddm);
@@ -154,7 +152,7 @@ bool APIGlobal::CheckFormatValidate(D3DFORMAT & renderTarget, D3DFORMAT depthSte
 	return true;
 }
 
-bool APIGlobal::CheckBackBufferFormat(D3DFORMAT checkFormat, D3DFORMAT adapterFormat) const
+bool APIInstance::CheckBackBufferFormat(D3DFORMAT checkFormat, D3DFORMAT adapterFormat) const
 {
 	HRESULT hr = m_d3d9Ptr->CheckDeviceFormat(
 		D3DADAPTER_DEFAULT,
@@ -167,7 +165,7 @@ bool APIGlobal::CheckBackBufferFormat(D3DFORMAT checkFormat, D3DFORMAT adapterFo
 	return hr == S_OK;
 }
 
-bool APIGlobal::CheckDepthStencilFormat(D3DFORMAT checkFormat, D3DFORMAT adapterFormat) const
+bool APIInstance::CheckDepthStencilFormat(D3DFORMAT checkFormat, D3DFORMAT adapterFormat) const
 {
 	HRESULT hr = m_d3d9Ptr->CheckDeviceFormat(
 		D3DADAPTER_DEFAULT,
@@ -181,7 +179,7 @@ bool APIGlobal::CheckDepthStencilFormat(D3DFORMAT checkFormat, D3DFORMAT adapter
 }
 
 
-bool APIGlobal::CheckDeviceMultiSampleType(D3DFORMAT rtFormat, D3DFORMAT dsFormat, bool isFullsreen, D3DMULTISAMPLE_TYPE mulsampleType) const
+bool APIInstance::CheckDeviceMultiSampleType(D3DFORMAT rtFormat, D3DFORMAT dsFormat, bool isFullsreen, D3DMULTISAMPLE_TYPE mulsampleType) const
 {
 	DWORD numAAQuality;
 	HRESULT hr = m_d3d9Ptr->CheckDeviceMultiSampleType(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, rtFormat, !isFullsreen, mulsampleType, &numAAQuality);
@@ -198,7 +196,7 @@ bool APIGlobal::CheckDeviceMultiSampleType(D3DFORMAT rtFormat, D3DFORMAT dsForma
 	return true;
 }
 
-void APIGlobal::CreateD3D()
+void APIInstance::CreateD3D()
 {
 	// 通过查找Direct3DCreate9Ex是否存在来确认当前操作系统是否支持D3D9 EX
 	LPDIRECT3DCREATE9EX Direct3DCreate9ExPtr = NULL;
@@ -236,7 +234,7 @@ void APIGlobal::CreateD3D()
 	}
 }
 
-void APIGlobal::DestroyD3D()
+void APIInstance::DestroyD3D()
 {
 	if (m_d3d9ExPtr != NULL)
 	{
@@ -252,7 +250,7 @@ void APIGlobal::DestroyD3D()
 	}
 }
 
-D3DPRESENT_PARAMETERS APIGlobal::FillCreationParam(APIGlobal& self, HWND hWindow, unsigned int width, unsigned int height, bool isFullscreen, bool vsync, D3DFORMAT rtFormat, D3DFORMAT dsFormat, D3DMULTISAMPLE_TYPE mulsample)
+D3DPRESENT_PARAMETERS APIInstance::FillCreationParam(APIInstance& self, HWND hWindow, unsigned int width, unsigned int height, bool isFullscreen, bool vsync, D3DFORMAT rtFormat, D3DFORMAT dsFormat, D3DMULTISAMPLE_TYPE mulsample)
 {
 	D3DPRESENT_PARAMETERS d3dpp;
 	ZeroMemory(&d3dpp, sizeof(d3dpp));
@@ -281,18 +279,18 @@ D3DPRESENT_PARAMETERS APIGlobal::FillCreationParam(APIGlobal& self, HWND hWindow
 	return d3dpp;
 }
 
-bool APIGlobal::IsSupportManaged()
+bool APIInstance::IsSupportManaged()
 {
 	return !IsSupportD3D9EX();
 }
 
-void APIGlobal::Recreate()
+void APIInstance::Recreate()
 {
 	DestroyD3D();
 	CreateD3D();
 }
 
-IDirect3DDevice9* APIGlobal::CreateDevice(HWND hWindow, unsigned int width, unsigned int height, bool isFullscreen, bool vsync, D3DFORMAT rtFormat, D3DFORMAT dsFormat, D3DMULTISAMPLE_TYPE mulsample)
+IDirect3DDevice9* APIInstance::CreateDevice(HWND hWindow, unsigned int width, unsigned int height, bool isFullscreen, bool vsync, D3DFORMAT rtFormat, D3DFORMAT dsFormat, D3DMULTISAMPLE_TYPE mulsample)
 {
 	//by sssa2000 20110120
 	DWORD MT = D3DCREATE_MULTITHREADED | D3DCREATE_FPU_PRESERVE;
@@ -353,12 +351,12 @@ IDirect3DDevice9* APIGlobal::CreateDevice(HWND hWindow, unsigned int width, unsi
 	}
 }
 
-void APIGlobal::AddRef()
+void APIInstance::AddRef()
 {
 	++m_refCount;
 }
 
-void APIGlobal::Release()
+void APIInstance::Release()
 {
 	if (0 == --m_refCount)
 	{
@@ -367,7 +365,7 @@ void APIGlobal::Release()
 }
 
 
-RenderAPI::CreationResult APIGlobal::CreateDeviceAndContext(const RenderAPI::SwapChainDesc& desc, bool isFullscreen, bool useVerticalSync)
+RenderAPI::CreationResult APIInstance::CreateDeviceAndContext(const RenderAPI::SwapChainDesc& desc, bool isFullscreen, bool useVerticalSync)
 {
 	RenderAPI::CreationResult result;
 
@@ -413,7 +411,7 @@ RenderAPI::CreationResult APIGlobal::CreateDeviceAndContext(const RenderAPI::Swa
 	return result;
 }
 
-bool APIGlobal::CompileFXEffectFromFile(const char* sourceFXFile, const char* compiledFXFile)
+bool APIInstance::CompileFXEffectFromFile(const char* sourceFXFile, const char* compiledFXFile)
 {
 	EffectInclude includeCallback;
 	AutoR<ID3DXBuffer> pErrorBuffer;
@@ -448,22 +446,33 @@ bool APIGlobal::CompileFXEffectFromFile(const char* sourceFXFile, const char* co
 
 }
 
-const char * APIGlobal::GetDeviceDriver() const
+RenderAPI::RenderTargetFormat APIInstance::GetDefaultRenderTargetFormat()
+{
+	D3DDISPLAYMODE mode;
+	m_d3d9Ptr->GetAdapterDisplayMode(D3DADAPTER_DEFAULT, &mode);
+
+	if (mode.Format == D3DFMT_A8B8G8R8)
+		return RenderAPI::RT_ARGB8;
+	else
+		return RenderAPI::RT_XRGB8;
+}
+
+const char * APIInstance::GetDeviceDriver() const
 {
 	return m_deviceDriver.c_str();
 }
 
-const char * APIGlobal::GetDeviceName() const
+const char * APIInstance::GetDeviceName() const
 {
 	return m_deviceName.c_str();
 }
 
-const char * APIGlobal::GetDeviceDesc() const
+const char * APIInstance::GetDeviceDesc() const
 {
 	return m_deviceDesc.c_str();
 }
 
-unsigned int APIGlobal::GetVendorID() const
+unsigned int APIInstance::GetVendorID() const
 {
 	return m_vendorID;
 }
@@ -474,7 +483,7 @@ struct AAModeMapping
 	RenderAPI::AAMode apiAA;
 };
 
-bool APIGlobal::CheckMultiSampleSupport(RenderAPI::RenderTargetFormat bb, RenderAPI::DepthStencilFormat z, RenderAPI::AAMode aa, bool fullscreen) const
+bool APIInstance::CheckMultiSampleSupport(RenderAPI::RenderTargetFormat bb, RenderAPI::DepthStencilFormat z, RenderAPI::AAMode aa, bool fullscreen) const
 {
 	D3DFORMAT rtFormat = s_RTFormats[bb];
 	D3DFORMAT dsFormat = s_DSFormats[z];
@@ -482,10 +491,43 @@ bool APIGlobal::CheckMultiSampleSupport(RenderAPI::RenderTargetFormat bb, Render
 	return CheckDeviceMultiSampleType(rtFormat, dsFormat, fullscreen, aaType);
 }
 
-RenderAPI::DriverVersion APIGlobal::GetDriverVersion() const
+RenderAPI::DriverVersion APIInstance::GetDriverVersion() const
 {
 	return m_driverVersion;
 }
+
+void APIInstance::PerfBegin(unsigned int color, const char* name)
+{
+	if (D3DPerfBeginEvent != NULL)
+	{
+		size_t nameLength = strlen(name);
+		size_t outCount = kMaxPerfNameLength;
+		wchar_t nameWStr[kMaxPerfNameLength];
+		mbstowcs_s(&outCount, nameWStr, name, nameLength);		 
+		D3DPerfBeginEvent(color, nameWStr);
+	}
+}
+
+void APIInstance::PerfMark(unsigned int color, const char * name)
+{
+	if (D3DPerfSetMarker != NULL)
+	{
+		size_t nameLength = strlen(name);
+		size_t outCount = kMaxPerfNameLength;
+		wchar_t nameWStr[kMaxPerfNameLength];
+		mbstowcs_s(&outCount, nameWStr, name, nameLength);
+		D3DPerfSetMarker(color, nameWStr);
+	}
+}
+
+void APIInstance::PerfEnd()
+{
+	if (D3DPerfEndEvent != NULL)
+	{
+		D3DPerfEndEvent();
+	}
+}
+
 
 HRESULT STDMETHODCALLTYPE EffectInclude::Open(D3DXINCLUDE_TYPE, LPCSTR pFileName, LPCVOID /*pParentData*/, LPCVOID *ppData, UINT *pBytes)
 {
@@ -543,3 +585,6 @@ HRESULT STDMETHODCALLTYPE EffectInclude::Close(LPCVOID pData)
 	delete[] pData;
 	return S_OK;
 }
+
+
+

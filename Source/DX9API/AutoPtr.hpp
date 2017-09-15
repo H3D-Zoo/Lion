@@ -66,7 +66,26 @@ public:
 
 };
 
-template<typename T> class AutoR : public AutoKillPtr<T, PointerReleaser<T>> {};
-template<typename T> class AutoD : public AutoKillPtr<T, PointerDeleter<T>> {};
-template<typename T> class AutoA : public AutoKillPtr<T, ArrayDeleter<T>> {};
+template<typename T> class AutoR : public AutoKillPtr<T, PointerReleaser<T>> 
+{
+public:
+	AutoR() { }
+	AutoR(T* ptr) : AutoKillPtr(ptr) {}
+	AutoR& operator=(T* ptr) { AutoKillPtr::operator=(ptr); return *this; }
+};
+
+template<typename T> class AutoD : public AutoKillPtr<T, PointerDeleter<T>>
+{
+public:
+	AutoD() { }
+	AutoD(T* ptr) : AutoKillPtr(ptr) {}
+	AutoD& operator=(T* ptr) { AutoKillPtr::operator=(ptr); return *this; }
+};
+template<typename T> class AutoA : public AutoKillPtr<T, ArrayDeleter<T>> 
+{
+public:
+	AutoA() { }
+	AutoA(T* ptr) : AutoKillPtr(ptr) {}
+	AutoA& operator=(T* ptr) { AutoKillPtr::operator=(ptr); return *this; }
+};
 

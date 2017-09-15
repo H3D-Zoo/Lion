@@ -1,5 +1,5 @@
 #include "Context.h"
-#include "APIGlobal.h"
+#include "APIInstance.h"
 #include "Device.h"
 #include "RenderTarget.h"
 #include "DepthStencil.h"
@@ -7,6 +7,9 @@
 #include "IndexBuffer.h"
 #include "VertexDeclaration.h"
 #include "EnumMapping.h"
+#include "AutoPtr.hpp"
+#include "Texture2D.h"
+#include "TextureCube.h"
 #include <ddraw.h>
 
 struct DDrawX
@@ -158,9 +161,16 @@ namespace
 		D3DTA_CURRENT,
 		D3DTA_TFACTOR,
 	};
+
+	D3DTEXTUREFILTERTYPE s_d3dStretchFilter[] = 
+	{
+		D3DTEXF_NONE,
+		D3DTEXF_POINT,
+		D3DTEXF_LINEAR
+	};
 }
 
-Context::Context(APIGlobal* pAPI, IDirect3DDevice9 * device, RenderAPI::RenderTarget* defRT, RenderAPI::DepthStencil* defDS)
+Context::Context(APIInstance* pAPI, IDirect3DDevice9 * device, RenderAPI::RenderTarget* defRT, RenderAPI::DepthStencil* defDS)
 	: m_pAPI(pAPI)
 	, m_pDevice(device)
 	, m_backBufferManager(device, defRT, defDS)
@@ -346,9 +356,16 @@ void Context::SetVertexDeclaration(RenderAPI::VertexDeclaration * decl)
 	}
 }
 
-void Context::SetTexture(unsigned int slot, RenderAPI::Texture2D* texture)
+void Context::SetTexture(unsigned int slot, RenderAPI::Texture* texture)
 {
-	IDirect3DTexture9* pTexture = (texture == NULL) ? NULL : ((::Texture2D*)texture)->GetD3DTexture();
+	IDirect3DBaseTexture9* pTexture = NULL;
+	if (texture != NULL)
+	{
+		if (texture->IsCubemap())
+			pTexture = ((::TextureCube*)texture)->GetD3DTexture();
+		else
+			pTexture = ((::Texture2D*)texture)->GetD3DTexture();
+	}
 	m_pDevice->SetTexture(slot, pTexture);
 }
 
@@ -610,6 +627,32 @@ bool Context::UpdateTexture(RenderAPI::Texture2D * src, RenderAPI::Texture2D * d
 	return S_OK == m_pDevice->UpdateTexture(pSrcTexture, pDstTexture);
 }
 
+bool Context::StretchTexture(RenderAPI::Texture2D * src, RenderAPI::Texture2D * dst, RenderAPI::StretchFilter filter)
+{
+	AutoR<::TextureSurface> pSurfaceSrc = (::TextureSurface*)src->GetSurface(0);
+	AutoR<::TextureSurface> pSurfaceDst = (::TextureSurface*)dst->GetSurface(0);
+
+	pSurfaceSrc = (::TextureSurface*)src->GetSurface(0);
+	bool rst = S_OK == m_pDevice->StretchRect(pSurfaceSrc->GetD3DTextureSurfacePtr(), NULL, pSurfaceDst->GetD3DTextureSurfacePtr(), NULL, s_d3dStretchFilter[filter]);
+
+	
+	return rst;
+}
+
+bool Context::GetRenderTargetData(RenderAPI::RenderTarget * rt, RenderAPI::TextureSurface * surface)
+{
+	IDirect3DSurface9* pSurfaceRT = ((::RenderTarget*)rt)->GetD3DSurface();
+	IDirect3DSurface9* pRTSurfaceDst = ((::TextureSurface*)surface)->GetD3DTextureSurfacePtr();
+	return S_OK == m_pDevice->GetRenderTargetData(pSurfaceRT, pRTSurfaceDst);
+}
+
+bool Context::GetDepthStencilData(RenderAPI::DepthStencil * ds, RenderAPI::TextureSurface * surface)
+{
+	IDirect3DSurface9* pSurfaceDS = ((::DepthStencil*)ds)->GetD3DSurface();
+	IDirect3DSurface9* pRTSurfaceDst = ((::TextureSurface*)surface)->GetD3DTextureSurfacePtr();
+	return S_OK == m_pDevice->GetRenderTargetData(pSurfaceDS, pRTSurfaceDst);
+}
+
 RenderAPI::DeviceState Context::Present()
 {
 	HRESULT hr = m_pDevice->Present(NULL, NULL, NULL, NULL);
@@ -642,7 +685,7 @@ RenderAPI::DeviceState Context::ResetDevice(const RenderAPI::SwapChainDesc& desc
 {
 	HRESULT hr = S_OK;
 
-	D3DPRESENT_PARAMETERS CreationParam = APIGlobal::FillCreationParam(
+	D3DPRESENT_PARAMETERS CreationParam = APIInstance::FillCreationParam(
 		*m_pAPI,
 		(HWND)desc.hWindow,
 		desc.backbufferWidth,

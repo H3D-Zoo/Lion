@@ -26,7 +26,7 @@ public:
 
 	virtual void Release();
 
-	virtual bool NeedRecreateWhenDeviceLost();
+	virtual bool NeedRecreateWhenDeviceLost() const;
 
 	IDirect3DIndexBuffer9* GetD3DIndexBuffer();
 

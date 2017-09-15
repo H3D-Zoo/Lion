@@ -11,7 +11,7 @@ class RenderTarget : public RenderAPI::RenderTarget
 public:
 	RenderTarget(IDirect3DSurface9* rtSurface, RenderAPI::RenderTargetFormat format, unsigned int width, unsigned int height);
 
-	RenderTarget(IDirect3DTexture9* rtTexture, RenderAPI::RenderTargetFormat format, unsigned int width, unsigned int height);
+	RenderTarget(IDirect3DTexture9* rtTexture, RenderAPI::TextureFormat format, unsigned int width, unsigned int height);
 
 	~RenderTarget();
 
@@ -20,8 +20,6 @@ public:
 	virtual unsigned int GetWidth() const;
 
 	virtual unsigned int GetHeight() const;
-
-	virtual bool IsTexture2D() const;
 
 	virtual RenderAPI::Texture2D* GetTexturePtr();
 

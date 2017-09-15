@@ -4,20 +4,33 @@
 #include "DepthStencil.h"
 #include "EnumMapping.h"
 
-Texture2D::Texture2D(IDirect3DTexture9* texture, RenderAPI::TextureFormat format, RenderAPI::ResourceUsage usage, unsigned int width, unsigned int height, bool recreateWhenDeviceLost)
+Texture2D::Texture2D(IDirect3DTexture9* texture, RenderAPI::TextureFormat format, RenderAPI::ResourceUsage usage,
+	unsigned int width, unsigned int height,
+	bool recreateWhenDeviceLost, bool isRenderTexture)
 	: m_texFormat(format)
 	, m_usage(usage)
 	, m_recreateWhenDeviceLost(recreateWhenDeviceLost)
+	, m_isRenderTexture(isRenderTexture)
 	, m_pTexture(texture)
 	, m_pTempTextureForUpdate(NULL)
 	, m_texWidth(width)
 	, m_texHeight(height)
 {
-
 }
 
 Texture2D::~Texture2D()
 {
+	std::vector<TextureSurface*>::iterator itCur = m_surfaces.begin();
+	std::vector<TextureSurface*>::iterator itEnd = m_surfaces.end();
+	for (; itCur != itEnd; ++itCur)
+	{
+		TextureSurface* pSurface = *itCur;
+		if (pSurface != NULL)
+		{
+			pSurface->Release();
+		}
+	}
+	m_surfaces.clear();
 	m_pTexture->Release();
 	m_pTexture = NULL;
 }
@@ -39,7 +52,10 @@ unsigned int Texture2D::GetHeight() const
 
 void Texture2D::Release()
 {
-	delete this;
+	if (0 == --m_refCount)
+	{
+		delete this;
+	}
 }
 
 void Texture2D::Resize(unsigned int width, unsigned int height)
@@ -48,12 +64,17 @@ void Texture2D::Resize(unsigned int width, unsigned int height)
 	m_texHeight = height;
 }
 
+void Texture2D::AddRef()
+{
+	++m_refCount;
+}
+
 IDirect3DTexture9 * Texture2D::GetD3DTexture()
 {
 	return m_pTexture;
 }
 
-inline IDirect3DTexture9 ** Texture2D::TextureForUpdate(unsigned int index)
+IDirect3DTexture9 ** Texture2D::TextureForUpdate(unsigned int index)
 {
 	if (m_pTempTextureForUpdate.size() <= index)
 		m_pTempTextureForUpdate.resize(index + 1);
@@ -64,7 +85,7 @@ RenderAPI::MappedResource Texture2D::LockRect(unsigned int layer, RenderAPI::Loc
 {
 	RenderAPI::MappedResource ret;
 
-	if (m_usage == RenderAPI::RESUSAGE_Dynamic)
+	if (m_usage == RenderAPI::RESUSAGE_Dynamic || m_usage == RenderAPI::RESUSAGE_DynamicRW)
 	{
 		D3DLOCKED_RECT lockedRect;
 		if (S_OK == m_pTexture->LockRect(layer, &lockedRect, NULL, s_lockOptions[lockOption]))
@@ -104,7 +125,7 @@ RenderAPI::MappedResource Texture2D::LockRect(unsigned int layer, RenderAPI::Loc
 
 void Texture2D::UnlockRect(unsigned int layer)
 {
-	if (m_usage == RenderAPI::RESUSAGE_Dynamic)
+	if (m_usage == RenderAPI::RESUSAGE_Dynamic || m_usage == RenderAPI::RESUSAGE_DynamicRW)
 	{
 		m_pTexture->UnlockRect(layer);
 	}
@@ -114,13 +135,19 @@ void Texture2D::UnlockRect(unsigned int layer)
 
 		if (pTextureForUpdate != NULL)
 		{
-			pTextureForUpdate->UnlockRect(layer);
-
-			IDirect3DDevice9* pDevice = NULL;
-			HRESULT hr = m_pTexture->GetDevice(&pDevice);
-			if (hr == S_OK)
+			HRESULT hr = pTextureForUpdate->UnlockRect(layer);
+			if (S_OK == hr)
 			{
-				pDevice->UpdateTexture(pTextureForUpdate, m_pTexture);
+				IDirect3DDevice9* pDevice = NULL;
+				hr = m_pTexture->GetDevice(&pDevice);
+				if (hr == S_OK)
+				{
+					hr = pDevice->UpdateTexture(pTextureForUpdate, m_pTexture);
+					if (S_OK != hr)
+					{
+						//throw;
+					}
+				}
 			}
 
 			pTextureForUpdate->Release();
@@ -134,7 +161,106 @@ void Texture2D::GenerateMipmaps()
 	m_pTexture->GenerateMipSubLevels();
 }
 
-bool Texture2D::NeedRecreateWhenDeviceLost()
+RenderAPI::TextureSurface* Texture2D::GetSurface(unsigned int index)
+{
+	if (m_surfaces.size() <= index)
+	{
+		m_surfaces.resize(index + 1);
+	}
+	
+	if (m_surfaces[index] == NULL)
+	{
+		return m_surfaces[index];
+	}
+	else
+	{
+		IDirect3DSurface9* pSurface = NULL;
+		if (S_OK == m_pTexture->GetSurfaceLevel(index, &pSurface))
+		{
+			m_surfaces[index] = new TextureSurface(this,pSurface);
+		}
+	}
+
+	if (m_surfaces[index])
+	{
+		m_surfaces[index]->AddRef();
+	}
+	return m_surfaces[index];
+}
+
+unsigned int Texture2D::GetLayerCount() const
+{
+	return m_pTexture->GetLevelCount();
+}
+
+bool Texture2D::NeedRecreateWhenDeviceLost() const
 {
 	return m_recreateWhenDeviceLost;
+}
+
+bool Texture2D::IsCubemap() const
+{
+	return false;
+}
+
+bool Texture2D::IsRenderTexture() const
+{
+	return m_isRenderTexture;
+}
+
+bool Texture2D::SaveToFile(const char * fileName, RenderAPI::ImageFormat format)
+{
+	return S_OK == D3DXSaveTextureToFileA(fileName, s_d3dxFileFormat[format], NULL, NULL);
+}
+
+TextureSurface::TextureSurface(Texture2D* pTexture, IDirect3DSurface9 * pSurface)
+	: m_pParentTexture(pTexture)
+	, m_pSurface(pSurface)
+	, m_hDC(NULL)
+{
+
+}
+
+TextureSurface::~TextureSurface()
+{
+	ReleaseDC();
+	m_pSurface->Release();
+}
+
+void* TextureSurface::GetDC()
+{
+	if (m_hDC == NULL)
+	{
+		m_pSurface->GetDC(&m_hDC);
+	}
+	return m_hDC;
+}
+
+void TextureSurface::ReleaseDC()
+{
+	if (m_hDC != NULL)
+	{
+		m_pSurface->ReleaseDC(m_hDC);
+		m_hDC = NULL;
+	}
+}
+
+void TextureSurface::Release()
+{
+	m_pParentTexture->Release();
+	if (0 == --m_refCount)
+	{
+		delete this;
+	}
+}
+
+void TextureSurface::AddRef()
+{
+	m_pParentTexture->AddRef();
+	++m_refCount;
+}
+
+IDirect3DSurface9 * TextureSurface::GetD3DTextureSurfacePtr() 
+{
+	return m_pSurface;
 }

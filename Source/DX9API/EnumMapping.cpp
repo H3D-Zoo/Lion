@@ -5,23 +5,23 @@
 #include "Context.h"
 #include "EnumMapping.h"
 #include "DX9Include.h"
-#include "APIGlobal.h"
+#include "APIInstance.h"
 #include "AutoPtr.hpp"
 
-D3DFORMAT s_RTFormats[RTFormatCount] =
+D3DFORMAT s_RTFormats[kRTFormatCount] =
 {
 	D3DFMT_X8R8G8B8,
 	D3DFMT_A8R8G8B8,
 };
 
-D3DFORMAT s_DSFormats[DSFormatCount] =
+D3DFORMAT s_DSFormats[kDSFormatCount] =
 {
 	D3DFMT_D24S8,
 	D3DFMT_D24X8,
 	D3DFMT_D16,
 };
 
-D3DFORMAT s_TextureFormats[TexFormatCount] =
+D3DFORMAT s_TextureFormats[kTexFormatCount] =
 {
 	D3DFMT_UNKNOWN,
 	D3DFMT_A8R8G8B8,
@@ -33,9 +33,12 @@ D3DFORMAT s_TextureFormats[TexFormatCount] =
 	D3DFMT_D24X8,
 	D3DFMT_D32,
 	D3DFMT_D16,
+	D3DFMT_R32F,
+	D3DFMT_G32R32F,
+	D3DFMT_A32B32G32R32F,
 };
 
-D3DMULTISAMPLE_TYPE s_sampleTypes[MSFormatCount] =
+D3DMULTISAMPLE_TYPE s_sampleTypes[kMSFormatCount] =
 {
 	D3DMULTISAMPLE_NONE,
 	D3DMULTISAMPLE_2_SAMPLES,
@@ -45,19 +48,27 @@ D3DMULTISAMPLE_TYPE s_sampleTypes[MSFormatCount] =
 	D3DMULTISAMPLE_10_SAMPLES,
 };
 
-unsigned int s_IndexLengths[IndexLengthCount] =
+D3DXIMAGE_FILEFORMAT s_d3dxFileFormat[kImageFormatCount] =
+{
+	D3DXIFF_BMP,
+	D3DXIFF_TGA,
+	D3DXIFF_PNG,
+	D3DXIFF_DDS
+};
+
+unsigned int s_IndexLengths[kIndexLengthCount] =
 {
 	sizeof(unsigned short),
 	sizeof(unsigned int),
 };
 
-D3DFORMAT s_IndexFormats[IndexFormatCount] =
+D3DFORMAT s_IndexFormats[kIndexFormatCount] =
 {
 	D3DFMT_INDEX16,
 	D3DFMT_INDEX32,
 };
 
-unsigned int s_lockOptions[LockOptionCount] =
+unsigned int s_lockOptions[kLockOptionCount] =
 {
 	0,
 	D3DLOCK_DISCARD,

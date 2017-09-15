@@ -33,8 +33,8 @@ bool APITestBed::Init(HWND hWindow, HWND hWindowEditor, unsigned int backBufferW
 
 	m_textureSize.x = 1024;
 	m_textureSize.y = 1024;
-	m_pRenderTexture = m_pDevice->CreateRenderTarget(RenderAPI::BACKBUFFER_XRGB8, 1024, 1024);
-	m_pRenderDepth = m_pDevice->CreateDepthStencil(RenderAPI::ZBUFFER_D24S8, 1024, 1024);
+	m_pRenderTexture = m_pDevice->CreateRenderTarget(RenderAPI::TEX_XRGB, 1024, 1024);
+	m_pRenderDepth = m_pDevice->CreateDepthStencil(RenderAPI::DS_D24S8, 1024, 1024);
 
 	const int kMatrixLength = sizeof(float) * 16;
 	m_matWorldBoxs.resize(100);
@@ -212,8 +212,8 @@ bool APITestBed::CreateDeviceAndContext(HWND hWindow, HWND hWindowEditor, unsign
 {
 	RenderAPI::SwapChainDesc desc;
 	desc.hWindow = hWindow;
-	desc.backbufferFormat = RenderAPI::BACKBUFFER_XRGB8;
-	desc.zbufferFormat = RenderAPI::ZBUFFER_D24S8;
+	desc.backbufferFormat = RenderAPI::RT_XRGB8;
+	desc.zbufferFormat = RenderAPI::DS_D24S8;
 	desc.aaMode = RenderAPI::AA_Disable;
 	desc.backbufferWidth = backBufferWidth;
 	desc.backbufferHeight = backBufferHeight;
@@ -228,8 +228,8 @@ bool APITestBed::CreateDeviceAndContext(HWND hWindow, HWND hWindowEditor, unsign
 	m_defaultSwapChain = m_pDevice->GetDefaultSwapChain();
 
 	desc.hWindow = hWindowEditor;
-	desc.backbufferFormat = RenderAPI::BACKBUFFER_XRGB8;
-	desc.zbufferFormat = RenderAPI::ZBUFFER_D24S8;
+	desc.backbufferFormat = RenderAPI::RT_XRGB8;
+	desc.zbufferFormat = RenderAPI::DS_D24S8;
 	desc.aaMode = RenderAPI::AA_Disable;
 	desc.backbufferWidth = backBufferWidth;
 	desc.backbufferHeight = backBufferHeight;
@@ -341,7 +341,7 @@ void APITestBed::CreateMaterial()
 				texformat = RenderAPI::TEX_XRGB;
 			}
 
-			m_pParticleTexture = m_pDevice->CreateTexture2D(RenderAPI::RESUSAGE_Default, texformat, png.width, png.height, png.buffer, png.line_pitch, png.height);
+			m_pParticleTexture = m_pDevice->CreateTexture2D(RenderAPI::RESUSAGE_Default, texformat, png.width, png.height, 0, png.buffer, png.line_pitch, png.height);
 			png.destroy();
 		}
 		pngFileData.destroy();
@@ -365,7 +365,7 @@ void APITestBed::CreateMaterial()
 				texformat = RenderAPI::TEX_XRGB;
 			}
 
-			m_pBoxTexture = m_pDevice->CreateTexture2D(RenderAPI::RESUSAGE_Default, texformat, bmp.width, bmp.height, nullptr, 0, 0);
+			m_pBoxTexture = m_pDevice->CreateTexture2D(RenderAPI::RESUSAGE_Default, texformat, bmp.width, bmp.height, 0, nullptr, 0, 0);
 
 			RenderAPI::MappedResource res = m_pBoxTexture->LockRect(0, RenderAPI::LOCK_Discard);
 
@@ -402,7 +402,7 @@ void APITestBed::DrawBox(RenderAPI::TextureAddress address, bool alphaBlending)
 	sampler.AddressU = sampler.AddressV = address;
 	sampler.Filter = RenderAPI::FILTER_MinL_MagL_MipL;
 
-	int passCount = m_pEffectTintColor->Begin();
+	int passCount = m_pEffectTintColor->Begin(false);
 	if (passCount > 0)
 	{
 		for (int i = 0; i < passCount; i++)
@@ -413,8 +413,8 @@ void APITestBed::DrawBox(RenderAPI::TextureAddress address, bool alphaBlending)
 			Box.Set(m_pContext);
 			m_pContext->SetTexture(0, m_pBoxTexture);
 			m_pContext->SetTextureSampler(0, sampler);
-			m_pEffectTintColor->SetMatrix("g_matView", (float*)m_matView.m);
-			m_pEffectTintColor->SetMatrix("g_matProj", (float*)m_matProj.m);
+			m_pEffectTintColor->SetMatrixTranspose("g_matView", (float*)m_matView.m);
+			m_pEffectTintColor->SetMatrixTranspose("g_matProj", (float*)m_matProj.m);
 			if (alphaBlending)
 			{
 				RenderAPI::BlendState abstate;
@@ -446,7 +446,7 @@ void APITestBed::DrawBox(RenderAPI::TextureAddress address, bool alphaBlending)
 						depthState.Function = RenderAPI::COMPARE_Greater;
 						m_pContext->SetDepthTestingState(depthState);
 					}
-					m_pEffectTintColor->SetMatrix("g_matWorld", (float*)m_matWorldBoxs[i * 10 + j].m);
+					m_pEffectTintColor->SetMatrixTranspose("g_matWorld", (float*)m_matWorldBoxs[i * 10 + j].m);
 					m_pEffectTintColor->CommitChange();
 					m_pContext->DrawIndexed(RenderAPI::PRIMITIVE_TriangleList, 0, 0, 0, faceCount);
 				}
@@ -471,16 +471,16 @@ void APITestBed::DrawParticle(const gml::mat44& matProj)
 {
 	RenderAPI::AlphaTestingState alphaState;
 
-	int passCount = m_pEffectParticle->Begin();
+	int passCount = m_pEffectParticle->Begin(false);
 	if (passCount > 0)
 	{
 		for (int i = 0; i < passCount; i++)
 		{
 			if (!m_pEffectParticle->BeginPass(i))
 				continue;
-			m_pEffectParticle->SetMatrix("g_matWorld", (float*)m_matWorldParticle.m);
-			m_pEffectParticle->SetMatrix("g_matView", (float*)m_matView.m);
-			m_pEffectParticle->SetMatrix("g_matProj", (float*)matProj.m);
+			m_pEffectParticle->SetMatrixTranspose("g_matWorld", (float*)m_matWorldParticle.m);
+			m_pEffectParticle->SetMatrixTranspose("g_matView", (float*)m_matView.m);
+			m_pEffectParticle->SetMatrixTranspose("g_matProj", (float*)matProj.m);
 			m_pEffectParticle->SetValue("g_cameraX", (float*)m_matInvView.row[0], sizeof(gml::vec4));
 			m_pEffectParticle->SetValue("g_cameraY", (float*)m_matInvView.row[1], sizeof(gml::vec4));
 			m_pEffectParticle->SetTexture("g_particleTexture", m_pParticleTexture);
@@ -506,7 +506,7 @@ void APITestBed::DrawRTTQuad()
 	m_pContext->SetAlphaTestingState(alphaState);
 
 	m_pEffectSimpleTexture->SetTechniqueByName("SimpleTextureStencil");
-	int passCount = m_pEffectSimpleTexture->Begin();
+	int passCount = m_pEffectSimpleTexture->Begin(false);
 	if (passCount > 0)
 	{
 		for (int i = 0; i < passCount; i++)
@@ -527,7 +527,7 @@ void APITestBed::DrawRTTQuad()
 
 
 	m_pEffectSimpleTexture->SetTechniqueByName("SimpleTexture");
-	passCount = m_pEffectSimpleTexture->Begin();
+	passCount = m_pEffectSimpleTexture->Begin(false);
 	if (passCount > 0)
 	{
 		for (int i = 0; i < passCount; i++)

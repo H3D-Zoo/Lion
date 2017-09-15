@@ -30,13 +30,13 @@ private:
 	void UploadParticlesAndCommitDrawcalls();
 
 	HMODULE m_hRenderAPIDLL = nullptr;
-	RenderAPI::APIGlobal* m_pAPIGlobal = nullptr;
+	RenderAPI::APIInstance* m_pAPIGlobal = nullptr;
 	RenderAPI::Device* m_pDevice = nullptr;
 	RenderAPI::Context* m_pContext = nullptr;
 	RenderAPI::SwapChain* m_defaultSwapChain = nullptr;
 	RenderAPI::SwapChain* m_editorSwapChain = nullptr;
 
-	typedef RenderAPI::APIGlobal* (*CreateAPIGlobal)();
+	typedef RenderAPI::APIInstance* (*CreateAPIGlobal)();
 	CreateAPIGlobal m_createAPIGlobal = nullptr;
 
 	RenderAPI::Viewport m_bbViewport;

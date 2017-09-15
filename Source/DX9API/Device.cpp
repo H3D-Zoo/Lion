@@ -5,6 +5,7 @@
 #include "IndexBuffer.h"
 #include "VertexDeclaration.h"
 #include "Texture2D.h"
+#include "TextureCube.h"
 #include "FXEffect.h"
 #include "RenderTarget.h"
 #include "DepthStencil.h"
@@ -14,27 +15,18 @@
 
 namespace
 {
-	const int s_d3dUsageCount = 5;
-	unsigned int s_d3dBufferUsage[s_d3dUsageCount] =
+	const int kD3DUsageCount = 5;
+	unsigned int s_d3dBufferUsage[kD3DUsageCount] =
 	{
 		D3DUSAGE_WRITEONLY,
 		D3DUSAGE_WRITEONLY | D3DUSAGE_DYNAMIC,
 		D3DUSAGE_WRITEONLY,
 		0,
-		D3DUSAGE_DYNAMIC,
-	};
-
-	unsigned int s_d3dTextureUsage[s_d3dUsageCount] =
-	{
-		D3DUSAGE_AUTOGENMIPMAP,
-		D3DUSAGE_DYNAMIC | D3DUSAGE_AUTOGENMIPMAP,
-		D3DUSAGE_AUTOGENMIPMAP,
-		D3DUSAGE_AUTOGENMIPMAP,
-		D3DUSAGE_DYNAMIC | D3DUSAGE_AUTOGENMIPMAP,
+		D3DUSAGE_DYNAMIC
 	};
 }
 
-Device::Device(APIGlobal* pAPIContext, IDirect3DDevice9* device, const RenderAPI::SwapChainDesc & desc, bool isFullscreen, bool useVerticalSync)
+Device::Device(APIInstance* pAPIContext, IDirect3DDevice9* device, const RenderAPI::SwapChainDesc & desc, bool isFullscreen, bool useVerticalSync)
 	: m_pAPI(pAPIContext)
 	, m_pDefaultSwapChain(NULL)
 	, m_pDevice(device)
@@ -253,8 +245,8 @@ RenderAPI::VertexDeclaration* Device::CreateVertexDeclaration(const RenderAPI::V
 	//构建 Vertex Element 数组
 	std::vector<int> alignOffsets;
 	std::vector<RenderAPI::VertexElement> elementList(elements, elements + elementCount);
-	
-	std::vector<D3DVERTEXELEMENT9> d3dElements(elementCount + 1);	
+
+	std::vector<D3DVERTEXELEMENT9> d3dElements(elementCount + 1);
 	for (unsigned int i = 0; i < elementCount; i++)
 	{
 		D3DVERTEXELEMENT9& element = d3dElements[i];
@@ -284,7 +276,7 @@ RenderAPI::VertexDeclaration* Device::CreateVertexDeclaration(const RenderAPI::V
 	elementEnd.Usage = 0;
 	elementEnd.UsageIndex = 0;
 
-	IDirect3DVertexDeclaration9* pVertexDeclaration = NULL;	
+	IDirect3DVertexDeclaration9* pVertexDeclaration = NULL;
 	if (S_OK == m_pDevice->CreateVertexDeclaration(&(d3dElements[0]), &pVertexDeclaration))
 	{
 		return new VertexDeclaration(pVertexDeclaration, elementList);
@@ -295,7 +287,7 @@ RenderAPI::VertexDeclaration* Device::CreateVertexDeclaration(const RenderAPI::V
 	}
 }
 
-RenderAPI::Texture2D * Device::CreateTexture2D(RenderAPI::ResourceUsage usage, RenderAPI::TextureFormat format, unsigned int width, unsigned int height, void* initialData, int dataLinePitch, int dataHeight)
+RenderAPI::Texture2D * Device::CreateTexture2D(RenderAPI::ResourceUsage usage, RenderAPI::TextureFormat format, unsigned int width, unsigned int height, unsigned int layer, void* initialData, int dataLinePitch, int dataHeight)
 {
 	if (width == 0 || height == 0)
 	{
@@ -319,16 +311,16 @@ RenderAPI::Texture2D * Device::CreateTexture2D(RenderAPI::ResourceUsage usage, R
 	}
 
 	IDirect3DTexture9* pTexture = NULL;
-	unsigned int d3dUsage = usage == s_d3dTextureUsage[usage];
+	unsigned int d3dUsage = (usage == RenderAPI::RESUSAGE_Dynamic || usage == RenderAPI::RESUSAGE_DynamicRW) ? D3DUSAGE_DYNAMIC : 0;
 	D3DPOOL pool = (m_pAPI->IsSupportManaged() && immuable) ? D3DPOOL_MANAGED : D3DPOOL_DEFAULT;
-	HRESULT hr = m_pDevice->CreateTexture(width, height, 0, d3dUsage, s_TextureFormats[format], pool, &pTexture, NULL);
+	HRESULT hr = m_pDevice->CreateTexture(width, height, layer, d3dUsage, s_TextureFormats[format], pool, &pTexture, NULL);
 
 	if (hr != S_OK)
 	{
 		return NULL;
 	}
 
-	::Texture2D* texture = new ::Texture2D(pTexture, format, usage, width, height, pool != D3DPOOL_MANAGED);
+	::Texture2D* texture = new ::Texture2D(pTexture, format, usage, width, height, pool != D3DPOOL_MANAGED, false);
 
 	if (initialData != NULL)
 	{
@@ -344,6 +336,73 @@ RenderAPI::Texture2D * Device::CreateTexture2D(RenderAPI::ResourceUsage usage, R
 				memcpy(dstPtr + i * res.LinePitch, srcPtr + i* dataLinePitch, linePitch);
 			}
 			texture->UnlockRect(0);
+		}
+	}
+	return texture;
+}
+
+RenderAPI::TextureCube * Device::CreateTextureCube(RenderAPI::ResourceUsage usage, RenderAPI::TextureFormat format, unsigned int edgeLength, unsigned int layer, void ** initialData, int dataLinePitch, int dataHeight)
+{
+	if (edgeLength == 0)
+	{
+		return NULL;
+	}
+
+	bool immuable = usage == RenderAPI::RESUSAGE_Immuable;
+	if (initialData == NULL)
+	{
+		if (immuable)
+		{
+			return NULL;
+		}
+	}
+	else
+	{
+		if (dataLinePitch == 0 || dataHeight == 0)
+		{
+			return NULL;
+		}
+	}
+
+	IDirect3DCubeTexture9* pTexture = NULL;
+	unsigned int d3dUsage = (usage == RenderAPI::RESUSAGE_Dynamic || usage == RenderAPI::RESUSAGE_DynamicRW) ? D3DUSAGE_DYNAMIC : 0;
+	D3DPOOL pool = (m_pAPI->IsSupportManaged() && immuable) ? D3DPOOL_MANAGED : D3DPOOL_DEFAULT;
+	HRESULT hr = m_pDevice->CreateCubeTexture(edgeLength, layer, d3dUsage, s_TextureFormats[format], pool, &pTexture, NULL);
+
+	if (hr != S_OK)
+	{
+		return NULL;
+	}
+
+	::TextureCube* texture = new ::TextureCube(pTexture, format, usage, edgeLength, pool != D3DPOOL_MANAGED);
+	if (initialData != NULL)
+	{
+		RenderAPI::CubemapFace faces[6] = {
+			RenderAPI::CUBE_PositiveZ,
+			RenderAPI::CUBE_NegativeZ,
+			RenderAPI::CUBE_NegativeX,
+			RenderAPI::CUBE_PositiveX,
+			RenderAPI::CUBE_NegativeY,
+			RenderAPI::CUBE_PositiveY
+		};
+		
+		for( int i = 0; i < 6; i++)
+		{
+			RenderAPI::CubemapFace face = faces[i];
+			RenderAPI::MappedResource res = texture->LockRect(face, 0, RenderAPI::LOCK_Discard);
+			char* pSrcData = (char*)initialData[i];
+
+			if (res.Success)
+			{
+				unsigned int linePitch = (unsigned int)dataLinePitch > res.LinePitch ? res.LinePitch : dataLinePitch;
+				char* dstPtr = (char*)res.DataPtr;
+				char* srcPtr = pSrcData;
+				for (int i = 0; i < dataHeight; i++)
+				{
+					memcpy(dstPtr + i * res.LinePitch, srcPtr + i* dataLinePitch, linePitch);
+				}
+				texture->UnlockRect(face, 0);
+			}
 		}
 	}
 	return texture;
@@ -377,9 +436,9 @@ RenderAPI::FXEffect * Device::CreateFXEffectFromFile(const char * effectFilePath
 
 }
 
-RenderAPI::RenderTarget * Device::CreateRenderTarget(RenderAPI::RenderTargetFormat format, unsigned int width, unsigned int height)
+RenderAPI::RenderTarget* Device::CreateRenderTarget(RenderAPI::TextureFormat format, unsigned int width, unsigned int height)
 {
-	D3DFORMAT rtFormat = s_RTFormats[format];
+	D3DFORMAT rtFormat = s_TextureFormats[format];
 	IDirect3DTexture9* pTexture = NULL;
 	HRESULT hr = m_pDevice->CreateTexture(width, height, 1, D3DUSAGE_RENDERTARGET, rtFormat, D3DPOOL_DEFAULT, &pTexture, NULL);
 

@@ -1,10 +1,10 @@
 #pragma once
 #include "../../RenderAPI/RenderAPI.h"
 
-class BaseAPIGlobal : public RenderAPI::APIGlobal
+class BaseAPIInstance : public RenderAPI::APIInstance
 {
 public:
-	BaseAPIGlobal();
+	BaseAPIInstance();
 
 	// 获得系统内置默认Log对象
 	virtual RenderAPI::Logger* GetDefaultLogger();

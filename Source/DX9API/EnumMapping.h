@@ -3,21 +3,23 @@
 #include "DX9Include.h"
 #include "../../RenderAPI/RenderAPI.h"
 
-const int RTFormatCount = 2;
-const int DSFormatCount = 3;
-const int MSFormatCount = 6;
-const int TexFormatCount = 12;
-const int IndexLengthCount = 6;
-const int IndexFormatCount = 6;
-const int LockOptionCount = 4;
+const int kRTFormatCount = 2;
+const int kDSFormatCount = 3;
+const int kMSFormatCount = 6;
+const int kTexFormatCount = 13;
+const int kIndexLengthCount = 6;
+const int kIndexFormatCount = 6;
+const int kLockOptionCount = 4;
+const int kImageFormatCount = 4;
 
-extern D3DFORMAT s_RTFormats[RTFormatCount];
-extern D3DFORMAT s_DSFormats[DSFormatCount];
-extern D3DFORMAT s_TextureFormats[TexFormatCount];
-extern D3DFORMAT s_IndexFormats[IndexFormatCount];
-extern unsigned int s_IndexLengths[IndexLengthCount];
-extern unsigned int s_lockOptions[LockOptionCount];
-extern D3DMULTISAMPLE_TYPE s_sampleTypes[MSFormatCount];
+extern D3DFORMAT s_RTFormats[kRTFormatCount];
+extern D3DFORMAT s_DSFormats[kDSFormatCount];
+extern D3DFORMAT s_TextureFormats[kTexFormatCount];
+extern D3DFORMAT s_IndexFormats[kIndexFormatCount];
+extern unsigned int s_IndexLengths[kIndexLengthCount];
+extern unsigned int s_lockOptions[kLockOptionCount];
+extern D3DMULTISAMPLE_TYPE s_sampleTypes[kMSFormatCount];
+extern D3DXIMAGE_FILEFORMAT s_d3dxFileFormat[kImageFormatCount]; 
 
 bool IsLocalFileExist(const std::string & fileName);
 RenderAPI::DeviceState DeviceStateMapping(unsigned int rst);

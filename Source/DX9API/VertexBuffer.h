@@ -24,7 +24,7 @@ public:
 
 	virtual void Unlock();
 	
-	virtual bool NeedRecreateWhenDeviceLost();
+	virtual bool NeedRecreateWhenDeviceLost() const;
 
 	virtual void Release();
 

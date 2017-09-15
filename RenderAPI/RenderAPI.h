@@ -2,21 +2,18 @@
 
 namespace RenderAPI
 {
-	class Device;
-	class Context;
-	class Logger;
-
 	enum RenderTargetFormat
 	{
-		BACKBUFFER_XRGB8 = 0,
-		BACKBUFFER_ARGB8 = 1,
+		RT_XRGB8 = 0,
+		RT_ARGB8 = 1,
+		RT_RenderTexture = 2,
 	};
 
 	enum DepthStencilFormat
 	{
-		ZBUFFER_D24S8 = 0,
-		ZBUFFER_D24X8 = 1,
-		ZBUFFER_D16 = 2,
+		DS_D24S8 = 0,
+		DS_D24X8 = 1,
+		DS_D16 = 2,
 	};
 
 	enum AAMode
@@ -29,6 +26,246 @@ namespace RenderAPI
 		AA_X10 = 1 << 4,
 	};
 
+	enum ResourceUsage
+	{
+		RESUSAGE_Default = 0,
+		RESUSAGE_Dynamic = 1,
+		RESUSAGE_Immuable = 2,
+		RESUSAGE_DefaultRW = 3,
+		RESUSAGE_DynamicRW = 4,
+	};
+
+	enum LockOption
+	{
+		LOCK_Normal = 0,
+		LOCK_Discard = 1,
+		LOCK_ReadOnly = 2,
+		LOCK_NoOverWrite = 3,
+	};
+
+	enum IndexFormat
+	{
+		INDEX_Int16 = 0,
+		INDEX_Int32 = 1,
+	};
+
+	enum InputFormat
+	{
+		INPUT_Float1 = 0,
+		INPUT_Float2 = 1,
+		INPUT_Float3 = 2,
+		INPUT_Float4 = 3,
+		INPUT_Color4 = 4,
+		INPUT_UByte4 = 5,
+		INPUT_Short2 = 6,
+		INPUT_Short4 = 7,
+		INPUT_UShort2 = 8,
+		INPUT_UShort4 = 9,
+	};
+
+	enum Semantic
+	{
+		SEMANTIC_Position = 0,
+		SEMANTIC_Color = 1,
+		SEMANTIC_Normal = 2,
+		SEMANTIC_Texcoord = 3,
+		SEMANTIC_Tangent = 4,
+		SEMANTIC_Binormal = 5,
+		SEMANTIC_BlendWeight = 6,
+		SEMANTIC_BlendIndices = 7,
+	};
+
+	enum TextureFormat
+	{
+		TEX_Unknown = 0,
+		TEX_ARGB = 1,
+		TEX_XRGB = 2,
+		TEX_DXT1 = 3,
+		TEX_DXT3 = 4,
+		TEX_DXT5 = 5,
+		TEX_D24S8 = 6,
+		TEX_D24X8 = 7,
+		TEX_D32 = 8,
+		TEX_D16 = 9,
+		TEX_R32F = 10,
+		TEX_RG32F = 11,
+		TEX_ARGB32F = 12
+	};
+
+	enum CubemapFace
+	{
+		CUBE_PositiveX = 0,
+		CUBE_NegativeX = 1,
+		CUBE_PositiveY = 2,
+		CUBE_NegativeY = 3,
+		CUBE_PositiveZ = 4,
+		CUBE_NegativeZ = 5,
+	};
+
+	enum ImageFormat
+	{
+		IMG_BMP = 0,
+		IMG_TGA = 1,
+		IMG_PNG = 2,
+		IMG_DDS = 3,
+	};
+
+	enum BlendFactor
+	{
+		BLEND_Zero = 0,
+		BLEND_One = 1,
+		BLEND_SrcColor = 2,
+		BLEND_SrcAlpha = 3,
+		BLEND_DstColor = 4,
+		BLEND_DstAlpha = 5,
+		BLEND_InvSrcColor = 6,
+		BLEND_InvSrcAlpha = 7,
+		BLEND_InvDstColor = 8,
+		BLEND_InvDstAlpha = 9,
+	};
+
+	enum BlendOperator
+	{
+		BLENDOP_Add = 0,
+		BLENDOP_Sub = 1,
+		BLENDOP_Min = 2,
+		BLENDOP_Max = 2,
+	};
+
+	enum CompareMethod
+	{
+		COMPARE_Never = 0,
+		COMPARE_Always = 1,
+		COMPARE_Equal = 2,
+		COMPARE_NotEqual = 3,
+		COMPARE_Less = 4,
+		COMPARE_LessEqual = 5,
+		COMPARE_Greater = 6,
+		COMPARE_GreaterEqual = 7,
+	};
+
+	enum StencilOp
+	{
+		STENCIL_Keep = 0,
+		STENCIL_Zero = 1,
+		STENCIL_Replace = 2,
+		STENCIL_IncreaseSaturate = 3,
+		STENCIL_DecreaseSaturate = 4,
+		STENCIL_Invert = 5,
+		STENCIL_IncreaseRevert = 6,
+		STENCIL_DecreaseRevert = 7,
+	};
+
+	enum TextureOp
+	{
+		TEXOP_Disable = 0,
+		TEXOP_SelectArg1 = 1,
+		TEXOP_SelectArg2 = 2,
+		TEXOP_Modulate = 3,
+		TEXOP_Modulate2x = 4,
+		TEXOP_Modulate4x = 5,
+		TEXOP_Add = 6,
+		TEXOP_AddSigned = 7,
+		TEXOP_AddSigned2x = 8,
+		TEXOP_Sub = 9,
+		TEXOP_AddSmooth = 10, // Screen
+		TEXOP_DotProduct3 = 11,
+		TEXOP_MultiplyAdd = 12,
+		TEXOP_Lerp = 13
+	};
+
+	enum TextureArg
+	{
+		TEXARG_Texture,
+		TEXARG_Constant,
+		TEXARG_Current,
+		TEXARG_TextureFactor,
+	};
+
+	enum SamplerFilter
+	{
+		FILTER_MinP_MagP_MipP = 0x0000,		// P = Point
+		FILTER_MinP_MagP_MipL = 0x0001,		// L = Linear
+		FILTER_MinP_MagL_MipP = 0x0010,		// X = None
+		FILTER_MinP_MagL_MipL = 0x0011,
+		FILTER_MinL_MagP_MipP = 0x0100,
+		FILTER_MinL_MagP_MipL = 0x0101,
+		FILTER_MinL_MagL_MipP = 0x0110,
+		FILTER_MinL_MagL_MipL = 0x0111,
+		FILTER_MinP_MagP_MipX = 0x0002,
+		FILTER_MinP_MagL_MipX = 0x0012,
+		FILTER_MinL_MagP_MipX = 0x0102,
+		FILTER_MinL_MagL_MipX = 0x0112,
+		FILTER_Anisotropic = 0x1000,
+	};
+
+	enum StretchFilter
+	{
+		STRETCH_None = 0,
+		STRETCH_Point = 1,
+		STRETCH_Linear = 2,
+	};
+
+	enum TextureAddress
+	{
+		TEX_ADDRESS_Repeat = 0,
+		TEX_ADDRESS_Clamp = 1,
+		TEX_ADDRESS_Mirror = 2,
+		TEX_ADDRESS_Border = 2,
+	};
+
+	enum FillMode
+	{
+		FILL_Solid = 0,
+		FILL_Wireframe = 1,
+		FILL_Point = 2,
+	};
+
+	enum CullMode
+	{
+		CULL_None = 0,
+		CULL_CW = 1,
+		CULL_CCW = 2,
+	};
+
+	enum Primitive
+	{
+		PRIMITIVE_TriangleList = 0,
+		PRIMITIVE_TriangleStrip = 1,
+		PRIMITIVE_TriangleFan = 2,
+		PRIMITIVE_LineList = 3,
+		PRIMITIVE_LineStrip = 4,
+		PRIMITIVE_Point = 5,
+	};
+
+	enum DeviceState
+	{
+		DEVICE_OK = 0,
+		DEVICE_Lost = 1,
+		DEVICE_NeedReset = 2,
+		DEVICE_NeedRecreate = 3,
+		DEVICE_Busy = 4,
+		DEVICE_OutOfMemory = 5,
+		DEVICE_Error = 6,
+	};
+
+	//!对非2的幂texture的支持
+	enum ENONPOW2Support
+	{
+		//!完全支持
+		POW2_Support = 0,
+		//!有条件支持
+		POW2_Conditional = 1,
+		//!不支持
+		POW2_None = 2,
+	};
+	
+	class Device;
+	class Context;
+	class VertexBuffer;
+	typedef unsigned int HEffectParam;
+	const int hInvalidParam = 0xFFFFFFFF;
+
 	// 如果 backbufferWidth 和 backbufferHeight 同时被设为 0，将会使用 hWindow 默认的大小作为 backbuffer 的大小
 	struct SwapChainDesc
 	{
@@ -36,8 +273,8 @@ namespace RenderAPI
 			: hWindow(0)
 			, backbufferWidth(0)
 			, backbufferHeight(0)
-			, backbufferFormat(BACKBUFFER_XRGB8)
-			, zbufferFormat(ZBUFFER_D24S8)
+			, backbufferFormat(RT_XRGB8)
+			, zbufferFormat(DS_D24S8)
 			, aaMode(AA_Disable)
 		{ }
 
@@ -70,131 +307,58 @@ namespace RenderAPI
 		unsigned int WHQLLevel;
 	};
 
-	/*
-	全局初始化/析构函数
-	*/
-	class APIGlobal
+	struct DeviceCaps
 	{
-	public:
-		// 请把所有其他用户接口都释放后，最后调用这个接口
-		virtual void Release() = 0;
-
-		// 获得系统内置默认Log对象
-		virtual Logger* GetDefaultLogger() = 0;
-
-		// 获取当前系统正在使用的Log对象
-		virtual Logger* GetCurrentLogger() = 0;
-
-		// 修改系统使用的Log对象，以自定义log输出位置。
-		// 当参数为nullptr的时候，系统会使用默认的log对象处理输出
-		virtual void SetCurrentLogger(Logger*) = 0;
-
-		// 用户接口创建
-		virtual CreationResult CreateDeviceAndContext(const SwapChainDesc& desc, bool isFullscreen, bool useVerticalSync) = 0;
-
-		// 从文件中读取fx代码并编译，结果输出到compiledFXFile里
-		virtual bool CompileFXEffectFromFile(const char* sourceFXFile, const char* compiledFXFile) = 0;
-
-		virtual bool CheckMultiSampleSupport(RenderTargetFormat, DepthStencilFormat, AAMode, bool fullscreen) const = 0;
-
-		virtual const char* GetDeviceDriver() const = 0;
-
-		virtual const char* GetDeviceName() const = 0;
-
-		virtual const char* GetDeviceDesc() const = 0;
-
-		virtual unsigned int GetVendorID() const = 0;
-
-		virtual DriverVersion GetDriverVersion() const = 0;
+		//!最大texture宽度
+		unsigned int MaxTextureWidth;
+		//!最大texture高度
+		unsigned int MaxTextureHeight;
+		//!最大各项异性程度
+		unsigned int MaxAnisotropy;
+		//!最大texture层数
+		unsigned int MaxTextureStage;
+		//!最大同时绑定的texture数
+		unsigned int MaxSimultaneousTextures;
+		//!用户裁减面最大数
+		unsigned int MaxUserClipPlanes;
+		//!一次绘制的最大图原数
+		unsigned int MaxPrimitiveCount;
+		//!最大顶点索引数
+		unsigned int MaxVertexIndex;
+		//!最大顶点数据流数
+		unsigned int MaxStreams;
+		//!最大顶点宽度
+		unsigned int MaxStreamStride;
+		//!最大VS寄存器常量
+		unsigned int MaxVertexShaderConsts;
+		//!最大同时render target数
+		unsigned int MaxMRTs;
+		//!VS最大指令数
+		unsigned int MaxVertexShaderInstruction;
+		//!PS最大指令数
+		unsigned int MaxPixelShaderInstruction;
+		//!最大vertex blend矩阵数
+		unsigned int MaxVertexBlendMatrix;
+		//!最大vertex blend索引数
+		unsigned int MaxVertexBlendMatrixIndex;
+		//!VS版本，是一个两位数数字
+		unsigned int VertexShaderVersion;
+		//!PS版本，是一个两位数数字
+		unsigned int PixelShaderVersion;
+		//!是否支持32位索引
+		bool SupportIndex32;
+		//!是否支持dynamic texture
+		bool SupportsDynamicTexture;
+		//支持贴图透明通道
+		bool SupportTextureAlphaChannel;
+		//!仅支持正方形贴图
+		bool SupportOnlySquareTexture;
+		//!非pow2贴图支持
+		ENONPOW2Support NonePOW2Support;
+		//!初始显存数
+		unsigned int InitVideoMemory;
 	};
-
-	// RHI 初始化接口
-	APIGlobal* CreateAPIGlobal();
-
-	/*
-		系统日志设置函数
-	*/
-	// 外部用户继承并实现此接口，以重定向或自定义处理系统内部的Log。
-	class Logger
-	{
-	public:
-		virtual ~Logger() { }
-
-		virtual void LogE(const char*) = 0;
-
-		virtual void LogW(const char*) = 0;
-
-		virtual void LogD(const char*) = 0;
-
-		virtual void LogV(const char*) = 0;
-	};
-
-	/*
-		用户渲染接口
-	*/
-	// 所有的用户对象接口都从此对象继承，不需要显式书写虚基类。
-	// 用户对象接口在不使用的情况下，需要手动 Release 释放资源
-	// 不能通过拷贝、赋值构造接口对象
-	class RObject
-	{
-	public:
-		virtual void Release() = 0;
-
-	protected:
-		RObject() { }
-		virtual ~RObject() { }
-
-	private:
-		RObject(const RObject&);
-		RObject& operator=(const RObject&);
-	};
-
-	/*
-		资源创建接口
-	*/
-	enum ResourceUsage
-	{
-		RESUSAGE_Default = 0,
-		RESUSAGE_Dynamic = 1,
-		RESUSAGE_Immuable = 2,
-		RESUSAGE_DefaultRW = 3,
-		RESUSAGE_DynamicRW = 4,
-	};
-
-	enum LockOption
-	{
-		LOCK_Normal = 0,
-		LOCK_Discard = 1,
-		LOCK_ReadOnly = 2,
-		LOCK_NoOverride = 3,
-	};
-
-	enum InputFormat
-	{
-		INPUT_Float1 = 0,
-		INPUT_Float2 = 1,
-		INPUT_Float3 = 2,
-		INPUT_Float4 = 3,
-		INPUT_Color4 = 4,
-		INPUT_UByte4 = 5,
-		INPUT_Short2 = 6,
-		INPUT_Short4 = 7,
-		INPUT_UShort2 = 8,
-		INPUT_UShort4 = 9,
-	};
-
-	enum Semantic
-	{
-		SEMANTIC_Position = 0,
-		SEMANTIC_Color = 1,
-		SEMANTIC_Normal = 2,
-		SEMANTIC_Texcoord = 3,
-		SEMANTIC_Tangent = 4,
-		SEMANTIC_Binormal = 5,
-		SEMANTIC_BlendWeight = 6,
-		SEMANTIC_BlendIndices = 7,
-	};
-
+	
 	struct VertexElement
 	{
 		VertexElement()
@@ -212,89 +376,6 @@ namespace RenderAPI
 		InputFormat Format;
 	};
 
-	enum TextureFormat
-	{
-		TEX_Unknown = 0,
-		TEX_ARGB = 1,
-		TEX_XRGB = 2,
-		TEX_DXT1 = 3,
-		TEX_DXT3 = 4,
-		TEX_DXT5 = 5,
-		TEX_D24S8 = 6,
-		TEX_D24X8 = 7,
-		TEX_D32 = 8,
-		TEX_D16 = 9,
-	};
-
-	enum IndexFormat
-	{
-		INDEX_Int16 = 0,
-		INDEX_Int32 = 1,
-	};
-
-	class SwapChain;
-	class VertexBuffer;
-	class IndexBuffer;
-	class VertexDeclaration;
-	class Texture2D;
-	class FXEffect;
-	class RenderTarget;
-	class DepthStencil;
-	class OcclusionQuery;
-
-	class Device : public RObject
-	{
-	public:
-		// 这个 RenderTarget 不再使用的时候要调用 Release
-		virtual SwapChain* GetDefaultSwapChain() = 0;
-
-		virtual SwapChain* CreateAdditionalSwapChain(const SwapChainDesc&) = 0;
-
-		virtual VertexBuffer* CreateVertexBuffer(ResourceUsage usage, unsigned int vertexCount, unsigned int vertexSize, void* initialData) = 0;
-
-		virtual IndexBuffer* CreateIndexBuffer(ResourceUsage usage, IndexFormat format, unsigned int indexCount, void* initialData) = 0;
-
-		virtual VertexDeclaration* CreateVertexDeclaration(const VertexElement* elements, unsigned int elementCount) = 0;
-
-		virtual Texture2D* CreateTexture2D(ResourceUsage usage, TextureFormat format, unsigned int width, unsigned int height, void* initialData, int dataLinePitch, int dataHeight) = 0;
-
-		virtual FXEffect* CreateFXEffectFromFile(const char* effectFilePath) = 0;
-
-		virtual RenderTarget* CreateRenderTarget(RenderTargetFormat format, unsigned int width, unsigned int height) = 0;
-
-		virtual DepthStencil* CreateDepthStencil(DepthStencilFormat format, unsigned int width, unsigned int height) = 0;
-
-		virtual OcclusionQuery* CreateOcclusionQuery() = 0;
-
-		//为了引擎临时加上去的，等一下一步在去掉吧
-		virtual void* GetImplementPtr() = 0;
-	};
-
-	/*
-		渲染命令提交接口
-	*/
-	enum BlendFactor
-	{
-		BLEND_Zero = 0,
-		BLEND_One = 1,
-		BLEND_SrcColor = 2,
-		BLEND_SrcAlpha = 3,
-		BLEND_DstColor = 4,
-		BLEND_DstAlpha = 5,
-		BLEND_InvSrcColor = 6,
-		BLEND_InvSrcAlpha = 7,
-		BLEND_InvDstColor = 8,
-		BLEND_InvDstAlpha = 9,
-	};
-
-	enum BlendOperator
-	{
-		BLENDOP_Add = 0,
-		BLENDOP_Sub = 1,
-		BLENDOP_Min = 2,
-		BLENDOP_Max = 2,
-	};
-
 	struct BlendState
 	{
 		BlendState()
@@ -309,18 +390,6 @@ namespace RenderAPI
 		BlendFactor DstBlend;
 		BlendOperator BlendOp;
 		BlendOperator AlphaOp;
-	};
-
-	enum CompareMethod
-	{
-		COMPARE_Never = 0,
-		COMPARE_Always = 1,
-		COMPARE_Equal = 2,
-		COMPARE_NotEqual = 3,
-		COMPARE_Less = 4,
-		COMPARE_LessEqual = 5,
-		COMPARE_Greater = 6,
-		COMPARE_GreaterEqual = 7,
 	};
 
 	struct AlphaTestingState
@@ -345,18 +414,6 @@ namespace RenderAPI
 
 		bool IsEnable;
 		CompareMethod Function;
-	};
-
-	enum StencilOp
-	{
-		STENCIL_Keep = 0,
-		STENCIL_Zero = 1,
-		STENCIL_Replace = 2,
-		STENCIL_IncreaseSaturate = 3,
-		STENCIL_DecreaseSaturate = 4,
-		STENCIL_Invert = 5,
-		STENCIL_IncreaseRevert = 6,
-		STENCIL_DecreaseRevert = 7,
 	};
 
 	struct StencilOps
@@ -393,32 +450,6 @@ namespace RenderAPI
 		StencilOps BackSide;
 	};
 
-	enum TextureOp
-	{
-		TEXOP_Disable = 0,
-		TEXOP_SelectArg1 = 1,
-		TEXOP_SelectArg2 = 2,
-		TEXOP_Modulate = 3,
-		TEXOP_Modulate2x = 4,
-		TEXOP_Modulate4x = 5,
-		TEXOP_Add = 6,
-		TEXOP_AddSigned = 7,
-		TEXOP_AddSigned2x = 8,
-		TEXOP_Sub = 9,
-		TEXOP_AddSmooth = 10, // Screen
-		TEXOP_DotProduct3 = 11,
-		TEXOP_MultiplyAdd = 12,
-		TEXOP_Lerp = 13
-	};
-
-	enum TextureArg
-	{
-		TEXARG_Texture,
-		TEXARG_Constant,
-		TEXARG_Current,
-		TEXARG_TextureFactor,
-	};
-
 	struct TextureBlendingState
 	{
 		TextureBlendingState()
@@ -430,31 +461,6 @@ namespace RenderAPI
 		TextureOp  BlendOp;
 		TextureArg Argument0;
 		TextureArg Argument1;
-	};
-
-	enum SamplerFilter
-	{
-		FILTER_MinP_MagP_MipP = 0x0000,		// P = Point
-		FILTER_MinP_MagP_MipL = 0x0001,		// L = Linear
-		FILTER_MinP_MagL_MipP = 0x0010,		// X = None
-		FILTER_MinP_MagL_MipL = 0x0011,
-		FILTER_MinL_MagP_MipP = 0x0100,
-		FILTER_MinL_MagP_MipL = 0x0101,
-		FILTER_MinL_MagL_MipP = 0x0110,
-		FILTER_MinL_MagL_MipL = 0x0111,
-		FILTER_MinP_MagP_MipX = 0x0002,
-		FILTER_MinP_MagL_MipX = 0x0012,
-		FILTER_MinL_MagP_MipX = 0x0102,
-		FILTER_MinL_MagL_MipX = 0x0112,
-		FILTER_Anisotropic = 0x1000,
-	};
-
-	enum TextureAddress
-	{
-		TEX_ADDRESS_Repeat = 0,
-		TEX_ADDRESS_Clamp = 1,
-		TEX_ADDRESS_Mirror = 2,
-		TEX_ADDRESS_Border = 2,
 	};
 
 	struct TextureSampler
@@ -470,41 +476,6 @@ namespace RenderAPI
 		TextureAddress AddressU;
 		TextureAddress AddressV;
 		unsigned int BorderColor;
-	};
-
-	enum FillMode
-	{
-		FILL_Solid = 0,
-		FILL_Wireframe = 1,
-		FILL_Point = 2,
-	};
-
-	enum CullMode
-	{
-		CULL_None = 0,
-		CULL_CW = 1,
-		CULL_CCW = 2,
-	};
-
-	enum Primitive
-	{
-		PRIMITIVE_TriangleList = 0,
-		PRIMITIVE_TriangleStrip = 1,
-		PRIMITIVE_TriangleFan = 2,
-		PRIMITIVE_LineList = 3,
-		PRIMITIVE_LineStrip = 4,
-		PRIMITIVE_Point = 5,
-	};
-
-	enum DeviceState
-	{
-		DEVICE_OK = 0,
-		DEVICE_Lost = 1,
-		DEVICE_NeedReset = 2,
-		DEVICE_NeedRecreate = 3,
-		DEVICE_Busy = 4,
-		DEVICE_OutOfMemory = 5,
-		DEVICE_Error = 6,
 	};
 
 	struct ScissorState
@@ -567,69 +538,303 @@ namespace RenderAPI
 		unsigned int LinePitch;
 	};
 
-	//!对非2的幂texture的支持
-	enum ENONPOW2Support
+	// 所有的用户对象接口都从此对象继承，不需要显式书写虚基类。
+	// 用户对象接口在不使用的情况下，需要手动 Release 释放资源
+	// 不能通过拷贝、赋值构造接口对象
+	class RObject
 	{
-		//!完全支持
-		POW2_Support = 0,
-		//!有条件支持
-		POW2_Conditional = 1,
-		//!不支持
-		POW2_None = 2,
+	public:
+		virtual void Release() = 0;
+
+	protected:
+		RObject() { }
+		virtual ~RObject() { }
+
+	private:
+		RObject(const RObject&);
+		RObject& operator=(const RObject&);
 	};
 
-	struct DeviceCaps
+	// 系统日志设置函数
+	// 外部用户继承并实现此接口，以重定向或自定义处理系统内部的Log。
+	class Logger
 	{
-		//!最大texture宽度
-		unsigned int MaxTextureWidth;
-		//!最大texture高度
-		unsigned int MaxTextureHeight;
-		//!最大各项异性程度
-		unsigned int MaxAnisotropy;
-		//!最大texture层数
-		unsigned int MaxTextureStage;
-		//!最大同时绑定的texture数
-		unsigned int MaxSimultaneousTextures;
-		//!用户裁减面最大数
-		unsigned int MaxUserClipPlanes;
-		//!一次绘制的最大图原数
-		unsigned int MaxPrimitiveCount;
-		//!最大顶点索引数
-		unsigned int MaxVertexIndex;
-		//!最大顶点数据流数
-		unsigned int MaxStreams;
-		//!最大顶点宽度
-		unsigned int MaxStreamStride;
-		//!最大VS寄存器常量
-		unsigned int MaxVertexShaderConsts;
-		//!最大同时render target数
-		unsigned int MaxMRTs;
-		//!VS最大指令数
-		unsigned int MaxVertexShaderInstruction;
-		//!PS最大指令数
-		unsigned int MaxPixelShaderInstruction;
-		//!最大vertex blend矩阵数
-		unsigned int MaxVertexBlendMatrix;
-		//!最大vertex blend索引数
-		unsigned int MaxVertexBlendMatrixIndex;
-		//!VS版本，是一个两位数数字
-		unsigned int VertexShaderVersion;
-		//!PS版本，是一个两位数数字
-		unsigned int PixelShaderVersion;
-		//!是否支持32位索引
-		bool SupportIndex32;
-		//!是否支持dynamic texture
-		bool SupportsDynamicTexture;
-		//支持贴图透明通道
-		bool SupportTextureAlphaChannel;
-		//!仅支持正方形贴图
-		bool SupportOnlySquareTexture;
-		//!非pow2贴图支持
-		ENONPOW2Support NonePOW2Support;
-		//!初始显存数
-		unsigned int InitVideoMemory;
+	public:
+		virtual ~Logger() { }
+
+		virtual void LogE(const char*) = 0;
+
+		virtual void LogW(const char*) = 0;
+
+		virtual void LogD(const char*) = 0;
+
+		virtual void LogV(const char*) = 0;
 	};
 
+	class VertexBuffer : public RObject
+	{
+	public:
+		virtual ResourceUsage GetUsage() const = 0;
+
+		virtual unsigned int GetVertexCount() const = 0;
+
+		virtual unsigned int GetVertexStride() const = 0;
+
+		virtual unsigned int GetLength() const = 0;
+
+		virtual void* Lock(unsigned int offset, unsigned int lockLength, LockOption lockOption) = 0;
+
+		virtual void* DiscardLock() = 0;
+
+		virtual void Unlock() = 0;
+
+		virtual bool NeedRecreateWhenDeviceLost() const = 0;
+	};
+
+	class VertexDeclaration : public RObject
+	{
+	public:
+		virtual const VertexElement* GetElements() const = 0;
+
+		virtual unsigned int GetElementCount() const = 0;
+	};
+
+	class IndexBuffer : public RObject
+	{
+	public:
+		virtual ResourceUsage GetUsage() const = 0;
+
+		virtual IndexFormat GetFormat() const = 0;
+
+		virtual unsigned int GetIndexCount() const = 0;
+
+		virtual unsigned int GetLength() const = 0;
+
+		virtual void* Lock(unsigned int offset, unsigned int lockLength, LockOption lockOption) = 0;
+
+		virtual void* DiscardLock() = 0;
+
+		virtual void Unlock() = 0;
+
+		virtual bool NeedRecreateWhenDeviceLost() const = 0;
+	};
+
+	class Texture : public RObject
+	{
+	public:
+		virtual TextureFormat GetFormat() const = 0;
+
+		virtual void GenerateMipmaps() = 0;
+
+		virtual bool IsCubemap() const = 0;
+
+		virtual bool NeedRecreateWhenDeviceLost() const = 0;
+	};
+
+	class TextureSurface : public RObject
+	{
+	public:
+		virtual void* GetDC() = 0;
+
+		virtual void ReleaseDC() = 0;
+	};
+
+	class Texture2D : public Texture
+	{
+	public:
+		virtual unsigned int GetWidth() const = 0;
+
+		virtual unsigned int GetHeight() const = 0;
+
+		virtual MappedResource LockRect(unsigned int layer, LockOption lockOption) = 0;
+
+		virtual void UnlockRect(unsigned int layer) = 0;
+
+		virtual unsigned int GetLayerCount() const = 0;
+
+		virtual TextureSurface* GetSurface(unsigned int layer) = 0;
+
+		virtual bool IsRenderTexture() const = 0;
+		
+		virtual bool SaveToFile(const char* fileName, ImageFormat format) = 0;
+	};
+
+	class TextureCube : public Texture
+	{
+	public:
+		virtual unsigned int GetEdgeLength() const = 0;
+
+		virtual MappedResource LockRect(CubemapFace face, unsigned int layer, LockOption lockOption) = 0;
+
+		virtual void UnlockRect(CubemapFace face, unsigned int layer) = 0;
+	};
+
+	//如果这是一个通过Device创建出来的RT，那设备丢失的时候一定要释放掉
+	class RenderTarget : public RObject
+	{
+	public:
+		virtual RenderTargetFormat GetFormat() const = 0;
+
+		virtual unsigned int GetWidth() const = 0;
+
+		virtual unsigned int GetHeight() const = 0;
+
+		virtual Texture2D* GetTexturePtr() = 0;
+	};
+
+	class DepthStencil : public RObject
+	{
+	public:
+		virtual DepthStencilFormat GetFormat() const = 0;
+
+		virtual unsigned int GetWidth() const = 0;
+
+		virtual unsigned int GetHeight() const = 0;
+	};
+
+	class FXEffect : public RObject
+	{
+	public:
+		virtual unsigned int Begin(bool saveState) = 0;
+
+		virtual void End() = 0;
+
+		virtual bool BeginPass(unsigned int passIndex) = 0;
+
+		virtual void EndPass() = 0;
+
+		virtual void SetValidateTechnique() = 0;
+
+		virtual const char* GetTechniqueName(HEffectParam) = 0;
+
+		virtual HEffectParam GetTechniqueByName(const char* name) = 0;
+
+		virtual HEffectParam GetTechniqueByID(unsigned int index) = 0;
+
+		virtual HEffectParam GetParameterByName(const char* name) = 0;
+
+		virtual HEffectParam GetParameterByName(HEffectParam parent, const char* name) = 0;
+
+		virtual HEffectParam GetParameterElement(HEffectParam parent, unsigned int elementIndex) = 0;
+
+		virtual bool SetTechniqueByName(const char* name) = 0;
+
+		virtual bool SetMatrix(const char* paramName, const float* matrix) = 0;
+
+		virtual bool SetMatrixTranspose(const char* paramName, const float* matrix) = 0;
+
+		virtual bool SetMatrixInArray(const char* paramName, const float* matrix, unsigned int index) = 0;
+
+		virtual bool SetMatrixTransposeInArray(const char* paramName, const float* matrix, unsigned int index) = 0;
+
+		virtual bool SetMatrixArray(const char* paramName, const float* matrices, unsigned int count) = 0;
+
+		virtual bool SetMatrixTransposeArray(const char* paramName, const float* matrices, unsigned int count) = 0;
+
+		virtual bool SetValue(const char* paramName, const void* pValue, unsigned int sizeInByte) = 0;
+
+		virtual bool SetValueInArray(const char* paramName, const void* pValue, unsigned int sizeInByte, unsigned int index) = 0;
+
+		virtual bool SetFloat(const char* paramName, float fValue) = 0;
+
+		virtual bool SetInt(const char* paramName, int iValue) = 0;
+
+		virtual bool SetTexture(const char* paramName, RenderAPI::Texture* texture) = 0;
+
+		virtual bool SetTechnique(HEffectParam hParam) = 0;
+
+		virtual bool SetMatrix(HEffectParam hParam, const float* matrix) = 0;
+
+		virtual bool SetMatrixTranspose(HEffectParam hParam, const float* matrix) = 0;
+
+		virtual bool SetMatrixInArray(HEffectParam hParam, const float* matrix, unsigned int index) = 0;
+
+		virtual bool SetMatrixTransposeInArray(HEffectParam hParam, const float* matrix, unsigned int index) = 0;
+
+		virtual bool SetMatrixArray(HEffectParam hParam, const float* matrices, unsigned int count) = 0;
+
+		virtual bool SetMatrixTransposeArray(HEffectParam hParam, const float* matrices, unsigned int count) = 0;
+
+		virtual bool SetValue(HEffectParam hParam, const void* pValue, unsigned int sizeInByte) = 0;
+
+		virtual bool SetValueInArray(HEffectParam hParam, const void* pValue, unsigned int sizeInByte, unsigned int index) = 0;
+
+		virtual bool SetFloat(HEffectParam hParam, float fValue) = 0;
+
+		virtual bool SetInt(HEffectParam hParam, int iValue) = 0;
+
+		virtual bool SetTexture(HEffectParam hParam, RenderAPI::Texture* texture) = 0;
+
+		virtual void CommitChange() = 0;
+
+		virtual void OnLostDevice() = 0;
+
+		virtual void OnResetDevice() = 0;
+	};
+
+	class SwapChain : public RObject
+	{
+	public:
+		// 这个 RenderTarget 不再使用的时候要调用 Release
+		virtual RenderTarget* GetRenderTarget() = 0;
+
+		// 这个 RenderTarget 不再使用的时候要调用 Release
+		virtual DepthStencil* GetDepthStencil() = 0;
+
+		virtual unsigned int GetWidth() const = 0;
+
+		virtual unsigned int GetHeight() const = 0;
+
+		virtual bool OnResize(unsigned int width, unsigned int height) = 0;
+
+		// Present失败的时候，有两个可能
+		// 如果Present在BeginScene/EndScene之间调用，则表示调用失败
+		// 否则表示设备丢失，使用Context::CheckDeviceLost来查询设备状态，以确认是否需要重建
+		virtual DeviceState Present() = 0;
+	};
+
+	class OcclusionQuery : public RObject
+	{
+	public:
+		virtual bool Begin() = 0;
+
+		virtual void End() = 0;
+
+		virtual bool Get(void* dataPtr, unsigned int length) = 0;
+	};
+
+	// 用户渲染接口
+	class Device : public RObject
+	{
+	public:
+		// 这个 RenderTarget 不再使用的时候要调用 Release
+		virtual SwapChain* GetDefaultSwapChain() = 0;
+
+		virtual SwapChain* CreateAdditionalSwapChain(const SwapChainDesc&) = 0;
+
+		virtual VertexBuffer* CreateVertexBuffer(ResourceUsage usage, unsigned int vertexCount, unsigned int vertexSize, void* initialData) = 0;
+
+		virtual IndexBuffer* CreateIndexBuffer(ResourceUsage usage, IndexFormat format, unsigned int indexCount, void* initialData) = 0;
+
+		virtual VertexDeclaration* CreateVertexDeclaration(const VertexElement* elements, unsigned int elementCount) = 0;
+
+		virtual Texture2D* CreateTexture2D(ResourceUsage usage, TextureFormat format, unsigned int width, unsigned int height, unsigned int layer, void* initialData, int dataLinePitch, int dataHeight) = 0;
+
+		virtual TextureCube* CreateTextureCube(ResourceUsage usage, TextureFormat format, unsigned int edgeLength, unsigned int layer, void** initialData, int dataLinePitch, int dataHeight) = 0;
+
+		virtual FXEffect* CreateFXEffectFromFile(const char* effectFilePath) = 0;
+
+		virtual RenderTarget* CreateRenderTarget(TextureFormat format, unsigned int width, unsigned int height) = 0;
+
+		virtual DepthStencil* CreateDepthStencil(DepthStencilFormat format, unsigned int width, unsigned int height) = 0;
+
+		virtual OcclusionQuery* CreateOcclusionQuery() = 0;
+
+		//为了引擎临时加上去的，等一下一步在去掉吧
+		virtual void* GetImplementPtr() = 0;
+	};
+	
+	// 渲染命令接口
 	class Context : public RObject
 	{
 	public:
@@ -657,7 +862,7 @@ namespace RenderAPI
 
 		virtual void SetVertexDeclaration(VertexDeclaration* decl) = 0;
 
-		virtual void SetTexture(unsigned int slot, RenderAPI::Texture2D* textures) = 0;
+		virtual void SetTexture(unsigned int slot, RenderAPI::Texture* textures) = 0;
 
 		virtual void SetBlendState(const BlendState& state) = 0;
 
@@ -713,6 +918,12 @@ namespace RenderAPI
 
 		virtual bool UpdateTexture(Texture2D* src, Texture2D* dst) = 0;
 
+		virtual bool StretchTexture(Texture2D* src, Texture2D* dst, StretchFilter filter) = 0;
+
+		virtual bool GetRenderTargetData(RenderTarget* rt, TextureSurface* surface) = 0;
+
+		virtual bool GetDepthStencilData(DepthStencil* ds, TextureSurface* surface) = 0;
+
 		virtual DeviceState Present() = 0;
 
 		virtual DeviceState GetState() = 0;
@@ -722,162 +933,50 @@ namespace RenderAPI
 		virtual void EvictManagedResources() = 0;
 	};
 
-	class VertexBuffer : public RObject
+	// RenderAPI 总入口
+	class APIInstance
 	{
 	public:
-		virtual ResourceUsage GetUsage() const = 0;
+		// 请把所有其他用户接口都释放后，最后调用这个接口
+		virtual void Release() = 0;
 
-		virtual unsigned int GetVertexCount() const = 0;
+		// 获得系统内置默认Log对象
+		virtual Logger* GetDefaultLogger() = 0;
 
-		virtual unsigned int GetVertexStride() const = 0;
+		// 获取当前系统正在使用的Log对象
+		virtual Logger* GetCurrentLogger() = 0;
 
-		virtual unsigned int GetLength() const = 0;
+		// 修改系统使用的Log对象，以自定义log输出位置。
+		// 当参数为nullptr的时候，系统会使用默认的log对象处理输出
+		virtual void SetCurrentLogger(Logger*) = 0;
 
-		virtual void* Lock(unsigned int offset, unsigned int lockLength, LockOption lockOption) = 0;
+		// 用户接口创建
+		virtual CreationResult CreateDeviceAndContext(const SwapChainDesc& desc, bool isFullscreen, bool useVerticalSync) = 0;
 
-		virtual void* DiscardLock() = 0;
+		// 从文件中读取fx代码并编译，结果输出到compiledFXFile里
+		virtual bool CompileFXEffectFromFile(const char* sourceFXFile, const char* compiledFXFile) = 0;
 
-		virtual void Unlock() = 0;
+		virtual bool CheckMultiSampleSupport(RenderTargetFormat, DepthStencilFormat, AAMode, bool fullscreen) const = 0;
 
-		virtual bool NeedRecreateWhenDeviceLost() = 0;
+		virtual RenderTargetFormat GetDefaultRenderTargetFormat() = 0;
+
+		virtual const char* GetDeviceDriver() const = 0;
+
+		virtual const char* GetDeviceName() const = 0;
+
+		virtual const char* GetDeviceDesc() const = 0;
+
+		virtual unsigned int GetVendorID() const = 0;
+
+		virtual DriverVersion GetDriverVersion() const = 0;
+
+		virtual void PerfBegin(unsigned int color, const char* name) = 0;
+
+		virtual void PerfMark(unsigned int color, const char* name) = 0;
+
+		virtual void PerfEnd() = 0;
 	};
 
-	class VertexDeclaration : public RObject
-	{
-	public:
-		virtual const VertexElement* GetElements() const = 0;
-
-		virtual unsigned int GetElementCount() const = 0;
-	};
-
-	class IndexBuffer : public RObject
-	{
-	public:
-		virtual ResourceUsage GetUsage() const = 0;
-
-		virtual IndexFormat GetFormat() const = 0;
-
-		virtual unsigned int GetIndexCount() const = 0;
-
-		virtual unsigned int GetLength() const = 0;
-
-		virtual void* Lock(unsigned int offset, unsigned int lockLength, LockOption lockOption) = 0;
-
-		virtual void* DiscardLock() = 0;
-
-		virtual void Unlock() = 0;
-
-		virtual bool NeedRecreateWhenDeviceLost() = 0;
-	};
-
-	class Texture2D : public RObject
-	{
-	public:
-		virtual TextureFormat GetFormat() const = 0;
-
-		virtual unsigned int GetWidth() const = 0;
-
-		virtual unsigned int GetHeight() const = 0;
-
-		virtual MappedResource LockRect(unsigned int layer, LockOption lockOption) = 0;
-
-		virtual void UnlockRect(unsigned int layer) = 0;
-
-		virtual void GenerateMipmaps() = 0;
-
-		virtual bool NeedRecreateWhenDeviceLost() = 0;
-	};
-
-	class RenderTarget : public RObject
-	{
-	public:
-		virtual RenderTargetFormat GetFormat() const = 0;
-
-		virtual unsigned int GetWidth() const = 0;
-
-		virtual unsigned int GetHeight() const = 0;
-
-		virtual bool IsTexture2D() const = 0;
-
-		virtual Texture2D* GetTexturePtr() = 0;
-	};
-
-	class DepthStencil : public RObject
-	{
-	public:
-		virtual DepthStencilFormat GetFormat() const = 0;
-
-		virtual unsigned int GetWidth() const = 0;
-
-		virtual unsigned int GetHeight() const = 0;
-
-		virtual bool IsTexture2D() const = 0;
-
-		virtual Texture2D* GetTexturePtr() = 0;
-	};
-
-	class FXEffect : public RObject
-	{
-	public:
-		virtual unsigned int Begin() = 0;
-
-		virtual void End() = 0;
-
-		virtual bool BeginPass(unsigned int passIndex) = 0;
-
-		virtual void EndPass() = 0;
-
-		virtual void SetValidateTechnique() = 0;
-
-		virtual void SetTechniqueByName(const char* name) = 0;
-
-		virtual bool SetMatrix(const char* paramName, const float* matrix) = 0;
-
-		virtual bool SetMatrixInArray(const char* paramName, const float* data, unsigned int index) = 0;
-
-		virtual bool SetMatrixArray(const char* paramName, const float* data, unsigned int count) = 0;
-
-		virtual bool SetValue(const char* paramName, const void* pData, unsigned int sizeinByte) = 0;
-
-		virtual bool SetValueInArray(const char* paramName, const void* pData, unsigned int sizeinByte, unsigned int index) = 0;
-
-		virtual bool SetFloat(const char* paramName, float val) = 0;
-
-		virtual bool SetInt(const char* paramName, int data) = 0;
-
-		virtual bool SetTexture(const char*  paramName, RenderAPI::Texture2D* texture) = 0;
-
-		virtual void CommitChange() = 0;
-	};
-
-	class SwapChain : public RObject
-	{
-	public:
-		// 这个 RenderTarget 不再使用的时候要调用 Release
-		virtual RenderTarget* GetRenderTarget() = 0;
-
-		// 这个 RenderTarget 不再使用的时候要调用 Release
-		virtual DepthStencil* GetDepthStencil() = 0;
-
-		virtual unsigned int GetWidth() const = 0;
-
-		virtual unsigned int GetHeight() const = 0;
-
-		virtual bool OnResize(unsigned int width, unsigned int height) = 0;
-
-		// Present失败的时候，有两个可能
-		// 如果Present在BeginScene/EndScene之间调用，则表示调用失败
-		// 否则表示设备丢失，使用Context::CheckDeviceLost来查询设备状态，以确认是否需要重建
-		virtual DeviceState Present() = 0;
-	};
-
-	class OcclusionQuery : public RObject
-	{
-	public:
-		virtual bool Begin() = 0;
-
-		virtual void End() = 0;
-
-		virtual bool Get(void* dataPtr, unsigned int length) = 0;
-	};
+	// APIInstance 初始化接口
+	APIInstance* CreateAPIInstance();
 }

@@ -5,12 +5,11 @@
 #include "DepthStencil.h"
 #include "DX9Include.h"
 
-
-class APIGlobal;
+class APIInstance;
 class Device : public RenderAPI::Device
 {
 public:
-	Device(APIGlobal* pAPIContext, IDirect3DDevice9* device, const RenderAPI::SwapChainDesc& desc, bool isFullscreen, bool useVerticalSync);
+	Device(APIInstance* pAPIContext, IDirect3DDevice9* device, const RenderAPI::SwapChainDesc& desc, bool isFullscreen, bool useVerticalSync);
 
 	~Device();
 
@@ -28,11 +27,13 @@ public:
 
 	virtual RenderAPI::VertexDeclaration* CreateVertexDeclaration(const RenderAPI::VertexElement* elements, unsigned int elementCount);
 
-	virtual RenderAPI::Texture2D* CreateTexture2D(RenderAPI::ResourceUsage usage, RenderAPI::TextureFormat format, unsigned int width, unsigned int height, void* initialData, int dataLinePitch, int dataHeight);
+	virtual RenderAPI::Texture2D* CreateTexture2D(RenderAPI::ResourceUsage usage, RenderAPI::TextureFormat format, unsigned int width, unsigned int height, unsigned int layer, void* initialData, int dataLinePitch, int dataHeight);
+
+	virtual RenderAPI::TextureCube* CreateTextureCube(RenderAPI::ResourceUsage usage, RenderAPI::TextureFormat format, unsigned int edgeLength, unsigned int layer, void** initialData, int dataLinePitch, int dataHeight);
 
 	virtual RenderAPI::FXEffect* CreateFXEffectFromFile(const char* effectFilePath);
 
-	virtual RenderAPI::RenderTarget* CreateRenderTarget(RenderAPI::RenderTargetFormat format, unsigned int width, unsigned int height);
+	virtual RenderAPI::RenderTarget* CreateRenderTarget(RenderAPI::TextureFormat format, unsigned int width, unsigned int height);
 
 	virtual RenderAPI::DepthStencil* CreateDepthStencil(RenderAPI::DepthStencilFormat format, unsigned int width, unsigned int height);
 
@@ -43,7 +44,7 @@ public:
 	virtual void Release();
 
 private:
-	APIGlobal* m_pAPI;
+	APIInstance* m_pAPI;
 	::DepthStencil* CreateDepthStencilImplement(RenderAPI::DepthStencilFormat format, unsigned int width, unsigned int height);
 	::SwapChain* m_pDefaultSwapChain;
 	IDirect3DDevice9* m_pDevice;

@@ -42,7 +42,7 @@ void IndexBuffer::Release()
 	delete this;
 }
 
-bool IndexBuffer::NeedRecreateWhenDeviceLost() 
+bool IndexBuffer::NeedRecreateWhenDeviceLost() const
 {
 	return m_recreateWhenDeviceLost;
 }
