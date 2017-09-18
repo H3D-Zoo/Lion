@@ -67,6 +67,10 @@ public:
 
 	void AddRef();
 
+	void LogError(const char* action, const char* detail);
+
+	void LogError(const char* action, const char* detail, HRESULT errorCode);
+
 private:
 	void Deinit();
 

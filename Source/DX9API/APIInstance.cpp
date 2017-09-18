@@ -356,6 +356,20 @@ void APIInstance::AddRef()
 	++m_refCount;
 }
 
+void APIInstance::LogError(const char* action, const char * detail)
+{
+	char buff[512];
+	_sprintf_p(buff, 512, "%s Failed, %s, ", action, detail);
+	GetCurrentLogger()->LogE(buff);
+}
+
+void APIInstance::LogError(const char* action, const char * detail, HRESULT errorCode)
+{
+	char buff[512];
+	_sprintf_p(buff, 512, "%s Failed, error:%d, %s, ", action, errorCode, detail);
+	GetCurrentLogger()->LogE(buff);
+}
+
 void APIInstance::Release()
 {
 	if (0 == --m_refCount)

@@ -1,8 +1,9 @@
 #include "VertexBuffer.h"
 #include "EnumMapping.h"
 
-VertexBuffer::VertexBuffer(IDirect3DVertexBuffer9* vertexBuffer, RenderAPI::ResourceUsage usage, unsigned int vertexCount, unsigned int vertexSize, bool recreateWhenDeviceLost)
-	: m_usage(usage)
+VertexBuffer::VertexBuffer(APIInstance* pAPIInstance, IDirect3DVertexBuffer9* vertexBuffer, RenderAPI::ResourceUsage usage, unsigned int vertexCount, unsigned int vertexSize, bool recreateWhenDeviceLost)
+	: m_pAPIInstance(pAPIInstance)
+	, m_usage(usage)
 	, m_recreateWhenDeviceLost(recreateWhenDeviceLost)
 	, m_vertexCount(vertexCount)
 	, m_vertexStride(vertexSize)
@@ -43,12 +44,14 @@ void * VertexBuffer::Lock(unsigned int offset, unsigned int lockLength, RenderAP
 		return NULL;
 
 	void* pDataPtr = NULL;
-	if (S_OK == m_pVertexBuffer->Lock(offset, lockLength, &pDataPtr, s_lockOptions[lockOption]))
+	HRESULT hr = m_pVertexBuffer->Lock(offset, lockLength, &pDataPtr, s_lockOptions[lockOption]);
+	if (S_OK == hr)
 	{
 		return pDataPtr;
 	}
 	else
 	{
+		m_pAPIInstance->LogError("VertexBuffer::Lock", "Lock failed.", hr);
 		return NULL;
 	}
 }

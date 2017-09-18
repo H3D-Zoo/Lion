@@ -1,12 +1,13 @@
 #pragma once
 #include "../../RenderAPI/RenderAPI.h"
 #include <vector>
+#include "APIInstance.h"
 #include "DX9Include.h"
 
 class IndexBuffer : public RenderAPI::IndexBuffer
 {
 public:
-	IndexBuffer(IDirect3DIndexBuffer9* indexBuffer, RenderAPI::ResourceUsage usage, RenderAPI::IndexFormat format, unsigned int count, bool recreateWhenDeviceLost);
+	IndexBuffer(APIInstance* pAPI, IDirect3DIndexBuffer9* indexBuffer, RenderAPI::ResourceUsage usage, RenderAPI::IndexFormat format, unsigned int count, bool recreateWhenDeviceLost);
 
 	~IndexBuffer();
 
@@ -31,6 +32,7 @@ public:
 	IDirect3DIndexBuffer9* GetD3DIndexBuffer();
 
 private:
+	APIInstance* m_pAPIInstance;
 	RenderAPI::ResourceUsage m_usage;
 	RenderAPI::IndexFormat m_indexFormat;
 	const bool m_recreateWhenDeviceLost;

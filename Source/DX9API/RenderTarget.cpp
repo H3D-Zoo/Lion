@@ -10,7 +10,7 @@ RenderTarget::RenderTarget(IDirect3DSurface9* rtSurface, RenderAPI::RenderTarget
 
 }
 
-RenderTarget::RenderTarget(IDirect3DTexture9* rtTexture, RenderAPI::TextureFormat format, unsigned int width, unsigned int height)
+RenderTarget::RenderTarget(APIInstance* pAPI, IDirect3DTexture9* rtTexture, RenderAPI::TextureFormat format, unsigned int width, unsigned int height)
 	: m_format(RenderAPI::RT_RenderTexture)
 	, m_width(width)
 	, m_height(height)
@@ -18,7 +18,7 @@ RenderTarget::RenderTarget(IDirect3DTexture9* rtTexture, RenderAPI::TextureForma
 	, m_rtTexture(NULL)
 {
 	rtTexture->GetSurfaceLevel(0, &m_rtSurface);
-	m_rtTexture = new Texture2D(rtTexture, format, RenderAPI::RESUSAGE_Default, width, height, false, true, true);
+	m_rtTexture = new Texture2D(pAPI, rtTexture, format, RenderAPI::RESUSAGE_Default, width, height, false, true, true);
 }
 
 RenderTarget::~RenderTarget()

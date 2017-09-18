@@ -1,8 +1,9 @@
 #include "IndexBuffer.h"
 #include "EnumMapping.h"
 
-IndexBuffer::IndexBuffer(IDirect3DIndexBuffer9* indexBuffer, RenderAPI::ResourceUsage usage, RenderAPI::IndexFormat format, unsigned int count, bool recreateWhenDeviceLost)
-	: m_usage(usage)
+IndexBuffer::IndexBuffer(APIInstance* pAPI, IDirect3DIndexBuffer9* indexBuffer, RenderAPI::ResourceUsage usage, RenderAPI::IndexFormat format, unsigned int count, bool recreateWhenDeviceLost)
+	: m_pAPIInstance(pAPI)
+	, m_usage(usage)
 	, m_indexFormat(format)
 	, m_recreateWhenDeviceLost(recreateWhenDeviceLost)
 	, m_indexCount(count)
@@ -54,15 +55,20 @@ IDirect3DIndexBuffer9 * IndexBuffer::GetD3DIndexBuffer()
 void * IndexBuffer::Lock(unsigned int offset, unsigned int lockLength, RenderAPI::LockOption lockOption)
 {
 	if (m_usage == RenderAPI::RESUSAGE_Immuable)
+	{
+		m_pAPIInstance->LogError("IndexBuffer::Lock", "Immuable IndexBuffer Cannot be locked.");
 		return NULL;
+	}
 
 	void* pDataPtr = NULL;
-	if (S_OK == m_pIndexBuffer->Lock(offset, lockLength, &pDataPtr, s_lockOptions[lockOption]))
+	HRESULT hr = m_pIndexBuffer->Lock(offset, lockLength, &pDataPtr, s_lockOptions[lockOption]);
+	if (S_OK == hr)
 	{
 		return pDataPtr;
 	}
 	else
 	{
+		m_pAPIInstance->LogError("IndexBuffer::Lock", "IndexBuffer Cannot be locked.", hr);
 		return NULL;
 	}
 }

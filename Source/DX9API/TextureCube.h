@@ -1,6 +1,7 @@
 #pragma once
 #include "../../RenderAPI/RenderAPI.h"
 #include <vector>
+#include "APIInstance.h"
 #include "DX9Include.h"
 
 class RenderTarget;
@@ -9,7 +10,7 @@ class DepthStencil;
 class TextureCube : public RenderAPI::TextureCube
 {
 public:
-	TextureCube(IDirect3DCubeTexture9* texture, RenderAPI::TextureFormat format, RenderAPI::ResourceUsage usage, unsigned int edgeLength, bool autoGenMipmaps, bool recreateWhenDeviceLost);
+	TextureCube(APIInstance* pAPIInstance, IDirect3DCubeTexture9* texture, RenderAPI::TextureFormat format, RenderAPI::ResourceUsage usage, unsigned int edgeLength, bool autoGenMipmaps, bool recreateWhenDeviceLost);
 
 	~TextureCube();
 
@@ -34,7 +35,7 @@ public:
 	IDirect3DCubeTexture9* GetD3DTexture();
 
 private:
-
+	APIInstance* m_pAPIInstance;
 	RenderAPI::ResourceUsage m_usage;
 	RenderAPI::TextureFormat m_texFormat;
 	const bool m_autoGenMipmaps;

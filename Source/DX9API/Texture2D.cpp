@@ -4,10 +4,11 @@
 #include "DepthStencil.h"
 #include "EnumMapping.h"
 
-Texture2D::Texture2D(IDirect3DTexture9* texture, RenderAPI::TextureFormat format, RenderAPI::ResourceUsage usage,
+Texture2D::Texture2D(APIInstance* pAPIInstance, IDirect3DTexture9* texture, RenderAPI::TextureFormat format, RenderAPI::ResourceUsage usage,
 	unsigned int width, unsigned int height,
 	bool autoGenMipmaps, bool recreateWhenDeviceLost, bool isRenderTexture)
-	: m_texFormat(format)
+	: m_pAPIInstance(pAPIInstance)
+	, m_texFormat(format)
 	, m_usage(usage)
 	, m_autoGenMipmaps(autoGenMipmaps)
 	, m_recreateWhenDeviceLost(recreateWhenDeviceLost)
@@ -85,14 +86,21 @@ IDirect3DTexture9 ** Texture2D::TextureForUpdate(unsigned int index)
 RenderAPI::MappedResource Texture2D::LockRect(unsigned int layer, RenderAPI::LockOption lockOption)
 {
 	RenderAPI::MappedResource ret;
-	if (m_usage == RenderAPI::RESUSAGE_Immuable)
+	if (m_isRenderTexture)
 	{
+		m_pAPIInstance->LogError("Texture2D::Lock", " Render Texture cannot be locked because.");
+		ret.Success = false;
+	}
+	else if (m_usage == RenderAPI::RESUSAGE_Immuable)
+	{
+		m_pAPIInstance->LogError("Texture2D::Lock", "Immuable Texture cannot be locked.");
 		ret.Success = false;
 	}
 	else if (m_usage == RenderAPI::RESUSAGE_Dynamic || m_usage == RenderAPI::RESUSAGE_DynamicRW)
 	{
 		D3DLOCKED_RECT lockedRect;
-		if (S_OK == m_pTexture->LockRect(layer, &lockedRect, NULL, s_lockOptions[lockOption]))
+		HRESULT hr = m_pTexture->LockRect(layer, &lockedRect, NULL, s_lockOptions[lockOption]);
+		if (S_OK == hr)
 		{
 			ret.Success = true;
 			ret.DataPtr = lockedRect.pBits;
@@ -100,6 +108,7 @@ RenderAPI::MappedResource Texture2D::LockRect(unsigned int layer, RenderAPI::Loc
 		}
 		else
 		{
+			m_pAPIInstance->LogError("Texture2D::Lock", " Lock failed.", hr);
 			ret.Success = false;
 		}
 	}
@@ -126,6 +135,16 @@ RenderAPI::MappedResource Texture2D::LockRect(unsigned int layer, RenderAPI::Loc
 					ret.DataPtr = lockedRect.pBits;
 					ret.LinePitch = lockedRect.Pitch;
 				}
+				else
+				{
+					m_pAPIInstance->LogError("Texture2D::Lock", "helper texture lock failed.", hr);
+					ret.Success = false;
+				}
+			}
+			else
+			{
+				m_pAPIInstance->LogError("Texture2D::Lock", "helper texture creation failed.", hr);
+				ret.Success = false;
 			}
 		}
 	}
@@ -158,9 +177,14 @@ void Texture2D::UnlockRect(unsigned int layer)
 					pTextureForUpdate->GetSurfaceLevel(0, &pSurfaceSrc);
 					m_pTexture->GetSurfaceLevel(0, &pSurfaceDst);
 					hr = pDevice->UpdateSurface(pSurfaceSrc, NULL, pSurfaceDst, NULL);
+					if (hr != S_OK)
+					{
+						m_pAPIInstance->LogError("Texture2D::UnlockRect", "helper texture update failed.", hr);
+					}
 					pSurfaceSrc->Release();
 					pSurfaceDst->Release();
 				}
+				
 			}
 
 			pTextureForUpdate->Release();

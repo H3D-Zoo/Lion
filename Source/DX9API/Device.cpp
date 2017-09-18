@@ -127,6 +127,7 @@ RenderAPI::VertexBuffer* Device::CreateVertexBuffer(RenderAPI::ResourceUsage usa
 {
 	if (vertexCount == 0 || vertexSize == 0)
 	{
+		m_pAPI->LogError("CreateVertexBuffer", "Vertex Count and Vertex Size cannot be 0.");
 		return NULL;
 	}
 
@@ -134,6 +135,7 @@ RenderAPI::VertexBuffer* Device::CreateVertexBuffer(RenderAPI::ResourceUsage usa
 	bool dynamic = usage == RenderAPI::RESUSAGE_Dynamic || usage == RenderAPI::RESUSAGE_DynamicRW;
 	if (initialData == NULL && immuable)
 	{
+		m_pAPI->LogError("CreateVertexBuffer", "InitialData should be provided when VertexBuffer is Immuable.");
 		return NULL;
 	}
 
@@ -145,6 +147,7 @@ RenderAPI::VertexBuffer* Device::CreateVertexBuffer(RenderAPI::ResourceUsage usa
 	HRESULT hr = m_pDevice->CreateVertexBuffer(bufferSize, d3dUsage, 0, pool, &pVertexBuffer, NULL);
 	if (hr != S_OK)
 	{
+		m_pAPI->LogError("CreateVertexBuffer", "CreateVertexBuffer failed", hr);
 		return NULL;
 	}
 
@@ -156,9 +159,13 @@ RenderAPI::VertexBuffer* Device::CreateVertexBuffer(RenderAPI::ResourceUsage usa
 			memcpy(dataPtr, initialData, bufferSize);
 			pVertexBuffer->Unlock();
 		}
+		else
+		{
+			m_pAPI->LogError("CreateVertexBuffer", "Cannot lock VertexBuffer when upload.", hr);
+		}
 	}
 
-	return new VertexBuffer(pVertexBuffer, usage, vertexCount, vertexSize, pool != D3DPOOL_MANAGED);
+	return new VertexBuffer(m_pAPI, pVertexBuffer, usage, vertexCount, vertexSize, pool != D3DPOOL_MANAGED);
 
 }
 
@@ -166,6 +173,7 @@ RenderAPI::IndexBuffer* Device::CreateIndexBuffer(RenderAPI::ResourceUsage usage
 {
 	if (indexCount == 0)
 	{
+		m_pAPI->LogError("CreateIndexBuffer", "Index Count cannot be 0.");
 		return NULL;
 	}
 
@@ -173,6 +181,7 @@ RenderAPI::IndexBuffer* Device::CreateIndexBuffer(RenderAPI::ResourceUsage usage
 	bool dynamic = usage == RenderAPI::RESUSAGE_Dynamic || usage == RenderAPI::RESUSAGE_DynamicRW;
 	if (initialData == NULL && immuable)
 	{
+		m_pAPI->LogError("CreateIndexBuffer", "InitialData should be provided when Buffer is Immuable.");
 		return NULL;
 	}
 
@@ -184,6 +193,7 @@ RenderAPI::IndexBuffer* Device::CreateIndexBuffer(RenderAPI::ResourceUsage usage
 
 	if (hr != S_OK)
 	{
+		m_pAPI->LogError("CreateIndexBuffer", "CreateIndexBuffer failed", hr);
 		return NULL;
 	}
 
@@ -195,9 +205,13 @@ RenderAPI::IndexBuffer* Device::CreateIndexBuffer(RenderAPI::ResourceUsage usage
 			memcpy(dataPtr, initialData, bufferSize);
 			pIndexBuffer->Unlock();
 		}
+		else
+		{
+			m_pAPI->LogError("CreateIndexBuffer", "Cannot lock IndexBuffer when upload.", hr);
+		}
 	}
 
-	return new IndexBuffer(pIndexBuffer, usage, format, indexCount, pool != D3DPOOL_MANAGED);
+	return new IndexBuffer(m_pAPI, pIndexBuffer, usage, format, indexCount, pool != D3DPOOL_MANAGED);
 }
 
 namespace
@@ -239,8 +253,9 @@ namespace
 }
 RenderAPI::VertexDeclaration* Device::CreateVertexDeclaration(const RenderAPI::VertexElement * elements, unsigned int elementCount)
 {
-	if (elementCount == 0)
+	if (elementCount == 0 || elements == NULL)
 	{
+		m_pAPI->LogError("CreateVertexDeclaration", "Element Count cannot be 0.");
 		return NULL;
 	}
 
@@ -279,12 +294,14 @@ RenderAPI::VertexDeclaration* Device::CreateVertexDeclaration(const RenderAPI::V
 	elementEnd.UsageIndex = 0;
 
 	IDirect3DVertexDeclaration9* pVertexDeclaration = NULL;
-	if (S_OK == m_pDevice->CreateVertexDeclaration(&(d3dElements[0]), &pVertexDeclaration))
+	HRESULT hr = m_pDevice->CreateVertexDeclaration(&(d3dElements[0]), &pVertexDeclaration);
+	if (S_OK == hr)
 	{
 		return new VertexDeclaration(pVertexDeclaration, elementList);
 	}
 	else
 	{
+		m_pAPI->LogError("CreateVertexDeclaration", "CreateVertexDeclaration failed.", hr);
 		return NULL;
 	}
 }
@@ -293,6 +310,7 @@ RenderAPI::Texture2D * Device::CreateTexture2D(RenderAPI::ResourceUsage usage, R
 {
 	if (width == 0 || height == 0)
 	{
+		m_pAPI->LogError("CreateTexture", "Width and Height cannot be 0.");
 		return NULL;
 	}
 
@@ -301,6 +319,7 @@ RenderAPI::Texture2D * Device::CreateTexture2D(RenderAPI::ResourceUsage usage, R
 	{
 		if (immuable)
 		{
+			m_pAPI->LogError("CreateTexture2D", "Initial Data should be provided when Texture is Immuable");
 			return NULL;
 		}
 	}
@@ -308,6 +327,7 @@ RenderAPI::Texture2D * Device::CreateTexture2D(RenderAPI::ResourceUsage usage, R
 	{
 		if (dataLinePitch == 0 || dataHeight == 0)
 		{
+			m_pAPI->LogError("CreateTexture2D", "Pitch and height of initialData is invalid.");
 			return NULL;
 		}
 	}
@@ -318,7 +338,7 @@ RenderAPI::Texture2D * Device::CreateTexture2D(RenderAPI::ResourceUsage usage, R
 	}
 	else if (layer == 0 && !autoGenMipmaps)
 	{
-		autoGenMipmaps = true;
+		layer = 1;
 	}
 
 	IDirect3DTexture9* pTexture = NULL;
@@ -330,10 +350,11 @@ RenderAPI::Texture2D * Device::CreateTexture2D(RenderAPI::ResourceUsage usage, R
 
 	if (hr != S_OK)
 	{
+		m_pAPI->LogError("CreateTexture2D", "CreateTexture failed.", hr);
 		return NULL;
 	}
 
-	::Texture2D* texture = new ::Texture2D(pTexture, format, usage, width, height, autoGenMipmaps, pool != D3DPOOL_MANAGED, false);
+	::Texture2D* texture = new ::Texture2D(m_pAPI, pTexture, format, usage, width, height, autoGenMipmaps, pool != D3DPOOL_MANAGED, false);
 
 	if (initialData != NULL)
 	{
@@ -358,6 +379,7 @@ RenderAPI::TextureCube * Device::CreateTextureCube(RenderAPI::ResourceUsage usag
 {
 	if (edgeLength == 0)
 	{
+		m_pAPI->LogError("CreateTextureCube", "edgeLength cannot be 0.");
 		return NULL;
 	}
 
@@ -366,6 +388,7 @@ RenderAPI::TextureCube * Device::CreateTextureCube(RenderAPI::ResourceUsage usag
 	{
 		if (immuable)
 		{
+			m_pAPI->LogError("CreateTextureCube", "Initial Data should be provided when Texture is Immuable");
 			return NULL;
 		}
 	}
@@ -373,6 +396,7 @@ RenderAPI::TextureCube * Device::CreateTextureCube(RenderAPI::ResourceUsage usag
 	{
 		if (dataLinePitch == 0 || dataHeight == 0)
 		{
+			m_pAPI->LogError("CreateTextureCube", "Pitch and height of initialData is invalid.");
 			return NULL;
 		}
 	}
@@ -383,7 +407,7 @@ RenderAPI::TextureCube * Device::CreateTextureCube(RenderAPI::ResourceUsage usag
 	}
 	else if (layer == 0 && !autoGenMipmaps)
 	{
-		autoGenMipmaps = true;
+		layer = 1;
 	}
 
 	IDirect3DCubeTexture9* pTexture = NULL;
@@ -395,10 +419,11 @@ RenderAPI::TextureCube * Device::CreateTextureCube(RenderAPI::ResourceUsage usag
 
 	if (hr != S_OK)
 	{
+		m_pAPI->LogError("CreateTextureCube", "CreateCubeTexture failed.", hr);
 		return NULL;
 	}
 
-	::TextureCube* texture = new ::TextureCube(pTexture, format, usage, edgeLength, autoGenMipmaps, pool != D3DPOOL_MANAGED);
+	::TextureCube* texture = new ::TextureCube(m_pAPI, pTexture, format, usage, edgeLength, autoGenMipmaps, pool != D3DPOOL_MANAGED);
 	if (initialData != NULL)
 	{
 		RenderAPI::CubemapFace faces[6] = {
@@ -452,9 +477,9 @@ RenderAPI::FXEffect * Device::CreateFXEffectFromFile(const char * effectFilePath
 	}
 	else
 	{
-		// LogError("´Ó´ÅÅÌ¼ÓÔØfxÊ§°Ü: %s", fxofilename.c_str());
-		//PrintErrorIinfo(pErrorBuffer);
 		std::string errorStr = (char*)pErrorBuffer->GetBufferPointer();
+		m_pAPI->LogError("Device::CreateFXEffectFromFile", errorStr.c_str(), hr);
+		pErrorBuffer->Release();
 		return NULL;
 	}
 
@@ -468,10 +493,11 @@ RenderAPI::RenderTarget* Device::CreateRenderTarget(RenderAPI::TextureFormat for
 
 	if (hr != S_OK)
 	{
+		m_pAPI->LogError("CreateRenderTarget", "CreateTexture failed.", hr);
 		return NULL;
 	}
 
-	return new RenderTarget(pTexture, format, width, height);
+	return new RenderTarget(m_pAPI, pTexture, format, width, height);
 }
 
 RenderAPI::DepthStencil * Device::CreateDepthStencil(RenderAPI::DepthStencilFormat format, unsigned int width, unsigned int height)
@@ -503,6 +529,7 @@ void* Device::GetImplementPtr()
 	HRESULT hr = m_pDevice->CreateDepthStencilSurface(width, height, s_DSFormats[format], D3DMULTISAMPLE_NONE, 0, TRUE, &pDSSurface, NULL);
 	if (hr != S_OK)
 	{
+		m_pAPI->LogError("CreateDepthStencilImplement", "CreateDepthStencilSurface failed.", hr);
 		return NULL;
 	}
 
@@ -513,3 +540,8 @@ void Device::Release()
 {
 	delete this;
 }
+
+
+
+
+

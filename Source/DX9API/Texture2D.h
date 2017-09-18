@@ -1,6 +1,7 @@
 #pragma once
 #include "../../RenderAPI/RenderAPI.h"
 #include <vector>
+#include "APIInstance.h"
 #include "RefCount.hpp"
 #include "DX9Include.h"
 
@@ -35,7 +36,7 @@ private:
 class Texture2D : public RenderAPI::Texture2D
 {
 public:
-	Texture2D(IDirect3DTexture9* texture, RenderAPI::TextureFormat format, RenderAPI::ResourceUsage usage,
+	Texture2D(APIInstance* pAPIInstance, IDirect3DTexture9* texture, RenderAPI::TextureFormat format, RenderAPI::ResourceUsage usage,
 		unsigned int width, unsigned int height, 
 		bool autoGenMipmaps, bool recreateWhenDeviceLost, bool isRenderTexture);
 
@@ -76,6 +77,7 @@ public:
 	IDirect3DTexture9* GetD3DTexture();
 
 private:
+	APIInstance* m_pAPIInstance;
 	IDirect3DTexture9** TextureForUpdate(unsigned int index);
 
 	RefCount m_refCount;

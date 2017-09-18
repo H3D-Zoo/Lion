@@ -1,12 +1,13 @@
 #pragma once
 #include "../../RenderAPI/RenderAPI.h"
 #include <vector>
+#include "APIInstance.h"
 #include "DX9Include.h"
 
 class VertexBuffer : public RenderAPI::VertexBuffer
 {
 public:
-	VertexBuffer(IDirect3DVertexBuffer9* vertexBuffer, RenderAPI::ResourceUsage usage, unsigned int vertexCount, unsigned int vertexSize, bool recreateWhenDeviceLost);
+	VertexBuffer(APIInstance* pAPIInstance, IDirect3DVertexBuffer9* vertexBuffer, RenderAPI::ResourceUsage usage, unsigned int vertexCount, unsigned int vertexSize, bool recreateWhenDeviceLost);
 
 	~VertexBuffer();
 
@@ -31,6 +32,7 @@ public:
 	IDirect3DVertexBuffer9* GetBufferPtr();
 
 private:
+	APIInstance* m_pAPIInstance;
 	RenderAPI::ResourceUsage m_usage;
 	const bool m_recreateWhenDeviceLost;
 	unsigned int m_vertexCount;

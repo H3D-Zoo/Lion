@@ -17,8 +17,9 @@ namespace
 	};
 }
 
-TextureCube::TextureCube(IDirect3DCubeTexture9* texture, RenderAPI::TextureFormat format, RenderAPI::ResourceUsage usage, unsigned int edgeLength, bool autoGenMipmaps, bool recreateWhenDeviceLost)
-	: m_texFormat(format)
+TextureCube::TextureCube(APIInstance* pAPIInstance, IDirect3DCubeTexture9* texture, RenderAPI::TextureFormat format, RenderAPI::ResourceUsage usage, unsigned int edgeLength, bool autoGenMipmaps, bool recreateWhenDeviceLost)
+	: m_pAPIInstance(pAPIInstance)
+	, m_texFormat(format)
 	, m_usage(usage)
 	, m_autoGenMipmaps(autoGenMipmaps)
 	, m_recreateWhenDeviceLost(recreateWhenDeviceLost)
@@ -65,7 +66,8 @@ RenderAPI::MappedResource TextureCube::LockRect(RenderAPI::CubemapFace face, uns
 	else
 	{
 		D3DLOCKED_RECT lockedRect;
-		if (S_OK == m_pTexture->LockRect(s_d3dCubeFaces[face], layer, &lockedRect, NULL, s_lockOptions[lockOption]))
+		HRESULT hr = m_pTexture->LockRect(s_d3dCubeFaces[face], layer, &lockedRect, NULL, s_lockOptions[lockOption]);
+		if (S_OK == hr)
 		{
 			ret.Success = true;
 			ret.DataPtr = lockedRect.pBits;
@@ -74,6 +76,7 @@ RenderAPI::MappedResource TextureCube::LockRect(RenderAPI::CubemapFace face, uns
 		else
 		{
 			ret.Success = false;
+			m_pAPIInstance->LogError("TextureCube::UnlockRect", "Lock failed.", hr);
 		}
 	}
 	return ret;
@@ -83,6 +86,7 @@ void TextureCube::UnlockRect(RenderAPI::CubemapFace face, unsigned int layer)
 {
 	if (m_usage == RenderAPI::RESUSAGE_Immuable)
 	{
+		m_pAPIInstance->LogError("TextureCube::UnlockRect", "Immuable Texture cannot be locked.");
 	}
 	else
 	{
