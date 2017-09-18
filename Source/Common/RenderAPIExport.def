@@ -1,3 +1,3 @@
 EXPORTS
-	CreateAPIGlobal	@1
+	CreateAPIInstance	@1
 	

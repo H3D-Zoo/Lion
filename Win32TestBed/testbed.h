@@ -30,14 +30,14 @@ private:
 	void UploadParticlesAndCommitDrawcalls();
 
 	HMODULE m_hRenderAPIDLL = nullptr;
-	RenderAPI::APIInstance* m_pAPIGlobal = nullptr;
+	RenderAPI::APIInstance* m_pAPIInstance = nullptr;
 	RenderAPI::Device* m_pDevice = nullptr;
 	RenderAPI::Context* m_pContext = nullptr;
 	RenderAPI::SwapChain* m_defaultSwapChain = nullptr;
 	RenderAPI::SwapChain* m_editorSwapChain = nullptr;
 
 	typedef RenderAPI::APIInstance* (*CreateAPIGlobal)();
-	CreateAPIGlobal m_createAPIGlobal = nullptr;
+	CreateAPIGlobal m_createAPIInstance = nullptr;
 
 	RenderAPI::Viewport m_bbViewport;
 
@@ -75,5 +75,9 @@ private:
 	gml::mat44 m_matProjRTT;
 	gml::mat44 m_matInvView;
 
-	
+	RenderAPI::HEffectParam m_hTechStencil;
+	RenderAPI::HEffectParam m_hTechSimple;
+
+	RenderAPI::HEffectParam m_hParamTexture;
+	RenderAPI::HEffectParam m_hParamParticleTex;
 };

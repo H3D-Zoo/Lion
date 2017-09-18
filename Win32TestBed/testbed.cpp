@@ -15,8 +15,8 @@ bool APITestBed::Init(HWND hWindow, HWND hWindowEditor, unsigned int backBufferW
 		return false;
 	}
 
-	m_pAPIGlobal = m_createAPIGlobal();
-	if (m_pAPIGlobal == nullptr)
+	m_pAPIInstance = m_createAPIInstance();
+	if (m_pAPIInstance == nullptr)
 	{
 		return false;
 	}
@@ -73,7 +73,7 @@ void APITestBed::Deinit()
 	Release(m_defaultSwapChain);
 	Release(m_pContext);
 	Release(m_pDevice);
-	Release(m_pAPIGlobal);
+	Release(m_pAPIInstance);
 	if (m_hRenderAPIDLL != nullptr)
 	{
 		FreeLibrary(m_hRenderAPIDLL);
@@ -198,9 +198,9 @@ bool APITestBed::LoadDLL()
 		return false;
 	}
 
-	m_createAPIGlobal = (CreateAPIGlobal)GetProcAddress(m_hRenderAPIDLL, "CreateAPIGlobal");
+	m_createAPIInstance = (CreateAPIGlobal)GetProcAddress(m_hRenderAPIDLL, "CreateAPIInstance");
 
-	if (m_createAPIGlobal == nullptr)
+	if (m_createAPIInstance == nullptr)
 	{
 		return false;
 	}
@@ -217,7 +217,7 @@ bool APITestBed::CreateDeviceAndContext(HWND hWindow, HWND hWindowEditor, unsign
 	desc.aaMode = RenderAPI::AA_Disable;
 	desc.backbufferWidth = backBufferWidth;
 	desc.backbufferHeight = backBufferHeight;
-	auto rst = m_pAPIGlobal->CreateDeviceAndContext(desc, false, false);
+	auto rst = m_pAPIInstance->CreateDeviceAndContext(desc, false, false);
 
 	if (!rst.Success)
 	{
@@ -319,9 +319,14 @@ void APITestBed::CreateMaterial()
 
 	m_pEffectParticle = m_pDevice->CreateFXEffectFromFile("../../Win32TestBed/Particle.fx");
 	m_pEffectParticle->SetValidateTechnique();
+	m_hParamParticleTex = m_pEffectParticle->GetParameterByName("g_particleTexture");
 
 	m_pEffectSimpleTexture = m_pDevice->CreateFXEffectFromFile("../../Win32TestBed/SimpleTexture.fx");
-	m_pEffectSimpleTexture->SetValidateTechnique();
+	m_hTechStencil = m_pEffectSimpleTexture->GetTechniqueByName("SimpleTextureStencil");
+	m_hTechSimple = m_pEffectSimpleTexture->GetTechniqueByName("SimpleTexture");
+	m_hParamTexture = m_pEffectSimpleTexture->GetParameterByName("g_texture");
+		
+		
 
 	file_data pngFileData = read_file("../../Win32TestBed/particle.png");
 	if (pngFileData.is_valid())
@@ -341,7 +346,7 @@ void APITestBed::CreateMaterial()
 				texformat = RenderAPI::TEX_XRGB;
 			}
 
-			m_pParticleTexture = m_pDevice->CreateTexture2D(RenderAPI::RESUSAGE_Default, texformat, png.width, png.height, 0, png.buffer, png.line_pitch, png.height);
+			m_pParticleTexture = m_pDevice->CreateTexture2D(RenderAPI::RESUSAGE_Default, texformat, png.width, png.height, 0, true, png.buffer, png.line_pitch, png.height);
 			png.destroy();
 		}
 		pngFileData.destroy();
@@ -365,7 +370,7 @@ void APITestBed::CreateMaterial()
 				texformat = RenderAPI::TEX_XRGB;
 			}
 
-			m_pBoxTexture = m_pDevice->CreateTexture2D(RenderAPI::RESUSAGE_Default, texformat, bmp.width, bmp.height, 0, nullptr, 0, 0);
+			m_pBoxTexture = m_pDevice->CreateTexture2D(RenderAPI::RESUSAGE_Default, texformat, bmp.width, bmp.height, 0, true, nullptr, 0, 0);
 
 			RenderAPI::MappedResource res = m_pBoxTexture->LockRect(0, RenderAPI::LOCK_Discard);
 
@@ -483,7 +488,7 @@ void APITestBed::DrawParticle(const gml::mat44& matProj)
 			m_pEffectParticle->SetMatrixTranspose("g_matProj", (float*)matProj.m);
 			m_pEffectParticle->SetValue("g_cameraX", (float*)m_matInvView.row[0], sizeof(gml::vec4));
 			m_pEffectParticle->SetValue("g_cameraY", (float*)m_matInvView.row[1], sizeof(gml::vec4));
-			m_pEffectParticle->SetTexture("g_particleTexture", m_pParticleTexture);
+			m_pEffectParticle->SetTexture(m_hParamParticleTex, m_pParticleTexture);
 			Particle.Set(m_pContext);
 			m_pEffectParticle->CommitChange();
 			UploadParticlesAndCommitDrawcalls();
@@ -505,7 +510,7 @@ void APITestBed::DrawRTTQuad()
 	alphaState.Reference = 128;
 	m_pContext->SetAlphaTestingState(alphaState);
 
-	m_pEffectSimpleTexture->SetTechniqueByName("SimpleTextureStencil");
+	m_pEffectSimpleTexture->SetTechnique(m_hTechStencil);
 	int passCount = m_pEffectSimpleTexture->Begin(false);
 	if (passCount > 0)
 	{
@@ -514,7 +519,7 @@ void APITestBed::DrawRTTQuad()
 			if (!m_pEffectSimpleTexture->BeginPass(i))
 				continue;
 			m_pEffectSimpleTexture->SetValue("g_texelOffset", &(m_texelOffsetOffScreen[0]), sizeof(gml::vec4));
-			m_pEffectSimpleTexture->SetTexture("g_texture", m_pRenderTexture->GetTexturePtr());
+			m_pEffectSimpleTexture->SetTexture(m_hParamTexture, m_pRenderTexture->GetTexturePtr());
 			m_pEffectSimpleTexture->CommitChange();
 			Quad.Set(m_pContext);
 			m_pContext->DrawIndexed(RenderAPI::PRIMITIVE_TriangleList, 0, 0, 0, 2);
@@ -525,8 +530,7 @@ void APITestBed::DrawRTTQuad()
 	alphaState.IsEnable = false;
 	m_pContext->SetAlphaTestingState(alphaState);
 
-
-	m_pEffectSimpleTexture->SetTechniqueByName("SimpleTexture");
+	m_pEffectSimpleTexture->SetTechnique(m_hTechSimple);
 	passCount = m_pEffectSimpleTexture->Begin(false);
 	if (passCount > 0)
 	{
@@ -534,7 +538,7 @@ void APITestBed::DrawRTTQuad()
 		{
 			if (!m_pEffectSimpleTexture->BeginPass(i))
 				continue;
-			m_pEffectSimpleTexture->SetTexture("g_texture", m_pRenderTexture->GetTexturePtr());
+			m_pEffectSimpleTexture->SetTexture(m_hParamTexture, m_pRenderTexture->GetTexturePtr());
 			m_pEffectSimpleTexture->CommitChange();
 			Quad.Set(m_pContext);
 			m_pContext->DrawIndexed(RenderAPI::PRIMITIVE_TriangleList, 0, 0, 0, 2);

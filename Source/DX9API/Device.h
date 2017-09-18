@@ -27,9 +27,9 @@ public:
 
 	virtual RenderAPI::VertexDeclaration* CreateVertexDeclaration(const RenderAPI::VertexElement* elements, unsigned int elementCount);
 
-	virtual RenderAPI::Texture2D* CreateTexture2D(RenderAPI::ResourceUsage usage, RenderAPI::TextureFormat format, unsigned int width, unsigned int height, unsigned int layer, void* initialData, int dataLinePitch, int dataHeight);
+	virtual RenderAPI::Texture2D* CreateTexture2D(RenderAPI::ResourceUsage usage, RenderAPI::TextureFormat format, unsigned int width, unsigned int height, unsigned int layer, bool autoGenMipmaps, void* initialData, int dataLinePitch, int dataHeight);
 
-	virtual RenderAPI::TextureCube* CreateTextureCube(RenderAPI::ResourceUsage usage, RenderAPI::TextureFormat format, unsigned int edgeLength, unsigned int layer, void** initialData, int dataLinePitch, int dataHeight);
+	virtual RenderAPI::TextureCube* CreateTextureCube(RenderAPI::ResourceUsage usage, RenderAPI::TextureFormat format, unsigned int edgeLength, unsigned int layer, bool autoGenMipmaps, void** initialData, int dataLinePitch, int dataHeight);
 
 	virtual RenderAPI::FXEffect* CreateFXEffectFromFile(const char* effectFilePath);
 

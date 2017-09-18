@@ -52,7 +52,7 @@ namespace
 	}
 }
 
-RenderAPI::APIInstance* CreateAPIGlobal()
+RenderAPI::APIInstance* CreateAPIInstance()
 {
 	::APIInstance* pAPI = new ::APIInstance();
 	if (pAPI->Init())

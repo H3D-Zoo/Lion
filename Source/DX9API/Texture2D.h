@@ -37,7 +37,7 @@ class Texture2D : public RenderAPI::Texture2D
 public:
 	Texture2D(IDirect3DTexture9* texture, RenderAPI::TextureFormat format, RenderAPI::ResourceUsage usage,
 		unsigned int width, unsigned int height, 
-		bool recreateWhenDeviceLost, bool isRenderTexture);
+		bool autoGenMipmaps, bool recreateWhenDeviceLost, bool isRenderTexture);
 
 	~Texture2D();
 
@@ -59,6 +59,8 @@ public:
 
 	virtual bool NeedRecreateWhenDeviceLost() const;
 
+	virtual bool AutoGenMipmaps() const;
+
 	virtual bool IsCubemap() const;
 
 	virtual bool IsRenderTexture() const;
@@ -79,6 +81,7 @@ private:
 	RefCount m_refCount;
 	RenderAPI::ResourceUsage m_usage;
 	RenderAPI::TextureFormat m_texFormat;
+	const bool m_autoGenMipmaps;
 	const bool m_recreateWhenDeviceLost;
 	const bool m_isRenderTexture;
 	IDirect3DTexture9* m_pTexture;

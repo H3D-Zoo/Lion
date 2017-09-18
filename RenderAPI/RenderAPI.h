@@ -626,6 +626,8 @@ namespace RenderAPI
 
 		virtual void GenerateMipmaps() = 0;
 
+		virtual bool AutoGenMipmaps() const = 0;
+
 		virtual bool IsCubemap() const = 0;
 
 		virtual bool NeedRecreateWhenDeviceLost() const = 0;
@@ -818,9 +820,9 @@ namespace RenderAPI
 
 		virtual VertexDeclaration* CreateVertexDeclaration(const VertexElement* elements, unsigned int elementCount) = 0;
 
-		virtual Texture2D* CreateTexture2D(ResourceUsage usage, TextureFormat format, unsigned int width, unsigned int height, unsigned int layer, void* initialData, int dataLinePitch, int dataHeight) = 0;
+		virtual Texture2D* CreateTexture2D(ResourceUsage usage, TextureFormat format, unsigned int width, unsigned int height, unsigned int layer, bool autoGenMipmaps, void* initialData, int dataLinePitch, int dataHeight) = 0;
 
-		virtual TextureCube* CreateTextureCube(ResourceUsage usage, TextureFormat format, unsigned int edgeLength, unsigned int layer, void** initialData, int dataLinePitch, int dataHeight) = 0;
+		virtual TextureCube* CreateTextureCube(ResourceUsage usage, TextureFormat format, unsigned int edgeLength, unsigned int layer, bool autoGenMipmaps, void** initialData, int dataLinePitch, int dataHeight) = 0;
 
 		virtual FXEffect* CreateFXEffectFromFile(const char* effectFilePath) = 0;
 

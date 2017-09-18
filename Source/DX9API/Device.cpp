@@ -287,7 +287,7 @@ RenderAPI::VertexDeclaration* Device::CreateVertexDeclaration(const RenderAPI::V
 	}
 }
 
-RenderAPI::Texture2D * Device::CreateTexture2D(RenderAPI::ResourceUsage usage, RenderAPI::TextureFormat format, unsigned int width, unsigned int height, unsigned int layer, void* initialData, int dataLinePitch, int dataHeight)
+RenderAPI::Texture2D * Device::CreateTexture2D(RenderAPI::ResourceUsage usage, RenderAPI::TextureFormat format, unsigned int width, unsigned int height, unsigned int layer, bool autoGenMipmaps, void* initialData, int dataLinePitch, int dataHeight)
 {
 	if (width == 0 || height == 0)
 	{
@@ -310,8 +310,19 @@ RenderAPI::Texture2D * Device::CreateTexture2D(RenderAPI::ResourceUsage usage, R
 		}
 	}
 
+	if (autoGenMipmaps && layer == 1)
+	{
+		layer = 0;
+	}
+	else if (layer == 0 && !autoGenMipmaps)
+	{
+		autoGenMipmaps = true;
+	}
+
 	IDirect3DTexture9* pTexture = NULL;
-	unsigned int d3dUsage = (usage == RenderAPI::RESUSAGE_Dynamic || usage == RenderAPI::RESUSAGE_DynamicRW) ? D3DUSAGE_DYNAMIC : 0;
+	unsigned int d3dUsage = autoGenMipmaps ? D3DUSAGE_AUTOGENMIPMAP : 0;
+	if (usage == RenderAPI::RESUSAGE_Dynamic || usage == RenderAPI::RESUSAGE_DynamicRW)
+		d3dUsage |= D3DUSAGE_DYNAMIC;
 	D3DPOOL pool = (m_pAPI->IsSupportManaged() && immuable) ? D3DPOOL_MANAGED : D3DPOOL_DEFAULT;
 	HRESULT hr = m_pDevice->CreateTexture(width, height, layer, d3dUsage, s_TextureFormats[format], pool, &pTexture, NULL);
 
@@ -320,7 +331,7 @@ RenderAPI::Texture2D * Device::CreateTexture2D(RenderAPI::ResourceUsage usage, R
 		return NULL;
 	}
 
-	::Texture2D* texture = new ::Texture2D(pTexture, format, usage, width, height, pool != D3DPOOL_MANAGED, false);
+	::Texture2D* texture = new ::Texture2D(pTexture, format, usage, width, height, autoGenMipmaps, pool != D3DPOOL_MANAGED, false);
 
 	if (initialData != NULL)
 	{
@@ -341,7 +352,7 @@ RenderAPI::Texture2D * Device::CreateTexture2D(RenderAPI::ResourceUsage usage, R
 	return texture;
 }
 
-RenderAPI::TextureCube * Device::CreateTextureCube(RenderAPI::ResourceUsage usage, RenderAPI::TextureFormat format, unsigned int edgeLength, unsigned int layer, void ** initialData, int dataLinePitch, int dataHeight)
+RenderAPI::TextureCube * Device::CreateTextureCube(RenderAPI::ResourceUsage usage, RenderAPI::TextureFormat format, unsigned int edgeLength, unsigned int layer, bool autoGenMipmaps, void ** initialData, int dataLinePitch, int dataHeight)
 {
 	if (edgeLength == 0)
 	{
@@ -364,8 +375,19 @@ RenderAPI::TextureCube * Device::CreateTextureCube(RenderAPI::ResourceUsage usag
 		}
 	}
 
+	if (autoGenMipmaps && layer == 1)
+	{
+		layer = 0;
+	}
+	else if (layer == 0 && !autoGenMipmaps)
+	{
+		autoGenMipmaps = true;
+	}
+
 	IDirect3DCubeTexture9* pTexture = NULL;
-	unsigned int d3dUsage = (usage == RenderAPI::RESUSAGE_Dynamic || usage == RenderAPI::RESUSAGE_DynamicRW) ? D3DUSAGE_DYNAMIC : 0;
+	unsigned int d3dUsage = autoGenMipmaps ? D3DUSAGE_AUTOGENMIPMAP : 0;
+	if (usage == RenderAPI::RESUSAGE_Dynamic || usage == RenderAPI::RESUSAGE_DynamicRW)
+		d3dUsage |= D3DUSAGE_DYNAMIC;
 	D3DPOOL pool = (m_pAPI->IsSupportManaged() && immuable) ? D3DPOOL_MANAGED : D3DPOOL_DEFAULT;
 	HRESULT hr = m_pDevice->CreateCubeTexture(edgeLength, layer, d3dUsage, s_TextureFormats[format], pool, &pTexture, NULL);
 
@@ -374,7 +396,7 @@ RenderAPI::TextureCube * Device::CreateTextureCube(RenderAPI::ResourceUsage usag
 		return NULL;
 	}
 
-	::TextureCube* texture = new ::TextureCube(pTexture, format, usage, edgeLength, pool != D3DPOOL_MANAGED);
+	::TextureCube* texture = new ::TextureCube(pTexture, format, usage, edgeLength, autoGenMipmaps, pool != D3DPOOL_MANAGED);
 	if (initialData != NULL)
 	{
 		RenderAPI::CubemapFace faces[6] = {
