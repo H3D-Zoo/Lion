@@ -125,7 +125,7 @@ public:
 
 	virtual bool UpdateTexture(RenderAPI::Texture2D* src, RenderAPI::Texture2D* dst);
 
-	virtual bool StretchTexture(RenderAPI::Texture2D* src, RenderAPI::Texture2D* dst, RenderAPI::StretchFilter filter);
+	virtual bool StretchTexture(RenderAPI::Texture2D* src, RenderAPI::Texture2D* dst, RenderAPI::SamplerFilter filter);
 
 	virtual bool GetRenderTargetData(RenderAPI::RenderTarget* rt, RenderAPI::TextureSurface* surface);
 
@@ -150,5 +150,6 @@ private:
 	IDirect3DDevice9Ex* m_pDeviceEx;
 	BackBufferManager m_backBufferManager;
 	unsigned int m_indexBufferOffset;
+	unsigned int m_vertexBufferCount;
 	mutable RenderAPI::ScissorState m_scissorState;
 };

@@ -50,12 +50,12 @@ HRESULT FXStateManager::SetRenderState(THIS_ D3DRENDERSTATETYPE d3dRenderState, 
 
 HRESULT FXStateManager::SetSamplerState(THIS_ DWORD dwStage, D3DSAMPLERSTATETYPE d3dSamplerState, DWORD dwValue)
 {
-	return m_pDevice->SetSamplerState(dwStage, d3dSamplerState, dwValue);
+	return SetSS(dwStage, d3dSamplerState, dwValue);
 }
 
 HRESULT FXStateManager::SetTextureStageState(THIS_ DWORD dwStage, D3DTEXTURESTAGESTATETYPE d3dTextureStageState, DWORD dwValue)
 {
-	return m_pDevice->SetTextureStageState(dwStage, d3dTextureStageState, dwValue);
+	return SetTSS(dwStage, d3dTextureStageState, dwValue);
 }
 
 HRESULT FXStateManager::SetTexture(THIS_ DWORD dwStage, LPDIRECT3DBASETEXTURE9 pTexture)

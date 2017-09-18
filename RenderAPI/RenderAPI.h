@@ -184,26 +184,10 @@ namespace RenderAPI
 
 	enum SamplerFilter
 	{
-		FILTER_MinP_MagP_MipP = 0x0000,		// P = Point
-		FILTER_MinP_MagP_MipL = 0x0001,		// L = Linear
-		FILTER_MinP_MagL_MipP = 0x0010,		// X = None
-		FILTER_MinP_MagL_MipL = 0x0011,
-		FILTER_MinL_MagP_MipP = 0x0100,
-		FILTER_MinL_MagP_MipL = 0x0101,
-		FILTER_MinL_MagL_MipP = 0x0110,
-		FILTER_MinL_MagL_MipL = 0x0111,
-		FILTER_MinP_MagP_MipX = 0x0002,
-		FILTER_MinP_MagL_MipX = 0x0012,
-		FILTER_MinL_MagP_MipX = 0x0102,
-		FILTER_MinL_MagL_MipX = 0x0112,
-		FILTER_Anisotropic = 0x1000,
-	};
-
-	enum StretchFilter
-	{
-		STRETCH_None = 0,
-		STRETCH_Point = 1,
-		STRETCH_Linear = 2,
+		FILTER_None = 0,
+		FILTER_Point = 1,
+		FILTER_Linear = 2,
+		FILTER_Anisotropic  = 3,
 	};
 
 	enum TextureAddress
@@ -466,13 +450,17 @@ namespace RenderAPI
 	struct TextureSampler
 	{
 		TextureSampler()
-			: Filter(FILTER_MinP_MagP_MipX)
+			: MinFilter(FILTER_Point)
+			, MagFilter(FILTER_Point)
+			, MipFilter(FILTER_None)
 			, AddressU(TEX_ADDRESS_Clamp)
 			, AddressV(TEX_ADDRESS_Clamp)
 			, BorderColor(0x00000000)
 		{	}
 
-		SamplerFilter Filter;
+		SamplerFilter MinFilter;
+		SamplerFilter MagFilter;
+		SamplerFilter MipFilter;
 		TextureAddress AddressU;
 		TextureAddress AddressV;
 		unsigned int BorderColor;
@@ -920,7 +908,7 @@ namespace RenderAPI
 
 		virtual bool UpdateTexture(Texture2D* src, Texture2D* dst) = 0;
 
-		virtual bool StretchTexture(Texture2D* src, Texture2D* dst, StretchFilter filter) = 0;
+		virtual bool StretchTexture(Texture2D* src, Texture2D* dst, SamplerFilter filter) = 0;
 
 		virtual bool GetRenderTargetData(RenderTarget* rt, TextureSurface* surface) = 0;
 

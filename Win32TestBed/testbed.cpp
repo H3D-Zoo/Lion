@@ -405,7 +405,9 @@ void APITestBed::DrawBox(RenderAPI::TextureAddress address, bool alphaBlending)
 	depthState.IsEnable = true;
 	RenderAPI::TextureSampler sampler;
 	sampler.AddressU = sampler.AddressV = address;
-	sampler.Filter = RenderAPI::FILTER_MinL_MagL_MipL;
+	sampler.MinFilter = RenderAPI::FILTER_Linear;
+	sampler.MagFilter = RenderAPI::FILTER_Linear;
+	sampler.MipFilter = RenderAPI::FILTER_Linear;
 
 	int passCount = m_pEffectTintColor->Begin(false);
 	if (passCount > 0)
@@ -568,7 +570,7 @@ void APITestBed::UploadParticlesAndCommitDrawcalls()
 			dvb->Unlock();
 		}
 
-		m_pContext->DrawIndexed(RenderAPI::PRIMITIVE_TriangleList, 0, 0, 0, filledCount * 2);
+		m_pContext->DrawIndexed(RenderAPI::PRIMITIVE_TriangleList, 0, filledCount * 4, 0, filledCount * 2);
 	}
 
 }

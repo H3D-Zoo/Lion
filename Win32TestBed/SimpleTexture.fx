@@ -76,9 +76,9 @@ V2PStencil VSSimpleTextureStencil(VSInput INP)
 float4 PSSimpleTextureStencil(V2PStencil INP) : COLOR0
 {
 	float2 screenPixelPos = INP.screenpos  / g_texelOffset;
-	float2 intScreenPos = fmod(screenPixelPos, 2.0);
-	intScreenPos = step(0.9, intScreenPos);
-	float a = step(1.9, (intScreenPos.x + intScreenPos.y));
+	float2 intScreenPos = fmod(abs(screenPixelPos), 2.0);
+	intScreenPos = step(1.0, intScreenPos);
+	float a = step(2.0, (intScreenPos.x + intScreenPos.y));
 	return float4(INP.texcoord, 0, a);
 }
 

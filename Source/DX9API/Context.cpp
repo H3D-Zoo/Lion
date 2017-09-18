@@ -105,29 +105,6 @@ namespace
 		D3DFILL_POINT,
 	};
 
-	struct SamplerFilter
-	{
-		D3DTEXTUREFILTERTYPE min;
-		D3DTEXTUREFILTERTYPE mag;
-		D3DTEXTUREFILTERTYPE mip;
-	};
-
-	SamplerFilter s_samplerFilters[] =
-	{
-		{ D3DTEXF_POINT ,D3DTEXF_POINT , D3DTEXF_POINT },
-		{ D3DTEXF_POINT ,D3DTEXF_POINT , D3DTEXF_LINEAR },
-		{ D3DTEXF_POINT ,D3DTEXF_LINEAR , D3DTEXF_POINT },
-		{ D3DTEXF_POINT ,D3DTEXF_LINEAR , D3DTEXF_LINEAR },
-		{ D3DTEXF_LINEAR ,D3DTEXF_POINT , D3DTEXF_POINT },
-		{ D3DTEXF_LINEAR ,D3DTEXF_POINT , D3DTEXF_LINEAR },
-		{ D3DTEXF_LINEAR ,D3DTEXF_LINEAR  , D3DTEXF_POINT },
-		{ D3DTEXF_LINEAR ,D3DTEXF_LINEAR  , D3DTEXF_LINEAR },
-		{ D3DTEXF_POINT ,D3DTEXF_POINT , D3DTEXF_NONE },
-		{ D3DTEXF_POINT ,D3DTEXF_LINEAR  , D3DTEXF_NONE },
-		{ D3DTEXF_LINEAR ,D3DTEXF_POINT , D3DTEXF_NONE },
-		{ D3DTEXF_LINEAR ,D3DTEXF_LINEAR  , D3DTEXF_NONE },
-	};
-
 	D3DTEXTUREADDRESS s_textureAddress[] =
 	{
 		D3DTADDRESS_WRAP,
@@ -162,11 +139,12 @@ namespace
 		D3DTA_TFACTOR,
 	};
 
-	D3DTEXTUREFILTERTYPE s_d3dStretchFilter[] = 
+	D3DTEXTUREFILTERTYPE s_d3dSamplerFilter[] =
 	{
 		D3DTEXF_NONE,
 		D3DTEXF_POINT,
-		D3DTEXF_LINEAR
+		D3DTEXF_LINEAR,
+		D3DTEXF_ANISOTROPIC,
 	};
 }
 
@@ -327,11 +305,19 @@ void Context::SetDepthStencil(RenderAPI::DepthStencil* depthStencil)
 
 void Context::SetVertexBuffers(RenderAPI::VertexBufferInfo* buffers, unsigned int bufferCount)
 {
+	m_vertexBufferCount = 0;
 	for (unsigned int i = 0; i < bufferCount; i++)
 	{
 		if (buffers[i].BufferPtr != NULL)
 		{
-			IDirect3DVertexBuffer9* vertexBufferPtr = ((::VertexBuffer*)buffers[i].BufferPtr)->GetBufferPtr();
+			::VertexBuffer* pVertexBuffe = (::VertexBuffer*)buffers[i].BufferPtr;
+			IDirect3DVertexBuffer9* vertexBufferPtr = pVertexBuffe->GetBufferPtr();
+
+			if (m_vertexBufferCount == 0 || m_vertexBufferCount > pVertexBuffe->GetVertexCount())
+			{
+				m_vertexBufferCount = pVertexBuffe->GetVertexCount();
+			}
+
 			HRESULT hr = m_pDevice->SetStreamSource(i, vertexBufferPtr, buffers[i].Offset, buffers[i].BufferPtr->GetVertexStride());
 		}
 	}
@@ -519,10 +505,9 @@ void Context::SetTextureAlphaBlendingState(unsigned int slot, const RenderAPI::T
 }
 void Context::SetTextureSampler(unsigned int slot, const RenderAPI::TextureSampler& sampler)
 {
-	SamplerFilter& filter = s_samplerFilters[sampler.Filter];
-	m_renderStateManager.SetSamplerMinFilter(slot, filter.min);
-	m_renderStateManager.SetSamplerMagFilter(slot, filter.mag);
-	m_renderStateManager.SetSamplerMipFilter(slot, filter.mip);
+	m_renderStateManager.SetSamplerMinFilter(slot, s_d3dSamplerFilter[sampler.MinFilter]);
+	m_renderStateManager.SetSamplerMagFilter(slot, s_d3dSamplerFilter[sampler.MagFilter]);
+	m_renderStateManager.SetSamplerMipFilter(slot, s_d3dSamplerFilter[sampler.MipFilter]);
 	m_renderStateManager.SetSamplerAddressU(slot, s_textureAddress[sampler.AddressU]);
 	m_renderStateManager.SetSamplerAddressV(slot, s_textureAddress[sampler.AddressV]);
 	if (sampler.AddressV == RenderAPI::TEX_ADDRESS_Border || sampler.AddressU == RenderAPI::TEX_ADDRESS_Border)
@@ -613,6 +598,8 @@ void Context::Draw(RenderAPI::Primitive primitive, unsigned int startVertex, uns
 
 void Context::DrawIndexed(RenderAPI::Primitive primitive, unsigned int baseVertex, unsigned int vertexCount, unsigned int startIndex, unsigned int primitiveCount)
 {
+	if (vertexCount == 0)
+		vertexCount = m_vertexBufferCount;
 	m_pDevice->DrawIndexedPrimitive(s_primitives[primitive], baseVertex, 0, vertexCount, startIndex, primitiveCount);
 }
 
@@ -627,15 +614,15 @@ bool Context::UpdateTexture(RenderAPI::Texture2D * src, RenderAPI::Texture2D * d
 	return S_OK == m_pDevice->UpdateTexture(pSrcTexture, pDstTexture);
 }
 
-bool Context::StretchTexture(RenderAPI::Texture2D * src, RenderAPI::Texture2D * dst, RenderAPI::StretchFilter filter)
+bool Context::StretchTexture(RenderAPI::Texture2D * src, RenderAPI::Texture2D * dst, RenderAPI::SamplerFilter filter)
 {
 	AutoR<::TextureSurface> pSurfaceSrc = (::TextureSurface*)src->GetSurface(0);
 	AutoR<::TextureSurface> pSurfaceDst = (::TextureSurface*)dst->GetSurface(0);
 
 	pSurfaceSrc = (::TextureSurface*)src->GetSurface(0);
-	bool rst = S_OK == m_pDevice->StretchRect(pSurfaceSrc->GetD3DTextureSurfacePtr(), NULL, pSurfaceDst->GetD3DTextureSurfacePtr(), NULL, s_d3dStretchFilter[filter]);
+	bool rst = S_OK == m_pDevice->StretchRect(pSurfaceSrc->GetD3DTextureSurfacePtr(), NULL, pSurfaceDst->GetD3DTextureSurfacePtr(), NULL, s_d3dSamplerFilter[filter]);
 
-	
+
 	return rst;
 }
 

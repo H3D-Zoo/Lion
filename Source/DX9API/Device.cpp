@@ -131,6 +131,7 @@ RenderAPI::VertexBuffer* Device::CreateVertexBuffer(RenderAPI::ResourceUsage usa
 	}
 
 	bool immuable = usage == RenderAPI::RESUSAGE_Immuable;
+	bool dynamic = usage == RenderAPI::RESUSAGE_Dynamic || usage == RenderAPI::RESUSAGE_DynamicRW;
 	if (initialData == NULL && immuable)
 	{
 		return NULL;
@@ -150,7 +151,7 @@ RenderAPI::VertexBuffer* Device::CreateVertexBuffer(RenderAPI::ResourceUsage usa
 	if (initialData != NULL)
 	{
 		void* dataPtr = NULL;
-		if (S_OK == pVertexBuffer->Lock(0, bufferSize, &dataPtr, D3DLOCK_DISCARD))
+		if (S_OK == pVertexBuffer->Lock(0, bufferSize, &dataPtr, dynamic ? D3DLOCK_DISCARD : 0))
 		{
 			memcpy(dataPtr, initialData, bufferSize);
 			pVertexBuffer->Unlock();
@@ -169,6 +170,7 @@ RenderAPI::IndexBuffer* Device::CreateIndexBuffer(RenderAPI::ResourceUsage usage
 	}
 
 	bool immuable = usage == RenderAPI::RESUSAGE_Immuable;
+	bool dynamic = usage == RenderAPI::RESUSAGE_Dynamic || usage == RenderAPI::RESUSAGE_DynamicRW;
 	if (initialData == NULL && immuable)
 	{
 		return NULL;
@@ -188,7 +190,7 @@ RenderAPI::IndexBuffer* Device::CreateIndexBuffer(RenderAPI::ResourceUsage usage
 	if (initialData != NULL)
 	{
 		void* dataPtr = NULL;
-		if (S_OK == pIndexBuffer->Lock(0, bufferSize, &dataPtr, D3DLOCK_DISCARD))
+		if (S_OK == pIndexBuffer->Lock(0, bufferSize, &dataPtr, dynamic ? D3DLOCK_DISCARD : 0))
 		{
 			memcpy(dataPtr, initialData, bufferSize);
 			pIndexBuffer->Unlock();
