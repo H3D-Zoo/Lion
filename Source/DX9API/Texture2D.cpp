@@ -99,7 +99,7 @@ RenderAPI::MappedResource Texture2D::LockRect(unsigned int layer, RenderAPI::Loc
 	else if (m_usage == RenderAPI::RESUSAGE_Dynamic || m_usage == RenderAPI::RESUSAGE_DynamicRW)
 	{
 		D3DLOCKED_RECT lockedRect;
-		HRESULT hr = m_pTexture->LockRect(layer, &lockedRect, NULL, s_lockOptions[lockOption]);
+		HRESULT hr = m_pTexture->LockRect(layer, &lockedRect, NULL, GetLockOption(lockOption, m_usage));
 		if (S_OK == hr)
 		{
 			ret.Success = true;
@@ -129,7 +129,7 @@ RenderAPI::MappedResource Texture2D::LockRect(unsigned int layer, RenderAPI::Loc
 			if (hr == S_OK)
 			{
 				D3DLOCKED_RECT lockedRect;
-				if (S_OK == pTextureForUpdate->LockRect(layer, &lockedRect, NULL, s_lockOptions[lockOption]))
+				if (S_OK == pTextureForUpdate->LockRect(layer, &lockedRect, NULL, GetLockOption(lockOption, m_usage)))
 				{
 					ret.Success = true;
 					ret.DataPtr = lockedRect.pBits;

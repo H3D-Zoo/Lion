@@ -66,7 +66,7 @@ RenderAPI::MappedResource TextureCube::LockRect(RenderAPI::CubemapFace face, uns
 	else
 	{
 		D3DLOCKED_RECT lockedRect;
-		HRESULT hr = m_pTexture->LockRect(s_d3dCubeFaces[face], layer, &lockedRect, NULL, s_lockOptions[lockOption]);
+		HRESULT hr = m_pTexture->LockRect(s_d3dCubeFaces[face], layer, &lockedRect, NULL, GetLockOption(lockOption, m_usage));
 		if (S_OK == hr)
 		{
 			ret.Success = true;

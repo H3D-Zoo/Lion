@@ -61,7 +61,7 @@ void * IndexBuffer::Lock(unsigned int offset, unsigned int lockLength, RenderAPI
 	}
 
 	void* pDataPtr = NULL;
-	HRESULT hr = m_pIndexBuffer->Lock(offset, lockLength, &pDataPtr, s_lockOptions[lockOption]);
+	HRESULT hr = m_pIndexBuffer->Lock(offset, lockLength, &pDataPtr, GetLockOption(lockOption,m_usage));
 	if (S_OK == hr)
 	{
 		return pDataPtr;

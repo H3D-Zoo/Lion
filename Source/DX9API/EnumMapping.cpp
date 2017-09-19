@@ -68,14 +68,6 @@ D3DFORMAT s_IndexFormats[kIndexFormatCount] =
 	D3DFMT_INDEX32,
 };
 
-unsigned int s_lockOptions[kLockOptionCount] =
-{
-	0,
-	D3DLOCK_DISCARD,
-	D3DLOCK_READONLY,
-	D3DLOCK_NOOVERWRITE,
-};
-
 bool IsLocalFileExist(const std::string & fileName)
 {
 	return (_access(fileName.c_str(), 0) != -1);
@@ -164,4 +156,25 @@ RenderAPI::StencilOp StencilOpMapping(unsigned int sop)
 	case D3DSTENCILOP_INCR: return RenderAPI::STENCIL_IncreaseRevert;
 	case D3DSTENCILOP_DECR: return RenderAPI::STENCIL_DecreaseRevert;
 	}
+}
+
+unsigned int GetLockOption(RenderAPI::LockOption option, RenderAPI::ResourceUsage usage)
+{
+	unsigned int ret = 0;
+	if (usage == RenderAPI::RESUSAGE_Dynamic || usage == RenderAPI::RESUSAGE_DynamicRW)
+	{
+		switch (option)
+		{	
+		case RenderAPI::LOCK_Discard:
+			ret = D3DLOCK_DISCARD;
+			break;
+		case RenderAPI::LOCK_ReadOnly:
+			ret = D3DLOCK_READONLY;
+			break;
+		case RenderAPI::LOCK_NoOverWrite:
+			ret = D3DLOCK_NOOVERWRITE;
+			break;
+		}
+	}
+	return ret;
 }
