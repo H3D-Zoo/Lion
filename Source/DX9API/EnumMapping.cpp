@@ -83,7 +83,7 @@ RenderAPI::DeviceState DeviceStateMapping(unsigned int rst)
 	{
 		return RenderAPI::DEVICE_Lost;
 	}
-	else if (rst == D3DERR_DEVICENOTRESET || rst == S_PRESENT_MODE_CHANGED)
+	else if (rst == D3DERR_DEVICENOTRESET )
 	{
 		return RenderAPI::DEVICE_NeedReset;
 	}
@@ -96,13 +96,17 @@ RenderAPI::DeviceState DeviceStateMapping(unsigned int rst)
 	{
 		return RenderAPI::DEVICE_Busy;
 	}
-	else if (rst == D3DERR_OUTOFVIDEOMEMORY || E_OUTOFMEMORY)
+	else if (rst == D3DERR_OUTOFVIDEOMEMORY || rst == E_OUTOFMEMORY)
 	{
 		return RenderAPI::DEVICE_OutOfMemory;
 	}
-	else//D3DERR_DEVICEREMOVED
+	else if (rst == D3DERR_DEVICEREMOVED)
 	{
 		return RenderAPI::DEVICE_Error;
+	}
+	else
+	{
+		return RenderAPI::DEVICE_OK;
 	}
 }
 
