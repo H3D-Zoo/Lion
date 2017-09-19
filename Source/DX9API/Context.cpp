@@ -792,19 +792,24 @@ void BackBufferManager::SetRenderTarget(unsigned int index, RenderAPI::RenderTar
 		rtSurface = ((::RenderTarget*)rt)->GetD3DSurface();
 	}
 
-	::Texture2D* texture = (::Texture2D*)(rt->GetTexturePtr());
-	if (texture != NULL)
+	//÷ÿ…Ëtexture
+	if (rt)
 	{
-		IDirect3DBaseTexture9* pTexture;
-		for (unsigned int i = 0; i < m_maxTextureStage; i++)
+		::Texture2D* texture = (::Texture2D*)(rt->GetTexturePtr());
+		if (texture != NULL)
 		{
-			m_pDevice->GetTexture(i, &pTexture);
-			if (pTexture == texture->GetD3DTexture())
+			IDirect3DBaseTexture9* pTexture;
+			for (unsigned int i = 0; i < m_maxTextureStage; i++)
 			{
-				m_pDevice->SetTexture(i, NULL);
+				m_pDevice->GetTexture(i, &pTexture);
+				if (pTexture == texture->GetD3DTexture())
+				{
+					m_pDevice->SetTexture(i, NULL);
+				}
 			}
 		}
 	}
+
 
 	if (index >= m_pCurrentRTs.size())
 	{
