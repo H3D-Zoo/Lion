@@ -95,9 +95,9 @@ RenderAPI::HEffectParam FXEffect::GetTechniqueByID(unsigned int index)
 	if (h == NULL) return RenderAPI::hInvalidParam;
 
 	size_t n = m_hTechniqueIDs.size();
-	for (size_t i = 0; i < n ; i++)
+	for (size_t i = 0; i < n; i++)
 	{
-		if(m_hTechniqueIDs[i] == h)
+		if (m_hTechniqueIDs[i] == h)
 		{
 			return i;
 		}
@@ -129,7 +129,7 @@ RenderAPI::HEffectParam FXEffect::GetParameterByName(const char* name)
 
 RenderAPI::HEffectParam FXEffect::GetParameterByName(RenderAPI::HEffectParam parent, const char* name)
 {
-	if(parent >= m_hParamIDs.size())
+	if (parent >= m_hParamIDs.size())
 		return RenderAPI::hInvalidParam;
 
 	std::string nameStr = name;
@@ -147,7 +147,7 @@ RenderAPI::HEffectParam FXEffect::GetParameterByName(RenderAPI::HEffectParam par
 	{
 		return m_hParamMapping[nameStr];
 	}
-	
+
 }
 
 RenderAPI::HEffectParam FXEffect::GetParameterElement(RenderAPI::HEffectParam parent, unsigned int elementIndex)
@@ -156,8 +156,8 @@ RenderAPI::HEffectParam FXEffect::GetParameterElement(RenderAPI::HEffectParam pa
 		return RenderAPI::hInvalidParam;
 
 	D3DXHANDLE h = m_pEffect->GetParameterElement(m_hParamIDs[parent], elementIndex);
-	if(h == NULL) return RenderAPI::hInvalidParam;
-	
+	if (h == NULL) return RenderAPI::hInvalidParam;
+
 	size_t n = m_hParamIDs.size();
 	for (size_t i = 0; i < n; i++)
 	{
@@ -336,7 +336,7 @@ bool FXEffect::SetTexture(const char* paramName, RenderAPI::Texture* texture)
 	IDirect3DBaseTexture9* texturePtr = NULL;
 	if (texture != NULL)
 	{
-		if(texture->IsCubemap())
+		if (texture->IsCubemap())
 			texturePtr = ((::TextureCube*)(texture))->GetD3DTexture();
 		else
 			texturePtr = ((::Texture2D*)(texture))->GetD3DTexture();
@@ -531,4 +531,112 @@ void FXEffect::OnLostDevice()
 void FXEffect::OnResetDevice()
 {
 	m_pEffect->OnResetDevice();
+}
+
+
+namespace
+{
+	D3DTEXTUREADDRESS s_textureAddress[] =
+	{
+		D3DTADDRESS_WRAP,
+		D3DTADDRESS_CLAMP,
+		D3DTADDRESS_MIRROR,
+		D3DTADDRESS_BORDER,
+	};
+	D3DTEXTUREFILTERTYPE s_d3dSamplerFilter[] =
+	{
+		D3DTEXF_NONE,
+		D3DTEXF_POINT,
+		D3DTEXF_LINEAR,
+		D3DTEXF_ANISOTROPIC,
+	};
+}
+
+void FXEffect::SetTextureSampler(RenderAPI::HEffectParam hParam, unsigned int index, RenderAPI::TextureSampler sampler)
+{
+	if (hParam >= m_hParamIDs.size())
+		return;
+
+	D3DXHANDLE hSampler = m_hParamIDs[hParam];
+	D3DXHANDLE hAddressU = m_pEffect->GetParameterByName(hSampler, "AddressU");
+	D3DXHANDLE hAddressV = m_pEffect->GetParameterByName(hSampler, "AddressV");
+	D3DXHANDLE hAddressW = m_pEffect->GetParameterByName(hSampler, "AddressW");
+	D3DXHANDLE hBorderColor = m_pEffect->GetParameterByName(hSampler, "BorderColor");
+	D3DXHANDLE hMagFilter = m_pEffect->GetParameterByName(hSampler, "MagFilter");
+	D3DXHANDLE hMinFilter = m_pEffect->GetParameterByName(hSampler, "MinFilter");
+	D3DXHANDLE hMipFilter = m_pEffect->GetParameterByName(hSampler, "MipFilter");
+
+
+	DWORD value;
+	if (hAddressU != NULL)
+	{
+		value = s_textureAddress[sampler.AddressU];
+		m_pEffect->SetValue(hAddressU, &value, sizeof(DWORD));
+	}
+	if (hAddressV != NULL)
+	{
+		value = s_textureAddress[sampler.AddressV];
+		m_pEffect->SetValue(hAddressV, &value, sizeof(DWORD));
+	}
+	if (hAddressW != NULL)
+	{
+		value = s_textureAddress[sampler.AddressW];
+		m_pEffect->SetValue(hAddressW, &value, sizeof(DWORD));
+	}
+	if (hMagFilter != NULL)
+	{
+		if (sampler.MagFilter == RenderAPI::FILTER_Anisotropic)
+		{
+			value = s_d3dSamplerFilter[RenderAPI::FILTER_Linear];
+		}
+		else
+		{
+			value = s_d3dSamplerFilter[sampler.MagFilter];
+		}
+
+		m_pEffect->SetValue(hMagFilter, &value, sizeof(DWORD));
+	}
+
+	if (hMinFilter != NULL)
+	{
+		if (sampler.MinFilter == RenderAPI::FILTER_Anisotropic)
+		{
+			bool anisotropy = false;
+			if (sampler.OptionalAnisotropicFilter != RenderAPI::AA_Disable)
+			{
+				ID3DXEffectStateManager* pManager = NULL;
+				m_pEffect->GetStateManager(&pManager);
+				if (pManager != NULL)
+				{
+					anisotropy = true;
+					value = D3DTEXF_ANISOTROPIC;
+					DWORD maxanisotropies[] = { 0,2,4,6,8,10 };
+					pManager->SetSamplerState(index, D3DSAMP_MAXANISOTROPY, maxanisotropies[sampler.OptionalAnisotropicFilter]);
+				}
+			}
+
+			if (!anisotropy)
+			{
+				value = D3DTEXF_LINEAR;
+			}
+		}
+		else
+		{
+			value = s_d3dSamplerFilter[sampler.MinFilter];
+		}
+
+		m_pEffect->SetValue(hMinFilter, &value, sizeof(DWORD));
+	}
+
+	if (hMipFilter != NULL)
+	{
+		value = s_d3dSamplerFilter[sampler.MipFilter];
+		m_pEffect->SetValue(hMipFilter, &value, sizeof(DWORD));
+	}
+
+	if (hBorderColor != NULL)
+	{
+		value = sampler.BorderColor;
+		m_pEffect->SetValue(hBorderColor, &value, sizeof(DWORD));
+	}
 }

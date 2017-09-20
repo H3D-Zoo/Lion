@@ -503,17 +503,24 @@ void Context::SetTextureAlphaBlendingState(unsigned int slot, const RenderAPI::T
 		m_renderStateManager.SetTextureAlphaArg2(slot, s_texBlendingArgs[state.Argument1]);
 	}
 }
+
 void Context::SetTextureSampler(unsigned int slot, const RenderAPI::TextureSampler& sampler)
 {
+	DWORD magFilter = s_d3dSamplerFilter[sampler.MagFilter == RenderAPI::FILTER_Anisotropic ? RenderAPI::FILTER_Linear : sampler.MagFilter];
 	m_renderStateManager.SetSamplerMinFilter(slot, s_d3dSamplerFilter[sampler.MinFilter]);
-	m_renderStateManager.SetSamplerMagFilter(slot, s_d3dSamplerFilter[sampler.MagFilter]);
+	m_renderStateManager.SetSamplerMagFilter(slot, magFilter);
 	m_renderStateManager.SetSamplerMipFilter(slot, s_d3dSamplerFilter[sampler.MipFilter]);
 	m_renderStateManager.SetSamplerAddressU(slot, s_textureAddress[sampler.AddressU]);
 	m_renderStateManager.SetSamplerAddressV(slot, s_textureAddress[sampler.AddressV]);
-	if (sampler.AddressV == RenderAPI::TEX_ADDRESS_Border || sampler.AddressU == RenderAPI::TEX_ADDRESS_Border)
+	m_renderStateManager.SetSamplerAddressW(slot, s_textureAddress[sampler.AddressW]);
+	if (sampler.AddressU == RenderAPI::TEX_ADDRESS_Border || sampler.AddressV == RenderAPI::TEX_ADDRESS_Border || sampler.AddressW == RenderAPI::TEX_ADDRESS_Border)
 	{
 		m_renderStateManager.SetSamplerBorderColor(slot, sampler.BorderColor);
 	};
+	if (sampler.MagFilter == RenderAPI::FILTER_Anisotropic)
+	{
+		m_renderStateManager.SetMaxAnisotropy(slot, s_sampleTypes[sampler.OptionalAnisotropicFilter]);
+	}
 }
 
 void Context::SetScissorState(const RenderAPI::ScissorState& state)
@@ -596,11 +603,26 @@ void Context::Draw(RenderAPI::Primitive primitive, unsigned int startVertex, uns
 	m_pDevice->DrawPrimitive(s_primitives[primitive], startVertex, primitiveCount);
 }
 
+void Context::DrawWithDynamicVertex(RenderAPI::Primitive primitive, unsigned int primitiveCount, const void* pVertexData, unsigned int vertexStride)
+{
+	m_pDevice->DrawPrimitiveUP(s_primitives[primitive], primitiveCount, pVertexData, vertexStride);
+}
+
 void Context::DrawIndexed(RenderAPI::Primitive primitive, unsigned int baseVertex, unsigned int vertexCount, unsigned int startIndex, unsigned int primitiveCount)
 {
 	if (vertexCount == 0)
 		vertexCount = m_vertexBufferCount;
 	m_pDevice->DrawIndexedPrimitive(s_primitives[primitive], baseVertex, 0, vertexCount, startIndex, primitiveCount);
+}
+
+void Context::DrawIndexedWithDynamicVertex(RenderAPI::Primitive primitive, unsigned int vertexCount, unsigned int primitiveCount, const unsigned int* pIndexData, const void* pVertexData, unsigned int vertexStride)
+{
+	m_pDevice->DrawIndexedPrimitiveUP(s_primitives[primitive], 0, vertexCount, primitiveCount, pIndexData, D3DFMT_INDEX32, pVertexData, vertexStride);
+}
+
+void Context::DrawIndexedWithDynamicVertex(RenderAPI::Primitive primitive, unsigned int vertexCount, unsigned int primitiveCount, const unsigned short* pIndexData, const void* pVertexData, unsigned int vertexStride)
+{
+	m_pDevice->DrawIndexedPrimitiveUP(s_primitives[primitive], 0, vertexCount, primitiveCount, pIndexData, D3DFMT_INDEX16, pVertexData, vertexStride);
 }
 
 bool Context::UpdateTexture(RenderAPI::Texture2D * src, RenderAPI::Texture2D * dst)
@@ -775,6 +797,9 @@ BackBufferManager::~BackBufferManager()
 
 void BackBufferManager::SetRenderTarget(unsigned int index, RenderAPI::RenderTarget * rt)
 {
+	//当index为0时，rt为空的含义被视为使用主窗体的默认backbuffer
+	//因为manager有对rt做Cache的需求，我们用defaultRT来代替NULL作为参数使用
+	//遇到此情况会把NULL替换为defaultRT
 	IDirect3DSurface9* rtSurface;
 	if (rt == NULL)
 	{
@@ -792,8 +817,9 @@ void BackBufferManager::SetRenderTarget(unsigned int index, RenderAPI::RenderTar
 		rtSurface = ((::RenderTarget*)rt)->GetD3DSurface();
 	}
 
-	//重设texture
-	if (rt)
+	//如果传入参数是一个render texture的话，有可能被视为纹理设置到device中
+	//所以需要在设置render target之前清空纹理状态
+	if (rt != NULL)
 	{
 		::Texture2D* texture = (::Texture2D*)(rt->GetTexturePtr());
 		if (texture != NULL)

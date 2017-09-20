@@ -112,7 +112,11 @@ public:
 
 	SSDefine(SamplerAddressV, D3DSAMP_ADDRESSV);
 
+	SSDefine(SamplerAddressW, D3DSAMP_ADDRESSW);
+
 	SSDefine(SamplerBorderColor, D3DSAMP_BORDERCOLOR);
+
+	SSDefine(MaxAnisotropy, D3DSAMP_MAXANISOTROPY);
 
 	RenderAPI::BlendState GetBlendState() const { return m_blendState; }
 

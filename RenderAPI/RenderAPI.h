@@ -248,7 +248,7 @@ namespace RenderAPI
 	class Context;
 	class VertexBuffer;
 	typedef unsigned int HEffectParam;
-	const int hInvalidParam = 0xFFFFFFFF;
+	const HEffectParam hInvalidParam = 0xFFFFFFFF;
 
 	// 如果 backbufferWidth 和 backbufferHeight 同时被设为 0，将会使用 hWindow 默认的大小作为 backbuffer 的大小
 	struct SwapChainDesc
@@ -455,7 +455,9 @@ namespace RenderAPI
 			, MipFilter(FILTER_None)
 			, AddressU(TEX_ADDRESS_Clamp)
 			, AddressV(TEX_ADDRESS_Clamp)
+			, AddressW(TEX_ADDRESS_Clamp)
 			, BorderColor(0x00000000)
+			, OptionalAnisotropicFilter(AA_Disable)
 		{	}
 
 		SamplerFilter MinFilter;
@@ -463,7 +465,9 @@ namespace RenderAPI
 		SamplerFilter MipFilter;
 		TextureAddress AddressU;
 		TextureAddress AddressV;
+		TextureAddress AddressW;
 		unsigned int BorderColor;
+		AAMode OptionalAnisotropicFilter;
 	};
 
 	struct ScissorState
@@ -729,7 +733,7 @@ namespace RenderAPI
 
 		virtual bool SetInt(const char* paramName, int iValue) = 0;
 
-		virtual bool SetTexture(const char* paramName, RenderAPI::Texture* texture) = 0;
+		virtual bool SetTexture(const char* paramName, Texture* texture) = 0;
 
 		virtual bool SetTechnique(HEffectParam hParam) = 0;
 
@@ -753,7 +757,9 @@ namespace RenderAPI
 
 		virtual bool SetInt(HEffectParam hParam, int iValue) = 0;
 
-		virtual bool SetTexture(HEffectParam hParam, RenderAPI::Texture* texture) = 0;
+		virtual bool SetTexture(HEffectParam hParam, Texture* texture) = 0;
+
+		virtual void SetTextureSampler(HEffectParam hParam, unsigned int index, TextureSampler sampler) = 0;
 
 		virtual void CommitChange() = 0;
 
@@ -840,7 +846,7 @@ namespace RenderAPI
 
 		virtual void SetViewport(const Viewport&) = 0;
 
-		virtual RenderAPI::Viewport GetViewport() = 0;
+		virtual Viewport GetViewport() = 0;
 
 		virtual void SetRenderTarget(unsigned int index, RenderTarget* renderTarget) = 0;
 
@@ -852,7 +858,7 @@ namespace RenderAPI
 
 		virtual void SetVertexDeclaration(VertexDeclaration* decl) = 0;
 
-		virtual void SetTexture(unsigned int slot, RenderAPI::Texture* textures) = 0;
+		virtual void SetTexture(unsigned int slot, Texture* textures) = 0;
 
 		virtual void SetBlendState(const BlendState& state) = 0;
 
@@ -904,7 +910,13 @@ namespace RenderAPI
 
 		virtual void Draw(Primitive primitive, unsigned int startVertex, unsigned int primitiveCount) = 0;
 
-		virtual void DrawIndexed(RenderAPI::Primitive primitive, unsigned int baseVertex, unsigned int vertexCount, unsigned int startIndex, unsigned int primitiveCount) = 0;
+		virtual void DrawWithDynamicVertex(Primitive primitive, unsigned int primitiveCount, const void* pVertexData, unsigned int vertexStride) = 0;
+
+		virtual void DrawIndexed(Primitive primitive, unsigned int baseVertex, unsigned int vertexCount, unsigned int startIndex, unsigned int primitiveCount) = 0;
+
+		virtual void DrawIndexedWithDynamicVertex(Primitive primitive, unsigned int vertexCount, unsigned int primitiveCount, const unsigned int* pIndexData, const void* pVertexData, unsigned int vertexStride) = 0;
+
+		virtual void DrawIndexedWithDynamicVertex(Primitive primitive, unsigned int vertexCount, unsigned int primitiveCount, const unsigned short* pIndexData, const void* pVertexData, unsigned int vertexStride) = 0;
 
 		virtual bool UpdateTexture(Texture2D* src, Texture2D* dst) = 0;
 

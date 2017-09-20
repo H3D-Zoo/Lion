@@ -83,6 +83,8 @@ public:
 
 	virtual bool SetTexture(RenderAPI::HEffectParam hParam, RenderAPI::Texture* texture);
 
+	virtual void SetTextureSampler(RenderAPI::HEffectParam hParam, unsigned int index, RenderAPI::TextureSampler sampler);
+
 	virtual void CommitChange();
 	
 	virtual void OnLostDevice();

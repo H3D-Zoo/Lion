@@ -234,6 +234,8 @@ StateManager::StateManager(IDirect3DDevice9* pDevice)
 		GetSS(i, D3DSAMP_MIPFILTER);
 		GetSS(i, D3DSAMP_ADDRESSU);
 		GetSS(i, D3DSAMP_ADDRESSV);
+		GetSS(i, D3DSAMP_ADDRESSW);
+		GetSS(i, D3DSAMP_MAXANISOTROPY);
 	}
 #undef GetTSS
 #undef GetSS
