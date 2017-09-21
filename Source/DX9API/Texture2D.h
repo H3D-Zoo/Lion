@@ -20,7 +20,9 @@ public:
 
 	virtual void ReleaseDC();
 
-	virtual void Release();;
+	virtual bool SaveToFile(const char* fileName, RenderAPI::ImageFormat format);
+
+	virtual void Release();
 
 	void AddRef();
 

@@ -184,7 +184,7 @@ void Texture2D::UnlockRect(unsigned int layer)
 					pSurfaceSrc->Release();
 					pSurfaceDst->Release();
 				}
-				
+
 			}
 
 			pTextureForUpdate->Release();
@@ -235,7 +235,7 @@ bool Texture2D::NeedRecreateWhenDeviceLost() const
 	return m_recreateWhenDeviceLost;
 }
 
-bool Texture2D::AutoGenMipmaps() const 
+bool Texture2D::AutoGenMipmaps() const
 {
 	return m_autoGenMipmaps;
 }
@@ -285,6 +285,11 @@ void TextureSurface::ReleaseDC()
 		m_pSurface->ReleaseDC(m_hDC);
 		m_hDC = NULL;
 	}
+}
+
+bool TextureSurface::SaveToFile(const char * fileName, RenderAPI::ImageFormat format)
+{
+	return S_OK == D3DXSaveSurfaceToFile(fileName, s_d3dxFileFormat[format], m_pSurface, NULL, NULL);
 }
 
 void TextureSurface::Release()

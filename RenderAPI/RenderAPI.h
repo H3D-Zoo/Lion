@@ -631,6 +631,8 @@ namespace RenderAPI
 		virtual void* GetDC() = 0;
 
 		virtual void ReleaseDC() = 0;
+
+		virtual bool SaveToFile(const char* fileName, ImageFormat format) = 0;
 	};
 
 	class Texture2D : public Texture
