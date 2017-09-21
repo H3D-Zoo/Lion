@@ -340,6 +340,10 @@ void Context::SetVertexDeclaration(RenderAPI::VertexDeclaration * decl)
 		IDirect3DVertexDeclaration9* pDeclaration = ((::VertexDeclaration*)decl)->GetD3DVertexDeclarationPtr();
 		m_pDevice->SetVertexDeclaration(pDeclaration);
 	}
+	else
+	{
+		m_pDevice->SetVertexDeclaration(NULL);
+	}
 }
 
 void Context::SetTexture(unsigned int slot, RenderAPI::Texture* texture)
