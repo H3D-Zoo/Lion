@@ -896,7 +896,11 @@ namespace RenderAPI
 
 		virtual void SetFillMode(FillMode mode) = 0;
 
+		virtual FillMode GetFillMode() const = 0;
+
 		virtual void SetCullMode(CullMode mode) = 0;
+
+		virtual CullMode GetCullMode() const = 0;
 
 		virtual void SetDepthBias(float bias) = 0;
 

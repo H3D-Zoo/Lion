@@ -288,6 +288,32 @@ HRESULT StateManager::SetSS(unsigned int slot, D3DSAMPLERSTATETYPE type, DWORD v
 	}
 }
 
+unsigned int s_cullMode[] =
+{
+	D3DCULL_NONE,
+	D3DCULL_CW,
+	D3DCULL_CCW,
+};
+
+void StateManager::SetCullMode(RenderAPI::CullMode cullMode)
+{
+	SetRS(D3DRS_CULLMODE, s_cullMode[cullMode]);
+	m_cullMode = cullMode;
+}
+
+unsigned int s_fillMode[] =
+{
+	D3DFILL_SOLID,
+	D3DFILL_WIREFRAME,
+	D3DFILL_POINT,
+};
+
+void StateManager::SetFillMode(RenderAPI::FillMode fillMode)
+{
+	SetRS(D3DRS_FILLMODE, s_fillMode[fillMode]);
+	m_fillMode = fillMode;
+}
+
 unsigned int s_blendOps[] =
 {
 	D3DBLENDOP_ADD,

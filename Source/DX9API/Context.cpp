@@ -91,20 +91,6 @@ namespace
 		D3DPT_POINTLIST,
 	};
 
-	unsigned int s_cullMode[] =
-	{
-		D3DCULL_NONE,
-		D3DCULL_CW,
-		D3DCULL_CCW,
-	};
-
-	unsigned int s_fillMode[] =
-	{
-		D3DFILL_SOLID,
-		D3DFILL_WIREFRAME,
-		D3DFILL_POINT,
-	};
-
 	D3DTEXTUREADDRESS s_textureAddress[] =
 	{
 		D3DTADDRESS_WRAP,
@@ -569,12 +555,22 @@ void Context::SetColorWriteMask(bool r, bool g, bool b, bool a)
 
 void Context::SetFillMode(RenderAPI::FillMode mode)
 {
-	m_renderStateManager.SetFillMode(s_fillMode[mode]);
+	m_renderStateManager.SetFillMode(mode);
+}
+
+RenderAPI::FillMode Context::GetFillMode() const
+{
+	return m_renderStateManager.GetFillMode();
 }
 
 void Context::SetCullMode(RenderAPI::CullMode mode)
 {
-	m_renderStateManager.SetCullMode(s_cullMode[mode]);
+	m_renderStateManager.SetCullMode(mode);
+}
+
+RenderAPI::CullMode Context::GetCullMode() const
+{
+	return m_renderStateManager.GetCullMode();
 }
 
 void Context::SetDepthBias(float bias)

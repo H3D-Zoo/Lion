@@ -24,9 +24,9 @@ public:
 
 	RSDefine(TextureFactor, D3DRS_TEXTUREFACTOR);
 
-	RSDefine(FillMode, D3DRS_FILLMODE);
+	void SetFillMode(RenderAPI::FillMode fillMode);
 
-	RSDefine(CullMode, D3DRS_CULLMODE);
+	void SetCullMode(RenderAPI::CullMode cukkMode);
 
 	RSDefine(ScissorTest, D3DRS_SCISSORTESTENABLE);
 
@@ -128,6 +128,10 @@ public:
 
 	RenderAPI::StencilTestingState GetStencilTestingState() const { return m_stencilTestState; }
 
+	RenderAPI::FillMode GetFillMode() const { return m_fillMode; }
+
+	RenderAPI::CullMode GetCullMode() const { return m_cullMode; }
+
 	bool IsScissorTestEnable() const;
 
 protected:
@@ -150,6 +154,8 @@ protected:
 	RenderAPI::AlphaTestingState m_alphaTestState;
 	RenderAPI::DepthTestingState m_depthTestState;
 	RenderAPI::StencilTestingState m_stencilTestState;
+	RenderAPI::FillMode m_fillMode;
+	RenderAPI::CullMode m_cullMode;
 };
 
 class FXStateManager : public ID3DXEffectStateManager, public StateManager

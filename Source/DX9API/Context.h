@@ -107,7 +107,11 @@ public:
 
 	virtual void SetFillMode(RenderAPI::FillMode mode);
 
+	virtual RenderAPI::FillMode GetFillMode() const;
+
 	virtual void SetCullMode(RenderAPI::CullMode mode);
+
+	virtual RenderAPI::CullMode GetCullMode() const;
 
 	virtual void SetDepthBias(float bias);
 
