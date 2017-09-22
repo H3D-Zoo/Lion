@@ -457,11 +457,11 @@ RenderAPI::TextureCube * Device::CreateTextureCube(RenderAPI::ResourceUsage usag
 	return texture;
 }
 
-RenderAPI::FXEffect * Device::CreateFXEffectFromFile(const char * effectFilePath)
+RenderAPI::FXEffect * Device::CreateFXEffectFromFile(const char * effectFilePath, const char * includeDir)
 {
 	ID3DXEffect* pEffect = NULL;
 	AutoR<ID3DXBuffer> pErrorBuffer;
-	EffectInclude includeCallback;
+	EffectInclude includeCallback(includeDir);
 	DWORD flags = D3DXSHADER_USE_LEGACY_D3DX9_31_DLL; //要想支持ps 1_x 需要使用这个。
 
 

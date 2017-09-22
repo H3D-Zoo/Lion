@@ -178,7 +178,6 @@ bool APIInstance::CheckDepthStencilFormat(D3DFORMAT checkFormat, D3DFORMAT adapt
 	return hr == S_OK;
 }
 
-
 bool APIInstance::CheckDeviceMultiSampleType(D3DFORMAT rtFormat, D3DFORMAT dsFormat, bool isFullsreen, D3DMULTISAMPLE_TYPE mulsampleType) const
 {
 	DWORD numAAQuality;
@@ -425,9 +424,9 @@ RenderAPI::CreationResult APIInstance::CreateDeviceAndContext(const RenderAPI::S
 	return result;
 }
 
-bool APIInstance::CompileFXEffectFromFile(const char* sourceFXFile, const char* compiledFXFile)
+bool APIInstance::CompileFXEffectFromFile(const char* sourceFXFile, const char* compiledFXFile, const char* includeDir)
 {
-	EffectInclude includeCallback;
+	EffectInclude includeCallback(includeDir);
 	AutoR<ID3DXBuffer> pErrorBuffer;
 	AutoR<ID3DXBuffer> pEffectBuffer;
 	ID3DXEffectCompiler* pEffectCompile;
@@ -543,14 +542,56 @@ void APIInstance::PerfEnd()
 }
 
 
-HRESULT STDMETHODCALLTYPE EffectInclude::Open(D3DXINCLUDE_TYPE, LPCSTR pFileName, LPCVOID /*pParentData*/, LPCVOID *ppData, UINT *pBytes)
+EffectInclude::EffectInclude(const std::string & includeDir)
+	: m_dirInclude(includeDir)
 {
+	if (!m_dirInclude.empty())
+	{
+		if (m_dirInclude[m_dirInclude.size() - 1] != '\\' || m_dirInclude[m_dirInclude.size() - 1] != '/')
+		{
+			m_dirInclude += '\\';
+		}
+	}
+}
+
+
+std::string GetLocalFileName(const std::string& fullName)
+{
+	size_t slash = fullName.rfind("\\");
+	size_t rslash = fullName.rfind("/");
+
+	if (slash == std::string::npos && rslash == std::string::npos)
+		return fullName;
+	
+	slash = __min(slash, rslash);
+	return fullName.substr(slash + 1);
+}
+
+HRESULT STDMETHODCALLTYPE EffectInclude::Open(D3DXINCLUDE_TYPE includeType, LPCSTR pFileName, LPCVOID pParentData, LPCVOID *ppData, UINT *pBytes)
+{
+	std::string fileName = pFileName;
 	if (!IsLocalFileExist(pFileName))
 	{
-		return E_INVALIDARG;
+		bool localInclude = (includeType == D3DXINC_LOCAL) && (pParentData != NULL);
+		if (localInclude)
+		{
+			std::string localFileName = GetLocalFileName(fileName);
+			fileName = m_dirInclude + localFileName;
+
+			if (!IsLocalFileExist(fileName))
+			{
+				//g_Log.OutPutConsole(true,"无法打开Fx Include文件%s.\n当前目录:%s",pFileName,buff);
+				return E_INVALIDARG;
+			}
+		}
+		else
+		{
+			return E_INVALIDARG;
+		}
+
 	}
 
-	HANDLE hFile = CreateFileA(pFileName,		// file to open
+	HANDLE hFile = CreateFileA(fileName.c_str(),		// file to open
 		GENERIC_READ,							// open for reading
 		FILE_SHARE_READ,						// share for reading
 		NULL,									// default security
@@ -586,9 +627,6 @@ HRESULT STDMETHODCALLTYPE EffectInclude::Open(D3DXINCLUDE_TYPE, LPCSTR pFileName
 	{
 		*ppData = NULL;
 		*pBytes = 0;
-		//char buff[MAX_PATH];
-		//GetCurrentDirectoryA(MAX_PATH, buff);
-		//g_Log.OutPutConsole(true,"无法打开Fx Include文件%s.\n当前目录:%s",pFileName,buff);
 		//LogEWithDesc("无法打开Fx 文件dest_filename=%s.\n当前目录:%s ;pFileName=%s", dest_filename.c_str(), buff, pFileName);
 		return S_FALSE;
 	}

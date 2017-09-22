@@ -314,14 +314,14 @@ void APITestBed::CreatePartcleMesh()
 
 void APITestBed::CreateMaterial()
 {
-	m_pEffectTintColor = m_pDevice->CreateFXEffectFromFile("../../Win32TestBed/TintColor.fx");
+	m_pEffectTintColor = m_pDevice->CreateFXEffectFromFile("../../Win32TestBed/TintColor.fx","");
 	m_pEffectTintColor->SetValidateTechnique();
 
-	m_pEffectParticle = m_pDevice->CreateFXEffectFromFile("../../Win32TestBed/Particle.fx");
+	m_pEffectParticle = m_pDevice->CreateFXEffectFromFile("../../Win32TestBed/Particle.fx", "");
 	m_pEffectParticle->SetValidateTechnique();
 	m_hParamParticleTex = m_pEffectParticle->GetParameterByName("g_particleTexture");
 
-	m_pEffectSimpleTexture = m_pDevice->CreateFXEffectFromFile("../../Win32TestBed/SimpleTexture.fx");
+	m_pEffectSimpleTexture = m_pDevice->CreateFXEffectFromFile("../../Win32TestBed/SimpleTexture.fx", "");
 	m_hTechStencil = m_pEffectSimpleTexture->GetTechniqueByName("SimpleTextureStencil");
 	m_hTechSimple = m_pEffectSimpleTexture->GetTechniqueByName("SimpleTexture");
 	m_hParamTexture = m_pEffectSimpleTexture->GetParameterByName("g_texture");

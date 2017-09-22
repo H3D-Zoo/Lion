@@ -31,7 +31,7 @@ public:
 
 	virtual RenderAPI::TextureCube* CreateTextureCube(RenderAPI::ResourceUsage usage, RenderAPI::TextureFormat format, unsigned int edgeLength, unsigned int layer, bool autoGenMipmaps, void** initialData, int dataLinePitch, int dataHeight);
 
-	virtual RenderAPI::FXEffect* CreateFXEffectFromFile(const char* effectFilePath);
+	virtual RenderAPI::FXEffect* CreateFXEffectFromFile(const char* effectFilePath, const char * includeDir);
 
 	virtual RenderAPI::RenderTarget* CreateRenderTarget(RenderAPI::TextureFormat format, unsigned int width, unsigned int height);
 

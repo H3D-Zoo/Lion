@@ -152,7 +152,7 @@ RenderAPI::HEffectParam FXEffect::GetParameterByName(RenderAPI::HEffectParam par
 
 RenderAPI::HEffectParam FXEffect::GetParameterElement(RenderAPI::HEffectParam parent, unsigned int elementIndex)
 {
-	if (parent < m_hParamIDs.size())
+	if (parent >= m_hParamIDs.size())
 		return RenderAPI::hInvalidParam;
 
 	D3DXHANDLE h = m_pEffect->GetParameterElement(m_hParamIDs[parent], elementIndex);

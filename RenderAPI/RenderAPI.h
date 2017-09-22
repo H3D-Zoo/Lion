@@ -820,7 +820,7 @@ namespace RenderAPI
 
 		virtual TextureCube* CreateTextureCube(ResourceUsage usage, TextureFormat format, unsigned int edgeLength, unsigned int layer, bool autoGenMipmaps, void** initialData, int dataLinePitch, int dataHeight) = 0;
 
-		virtual FXEffect* CreateFXEffectFromFile(const char* effectFilePath) = 0;
+		virtual FXEffect* CreateFXEffectFromFile(const char* effectFilePath, const char * includeDir) = 0;
 
 		virtual RenderTarget* CreateRenderTarget(TextureFormat format, unsigned int width, unsigned int height) = 0;
 
@@ -962,7 +962,7 @@ namespace RenderAPI
 		virtual CreationResult CreateDeviceAndContext(const SwapChainDesc& desc, bool isFullscreen, bool useVerticalSync) = 0;
 
 		// 从文件中读取fx代码并编译，结果输出到compiledFXFile里
-		virtual bool CompileFXEffectFromFile(const char* sourceFXFile, const char* compiledFXFile) = 0;
+		virtual bool CompileFXEffectFromFile(const char* sourceFXFile, const char* compiledFXFile, const char* includeDir) = 0;
 
 		virtual bool CheckMultiSampleSupport(RenderTargetFormat, DepthStencilFormat, AAMode, bool fullscreen) const = 0;
 

@@ -41,7 +41,7 @@ public:
 
 	virtual RenderAPI::CreationResult CreateDeviceAndContext(const RenderAPI::SwapChainDesc& desc, bool isFullscreen, bool useVerticalSync);
 
-	virtual bool CompileFXEffectFromFile(const char* sourceFXFile, const char* compiledFXFile);
+	virtual bool CompileFXEffectFromFile(const char* sourceFXFile, const char* compiledFXFile, const char* includeDir);
 
 	virtual RenderAPI::RenderTargetFormat GetDefaultRenderTargetFormat();
 
@@ -110,6 +110,10 @@ public:
 
 class EffectInclude : public ID3DXInclude
 {
+public:
+	EffectInclude(const std::string& includeDir);
 	HRESULT STDMETHODCALLTYPE Open(D3DXINCLUDE_TYPE IncludeType, LPCSTR pFileName, LPCVOID pParentData, LPCVOID *ppData, UINT *pBytes);
 	HRESULT STDMETHODCALLTYPE Close(LPCVOID pData);
+private:
+	std::string m_dirInclude;
 };
