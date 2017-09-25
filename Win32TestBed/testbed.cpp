@@ -252,15 +252,15 @@ void APITestBed::CreateMesh()
 {
 	BoxMesh boxMesh;
 	auto pBoxVertexBuffer = m_pDevice->CreateVertexBuffer(RenderAPI::RESUSAGE_StaticWO, boxMesh.GetVertexCount(), sizeof(BoxVertex));
-	char* pBoxVB = (char*)pBoxVertexBuffer->DiscardLock();
+	char* pBoxVB = (char*)pBoxVertexBuffer->LockAll(RenderAPI::LOCK_Discard);
 	if (pBoxVB != nullptr)
 	{
 		memcpy(pBoxVB, boxMesh.GetVerticesPtr(), pBoxVertexBuffer->GetLength());
 		pBoxVertexBuffer->Unlock();
 	}
 
-	Box.index = m_pDevice->CreateIndexBuffer(RenderAPI::RESUSAGE_StaticManaged, RenderAPI::INDEX_Int16, boxMesh.GetIndexCount());
-	char* pBoxIB = (char*)Box.index->DiscardLock();
+	Box.index = m_pDevice->CreateIndexBuffer(RenderAPI::RESUSAGE_StaticWOManaged, RenderAPI::INDEX_Int16, boxMesh.GetIndexCount());
+	char* pBoxIB = (char*)Box.index->LockAll(RenderAPI::LOCK_NoOverWrite);
 	if (pBoxIB != nullptr)
 	{
 		memcpy(pBoxIB, boxMesh.GetIndicesPtr(), Box.index->GetLength());
@@ -298,16 +298,16 @@ void APITestBed::CreateQuadMesh()
 	unsigned short quadIndices[] = { 0, 2, 1, 0, 3, 2 };
 
 
-	auto pQuadVB = m_pDevice->CreateVertexBuffer(RenderAPI::RESUSAGE_StaticManaged, 4, sizeof(QuadVertex));
-	char* pQuadVBPtr = (char*)pQuadVB->DiscardLock();
+	auto pQuadVB = m_pDevice->CreateVertexBuffer(RenderAPI::RESUSAGE_StaticWOManaged, 4, sizeof(QuadVertex));
+	char* pQuadVBPtr = (char*)pQuadVB->LockAll(RenderAPI::LOCK_Normal);
 	if (pQuadVBPtr != nullptr)
 	{
 		memcpy(pQuadVBPtr, quadVertices, pQuadVB->GetLength());
 		pQuadVB->Unlock();
 	}
 
-	Quad.index = m_pDevice->CreateIndexBuffer(RenderAPI::RESUSAGE_StaticManaged, RenderAPI::INDEX_Int16, 6);
-	char* pQuadIB = (char*)Quad.index->DiscardLock();
+	Quad.index = m_pDevice->CreateIndexBuffer(RenderAPI::RESUSAGE_StaticWOManaged, RenderAPI::INDEX_Int16, 6);
+	char* pQuadIB = (char*)Quad.index->LockAll(RenderAPI::LOCK_Normal);
 	if (pQuadIB != nullptr)
 	{
 		memcpy(pQuadIB, quadIndices, Quad.index->GetLength());
@@ -322,8 +322,8 @@ void APITestBed::CreateQuadMesh()
 
 void APITestBed::CreatePartcleMesh()
 {
-	auto pParticleVBS = m_pDevice->CreateVertexBuffer(RenderAPI::RESUSAGE_StaticManaged, m_particleInstance.kParticleVertexCount, sizeof(ParticleVertexS));
-	char* pParticleVBSPtr = (char*)pParticleVBS->DiscardLock();
+	auto pParticleVBS = m_pDevice->CreateVertexBuffer(RenderAPI::RESUSAGE_StaticWOManaged, m_particleInstance.kParticleVertexCount, sizeof(ParticleVertexS));
+	char* pParticleVBSPtr = (char*)pParticleVBS->LockAll(RenderAPI::LOCK_Normal);
 	if (pParticleVBSPtr != nullptr)
 	{
 		memcpy(pParticleVBSPtr, m_particleInstance.GetSVerticesPtr(), pParticleVBS->GetLength());
@@ -332,8 +332,8 @@ void APITestBed::CreatePartcleMesh()
 
 	auto pParticleVBD = m_pDevice->CreateVertexBuffer(RenderAPI::RESUSAGE_Dynamic, m_particleInstance.kParticleVertexCount, sizeof(ParticleVertexD));
 
-	Particle.index = m_pDevice->CreateIndexBuffer(RenderAPI::RESUSAGE_StaticManaged, RenderAPI::INDEX_Int16, m_particleInstance.kParticleIndexCount);
-	char* pParticleIBSPtr = (char*)Particle.index->DiscardLock();
+	Particle.index = m_pDevice->CreateIndexBuffer(RenderAPI::RESUSAGE_StaticWOManaged, RenderAPI::INDEX_Int16, m_particleInstance.kParticleIndexCount);
+	char* pParticleIBSPtr = (char*)Particle.index->LockAll(RenderAPI::LOCK_Normal);
 	if (pParticleIBSPtr != nullptr)
 	{
 		memcpy(pParticleIBSPtr, m_particleInstance.GetIndicesPtr(), Particle.index->GetLength());
@@ -393,7 +393,7 @@ void APITestBed::CreateMaterial()
 				texformat = RenderAPI::TEX_XRGB;
 			}
 
-			m_pParticleTexture = m_pDevice->CreateTexture2D(RenderAPI::RESUSAGE_StaticManaged, texformat, png.width, png.height, 0, true);
+			m_pParticleTexture = m_pDevice->CreateTexture2D(RenderAPI::RESUSAGE_StaticWOManaged, texformat, png.width, png.height, 0, true);
 			RenderAPI::MappedResource mres = m_pParticleTexture->LockRect(0, RenderAPI::LOCK_Normal);
 			if (mres.Success)
 			{
@@ -431,7 +431,7 @@ void APITestBed::CreateMaterial()
 				texformat = RenderAPI::TEX_XRGB;
 			}
 
-			m_pBoxTexture = m_pDevice->CreateTexture2D(RenderAPI::RESUSAGE_StaticManaged, texformat, bmp.width, bmp.height, 0, true);
+			m_pBoxTexture = m_pDevice->CreateTexture2D(RenderAPI::RESUSAGE_StaticWOManaged, texformat, bmp.width, bmp.height, 0, true);
 
 			RenderAPI::MappedResource res = m_pBoxTexture->LockRect(0, RenderAPI::LOCK_Discard);
 
@@ -624,7 +624,7 @@ void APITestBed::UploadParticlesAndCommitDrawcalls()
 		const float kParticleSize = 0.1f;
 		const float range = 1.5f;
 		auto dvb = Particle.vertex[1].BufferPtr;
-		ParticleVertexD* vertices = (ParticleVertexD*)dvb->DiscardLock();
+		ParticleVertexD* vertices = (ParticleVertexD*)dvb->LockAll(RenderAPI::LOCK_Discard);
 		if (vertices != nullptr)
 		{
 			filledCount += m_particleInstance.FillVertexBuffer(vertices, filledCount);

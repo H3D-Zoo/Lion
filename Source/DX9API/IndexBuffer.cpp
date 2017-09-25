@@ -7,7 +7,7 @@ IndexBuffer::IndexBuffer(APIInstance* pAPI, IDirect3DIndexBuffer9* indexBuffer, 
 	, m_indexFormat(format)
 	, m_isManaged(isManaged)
 	, m_isDynamic(usage == RenderAPI::RESUSAGE_Dynamic || usage == RenderAPI::RESUSAGE_DynamicManaged)
-	, m_writeOnly(!(usage == RenderAPI::RESUSAGE_StaticManaged || usage == RenderAPI::RESUSAGE_StaticRW))
+	, m_writeOnly(!(usage == RenderAPI::RESUSAGE_StaticManaged || usage == RenderAPI::RESUSAGE_Static))
 	, m_indexCount(count)
 	, m_pIndexBuffer(indexBuffer)
 {
@@ -60,11 +60,14 @@ void * IndexBuffer::Lock(unsigned int offset, unsigned int lockLength, RenderAPI
 	{
 		return NULL;
 	}
-	else if (m_isDynamic && lockOption == RenderAPI::LOCK_Normal)
+	else if (lockOption == RenderAPI::LOCK_NoOverWrite || lockOption == RenderAPI::LOCK_Discard)
 	{
 		//The D3DLOCK_DISCARD and D3DLOCK_NOOVERWRITE flags are valid only 
 		//on buffers created with D3DUSAGE_DYNAMIC.
-		lockOption = RenderAPI::LOCK_Discard;
+		if (!m_isDynamic)
+		{
+			lockOption = RenderAPI::LOCK_Normal;
+		}
 	}
 
 	void* pDataPtr = NULL;
@@ -80,9 +83,9 @@ void * IndexBuffer::Lock(unsigned int offset, unsigned int lockLength, RenderAPI
 	}
 }
 
-void* IndexBuffer::DiscardLock()
+void* IndexBuffer::LockAll(RenderAPI::LockOption lockOption)
 {
-	return Lock(0, 0, RenderAPI::LOCK_Discard);
+	return Lock(0, 0, lockOption);
 }
 
 void IndexBuffer::Unlock()

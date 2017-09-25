@@ -21,7 +21,7 @@ public:
 
 	virtual void* Lock(unsigned int offset, unsigned int lockLength, RenderAPI::LockOption lockOption);
 
-	virtual void* DiscardLock();
+	virtual void* LockAll(RenderAPI::LockOption lockOption);
 
 	virtual void Unlock();
 	

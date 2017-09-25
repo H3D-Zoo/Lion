@@ -6,7 +6,7 @@ VertexBuffer::VertexBuffer(APIInstance* pAPIInstance, IDirect3DVertexBuffer9* ve
 	, m_usage(usage)
 	, m_isManaged(isManaged)
 	, m_isDynamic(usage == RenderAPI::RESUSAGE_Dynamic || usage == RenderAPI::RESUSAGE_DynamicManaged)
-	, m_writeOnly(!(usage == RenderAPI::RESUSAGE_StaticManaged || usage == RenderAPI::RESUSAGE_StaticRW))
+	, m_writeOnly(!(usage == RenderAPI::RESUSAGE_StaticManaged || usage == RenderAPI::RESUSAGE_Static))
 	, m_vertexCount(vertexCount)
 	, m_vertexStride(vertexSize)
 	, m_bufferLength(vertexCount * vertexSize)
@@ -46,11 +46,14 @@ void * VertexBuffer::Lock(unsigned int offset, unsigned int lockLength, RenderAP
 	{
 		return NULL;
 	}
-	else if (m_isDynamic && lockOption == RenderAPI::LOCK_Normal)
+	else if (lockOption == RenderAPI::LOCK_NoOverWrite || lockOption == RenderAPI::LOCK_Discard)
 	{
 		//The D3DLOCK_DISCARD and D3DLOCK_NOOVERWRITE flags are valid only 
 		//on buffers created with D3DUSAGE_DYNAMIC.
-		lockOption = RenderAPI::LOCK_Discard;
+		if (!m_isDynamic)
+		{
+			lockOption = RenderAPI::LOCK_Normal;
+		}
 	}
 
 	void* pDataPtr = NULL;
@@ -66,9 +69,9 @@ void * VertexBuffer::Lock(unsigned int offset, unsigned int lockLength, RenderAP
 	}
 }
 
-void* VertexBuffer::DiscardLock()
+void* VertexBuffer::LockAll(RenderAPI::LockOption lockOption)
 {
-	return Lock(0, 0, RenderAPI::LOCK_Discard);
+	return Lock(0, 0, lockOption);
 }
 
 void VertexBuffer::Unlock()

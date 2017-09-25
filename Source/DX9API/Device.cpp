@@ -15,13 +15,14 @@
 
 namespace
 {
-	const int kD3DUsageCount = 5;
+	const int kD3DUsageCount = 6;
 
 	unsigned int s_d3dBufferUsage[kD3DUsageCount] =
 	{
 		D3DUSAGE_WRITEONLY,
 		0,
 		D3DUSAGE_WRITEONLY | D3DUSAGE_DYNAMIC,
+		0,
 		0,
 		D3DUSAGE_DYNAMIC,
 	};
@@ -166,9 +167,42 @@ RenderAPI::VertexBuffer* Device::CreateVertexBuffer(RenderAPI::ResourceUsage usa
 		m_pAPI->LogError("CreateVertexBuffer", "Vertex Count and Vertex Size cannot be 0.");
 		return NULL;
 	}
-	bool dynamic = usage == RenderAPI::RESUSAGE_Dynamic || usage == RenderAPI::RESUSAGE_DynamicManaged;
-	bool managed = m_pAPI->IsSupportManaged() && (usage == RenderAPI::RESUSAGE_DynamicManaged || usage == RenderAPI::RESUSAGE_StaticManaged);
 
+	bool managed;
+	bool dynamic;
+	if (m_pAPI->IsSupportManaged())
+	{
+		if (usage == RenderAPI::RESUSAGE_StaticWOManaged)
+		{
+			usage = RenderAPI::RESUSAGE_StaticManaged;
+			managed = true;
+			dynamic = false;
+		}
+		else
+		{
+			managed = usage == RenderAPI::RESUSAGE_DynamicManaged || usage == RenderAPI::RESUSAGE_StaticManaged;
+			dynamic = usage == RenderAPI::RESUSAGE_Dynamic || usage == RenderAPI::RESUSAGE_DynamicManaged;
+		}
+	}
+	else
+	{
+		managed = false;
+		dynamic = false;
+		if (usage == RenderAPI::RESUSAGE_DynamicManaged)
+		{
+			usage = RenderAPI::RESUSAGE_Dynamic;
+			dynamic = true;
+		}
+		else if(usage == RenderAPI::RESUSAGE_StaticManaged)
+		{
+			usage = RenderAPI::RESUSAGE_Static;
+		}
+		else if (usage == RenderAPI::RESUSAGE_StaticWOManaged)
+		{
+			usage = RenderAPI::RESUSAGE_StaticWO;
+		}
+	}
+	
 	IDirect3DVertexBuffer9* pVertexBuffer = NULL;
 	unsigned int d3dUsage = s_d3dBufferUsage[usage];
 	unsigned int bufferSize = vertexCount * vertexSize;
@@ -192,8 +226,40 @@ RenderAPI::IndexBuffer* Device::CreateIndexBuffer(RenderAPI::ResourceUsage usage
 		return NULL;
 	}
 
-	bool dynamic = usage == RenderAPI::RESUSAGE_Dynamic || usage == RenderAPI::RESUSAGE_DynamicManaged;
-	bool managed = m_pAPI->IsSupportManaged() && (usage == RenderAPI::RESUSAGE_DynamicManaged || usage == RenderAPI::RESUSAGE_StaticManaged);
+	bool managed;
+	bool dynamic;
+	if (m_pAPI->IsSupportManaged())
+	{
+		if (usage == RenderAPI::RESUSAGE_StaticWOManaged)
+		{
+			usage = RenderAPI::RESUSAGE_StaticManaged;
+			managed = true;
+			dynamic = false;
+		}
+		else
+		{
+			managed = usage == RenderAPI::RESUSAGE_DynamicManaged || usage == RenderAPI::RESUSAGE_StaticManaged;
+			dynamic = usage == RenderAPI::RESUSAGE_Dynamic || usage == RenderAPI::RESUSAGE_DynamicManaged;
+		}
+	}
+	else
+	{
+		managed = false;
+		dynamic = false;
+		if (usage == RenderAPI::RESUSAGE_DynamicManaged)
+		{
+			usage = RenderAPI::RESUSAGE_Dynamic;
+			dynamic = true;
+		}
+		else if (usage == RenderAPI::RESUSAGE_StaticManaged)
+		{
+			usage = RenderAPI::RESUSAGE_Static;
+		}
+		else if (usage == RenderAPI::RESUSAGE_StaticWOManaged)
+		{
+			usage = RenderAPI::RESUSAGE_StaticWO;
+		}
+	}
 	
 	IDirect3DIndexBuffer9* pIndexBuffer = NULL;
 	unsigned int d3dUsage = s_d3dBufferUsage[usage];
@@ -282,9 +348,38 @@ RenderAPI::Texture2D * Device::CreateTexture2D(RenderAPI::ResourceUsage usage, R
 		layer = 1;
 	}
 
-
-	bool dynamic = usage == RenderAPI::RESUSAGE_Dynamic || usage == RenderAPI::RESUSAGE_DynamicManaged;
-	bool managed = m_pAPI->IsSupportManaged() && (usage == RenderAPI::RESUSAGE_DynamicManaged || usage == RenderAPI::RESUSAGE_StaticManaged);
+	bool managed;
+	bool dynamic;
+	if (m_pAPI->IsSupportManaged())
+	{
+		if (usage == RenderAPI::RESUSAGE_StaticWOManaged)
+		{
+			usage = RenderAPI::RESUSAGE_StaticManaged;
+			managed = true;
+			dynamic = false;
+		}
+		else
+		{
+			managed = usage == RenderAPI::RESUSAGE_DynamicManaged || usage == RenderAPI::RESUSAGE_StaticManaged;
+			dynamic = usage == RenderAPI::RESUSAGE_Dynamic || usage == RenderAPI::RESUSAGE_DynamicManaged;
+		}
+	}
+	else
+	{
+		managed = false;
+		dynamic = false;
+		if (usage == RenderAPI::RESUSAGE_DynamicManaged)
+		{
+			usage = RenderAPI::RESUSAGE_Dynamic;
+			dynamic = true;
+		}
+		else if (usage == RenderAPI::RESUSAGE_StaticManaged ||
+			usage == RenderAPI::RESUSAGE_StaticWOManaged ||
+			usage == RenderAPI::RESUSAGE_StaticWO)
+		{
+			usage = RenderAPI::RESUSAGE_Static;
+		}
+	}
 
 	IDirect3DTexture9* pTexture = NULL;
 	unsigned int d3dUsage = autoGenMipmaps ? D3DUSAGE_AUTOGENMIPMAP : 0;
@@ -318,9 +413,38 @@ RenderAPI::TextureCube * Device::CreateTextureCube(RenderAPI::ResourceUsage usag
 		layer = 1;
 	}
 
-
-	bool dynamic = usage == RenderAPI::RESUSAGE_Dynamic || usage == RenderAPI::RESUSAGE_DynamicManaged;
-	bool managed = m_pAPI->IsSupportManaged() && (usage == RenderAPI::RESUSAGE_DynamicManaged || usage == RenderAPI::RESUSAGE_StaticManaged);
+	bool managed;
+	bool dynamic;
+	if (m_pAPI->IsSupportManaged())
+	{
+		if (usage == RenderAPI::RESUSAGE_StaticWOManaged)
+		{
+			usage = RenderAPI::RESUSAGE_StaticManaged;
+			managed = true;
+			dynamic = false;
+		}
+		else
+		{
+			managed = usage == RenderAPI::RESUSAGE_DynamicManaged || usage == RenderAPI::RESUSAGE_StaticManaged;
+			dynamic = usage == RenderAPI::RESUSAGE_Dynamic || usage == RenderAPI::RESUSAGE_DynamicManaged;
+		}
+	}
+	else
+	{
+		managed = false;
+		dynamic = false;
+		if (usage == RenderAPI::RESUSAGE_DynamicManaged)
+		{
+			usage = RenderAPI::RESUSAGE_Dynamic;
+			dynamic = true;
+		}
+		else if (usage == RenderAPI::RESUSAGE_StaticManaged ||
+			usage == RenderAPI::RESUSAGE_StaticWOManaged ||
+			usage == RenderAPI::RESUSAGE_StaticWO)
+		{
+			usage = RenderAPI::RESUSAGE_Static;
+		}
+	}
 
 	IDirect3DCubeTexture9* pTexture = NULL;
 	unsigned int d3dUsage = autoGenMipmaps ? D3DUSAGE_AUTOGENMIPMAP : 0;

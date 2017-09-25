@@ -29,10 +29,11 @@ namespace RenderAPI
 	enum ResourceUsage
 	{
 		RESUSAGE_StaticWO = 0,
-		RESUSAGE_StaticRW = 1,	//WriteOnly only affect defaultpool
+		RESUSAGE_Static = 1,
 		RESUSAGE_Dynamic = 2,
-		RESUSAGE_StaticManaged = 3,
-		RESUSAGE_DynamicManaged = 4,
+		RESUSAGE_StaticWOManaged = 3,
+		RESUSAGE_StaticManaged = 4,
+		RESUSAGE_DynamicManaged = 5,
 	};
 
 	enum LockOption
@@ -576,7 +577,7 @@ namespace RenderAPI
 
 		virtual void* Lock(unsigned int offset, unsigned int lockLength, LockOption lockOption) = 0;
 
-		virtual void* DiscardLock() = 0;
+		virtual void* LockAll(LockOption lockOption) = 0;
 
 		virtual void Unlock() = 0;
 
@@ -604,7 +605,7 @@ namespace RenderAPI
 
 		virtual void* Lock(unsigned int offset, unsigned int lockLength, LockOption lockOption) = 0;
 
-		virtual void* DiscardLock() = 0;
+		virtual void* LockAll(LockOption lockOption) = 0;
 
 		virtual void Unlock() = 0;
 
