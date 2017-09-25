@@ -1,11 +1,13 @@
 #include "IndexBuffer.h"
 #include "EnumMapping.h"
 
-IndexBuffer::IndexBuffer(APIInstance* pAPI, IDirect3DIndexBuffer9* indexBuffer, RenderAPI::ResourceUsage usage, RenderAPI::IndexFormat format, unsigned int count, bool recreateWhenDeviceLost)
+IndexBuffer::IndexBuffer(APIInstance* pAPI, IDirect3DIndexBuffer9* indexBuffer, RenderAPI::ResourceUsage usage, RenderAPI::IndexFormat format, bool isManaged, unsigned int count)
 	: m_pAPIInstance(pAPI)
 	, m_usage(usage)
 	, m_indexFormat(format)
-	, m_recreateWhenDeviceLost(recreateWhenDeviceLost)
+	, m_isManaged(isManaged)
+	, m_isDynamic(usage == RenderAPI::RESUSAGE_Dynamic || usage == RenderAPI::RESUSAGE_DynamicManaged)
+	, m_writeOnly(!(usage == RenderAPI::RESUSAGE_StaticManaged || usage == RenderAPI::RESUSAGE_StaticRW))
 	, m_indexCount(count)
 	, m_pIndexBuffer(indexBuffer)
 {
@@ -45,7 +47,7 @@ void IndexBuffer::Release()
 
 bool IndexBuffer::NeedRecreateWhenDeviceLost() const
 {
-	return m_recreateWhenDeviceLost;
+	return !m_isManaged;
 }
 
 IDirect3DIndexBuffer9 * IndexBuffer::GetD3DIndexBuffer()
@@ -54,14 +56,19 @@ IDirect3DIndexBuffer9 * IndexBuffer::GetD3DIndexBuffer()
 }
 void * IndexBuffer::Lock(unsigned int offset, unsigned int lockLength, RenderAPI::LockOption lockOption)
 {
-	if (m_usage == RenderAPI::RESUSAGE_Immuable)
+	if (m_writeOnly && lockOption == RenderAPI::LOCK_ReadOnly)
 	{
-		m_pAPIInstance->LogError("IndexBuffer::Lock", "Immuable IndexBuffer Cannot be locked.");
 		return NULL;
+	}
+	else if (m_isDynamic && lockOption == RenderAPI::LOCK_Normal)
+	{
+		//The D3DLOCK_DISCARD and D3DLOCK_NOOVERWRITE flags are valid only 
+		//on buffers created with D3DUSAGE_DYNAMIC.
+		lockOption = RenderAPI::LOCK_Discard;
 	}
 
 	void* pDataPtr = NULL;
-	HRESULT hr = m_pIndexBuffer->Lock(offset, lockLength, &pDataPtr, GetLockOption(lockOption,m_usage));
+	HRESULT hr = m_pIndexBuffer->Lock(offset, lockLength, &pDataPtr, s_lockOptions[lockOption]);
 	if (S_OK == hr)
 	{
 		return pDataPtr;

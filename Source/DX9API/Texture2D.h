@@ -38,9 +38,9 @@ private:
 class Texture2D : public RenderAPI::Texture2D
 {
 public:
-	Texture2D(APIInstance* pAPIInstance, IDirect3DTexture9* texture, RenderAPI::TextureFormat format, RenderAPI::ResourceUsage usage,
+	Texture2D(APIInstance* pAPIInstance, IDirect3DTexture9* texture, RenderAPI::TextureFormat format, RenderAPI::ResourceUsage usage, bool isManaged,
 		unsigned int width, unsigned int height, 
-		bool autoGenMipmaps, bool recreateWhenDeviceLost, bool isRenderTexture);
+		bool autoGenMipmaps, bool isRenderTexture);
 
 	~Texture2D();
 
@@ -86,7 +86,8 @@ private:
 	RenderAPI::ResourceUsage m_usage;
 	RenderAPI::TextureFormat m_texFormat;
 	const bool m_autoGenMipmaps;
-	const bool m_recreateWhenDeviceLost;
+	const bool m_isManaged;
+	const bool m_isDynamic;
 	const bool m_isRenderTexture;
 	IDirect3DTexture9* m_pTexture;
 	std::vector<TextureSurface*> m_surfaces;

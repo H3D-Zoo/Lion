@@ -28,11 +28,11 @@ namespace RenderAPI
 
 	enum ResourceUsage
 	{
-		RESUSAGE_Default = 0,
-		RESUSAGE_Dynamic = 1,
-		RESUSAGE_Immuable = 2,
-		RESUSAGE_DefaultRW = 3,
-		RESUSAGE_DynamicRW = 4,
+		RESUSAGE_StaticWO = 0,
+		RESUSAGE_StaticRW = 1,	//WriteOnly only affect defaultpool
+		RESUSAGE_Dynamic = 2,
+		RESUSAGE_StaticManaged = 3,
+		RESUSAGE_DynamicManaged = 4,
 	};
 
 	enum LockOption
@@ -810,15 +810,15 @@ namespace RenderAPI
 
 		virtual SwapChain* CreateAdditionalSwapChain(const SwapChainDesc&) = 0;
 
-		virtual VertexBuffer* CreateVertexBuffer(ResourceUsage usage, unsigned int vertexCount, unsigned int vertexSize, void* initialData) = 0;
+		virtual VertexBuffer* CreateVertexBuffer(ResourceUsage usage, unsigned int vertexCount, unsigned int vertexSize) = 0;
 
-		virtual IndexBuffer* CreateIndexBuffer(ResourceUsage usage, IndexFormat format, unsigned int indexCount, void* initialData) = 0;
+		virtual IndexBuffer* CreateIndexBuffer(ResourceUsage usage, IndexFormat format, unsigned int indexCount) = 0;
 
 		virtual VertexDeclaration* CreateVertexDeclaration(const VertexElement* elements, unsigned int elementCount) = 0;
 
-		virtual Texture2D* CreateTexture2D(ResourceUsage usage, TextureFormat format, unsigned int width, unsigned int height, unsigned int layer, bool autoGenMipmaps, void* initialData, int dataLinePitch, int dataHeight) = 0;
+		virtual Texture2D* CreateTexture2D(ResourceUsage usage, TextureFormat format, unsigned int width, unsigned int height, unsigned int layer, bool autoGenMipmaps) = 0;
 
-		virtual TextureCube* CreateTextureCube(ResourceUsage usage, TextureFormat format, unsigned int edgeLength, unsigned int layer, bool autoGenMipmaps, void** initialData, int dataLinePitch, int dataHeight) = 0;
+		virtual TextureCube* CreateTextureCube(ResourceUsage usage, TextureFormat format, unsigned int edgeLength, unsigned int layer, bool autoGenMipmaps) = 0;
 
 		virtual FXEffect* CreateFXEffectFromFile(const char* effectFilePath, const char * includeDir) = 0;
 

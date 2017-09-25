@@ -7,7 +7,7 @@
 class VertexBuffer : public RenderAPI::VertexBuffer
 {
 public:
-	VertexBuffer(APIInstance* pAPIInstance, IDirect3DVertexBuffer9* vertexBuffer, RenderAPI::ResourceUsage usage, unsigned int vertexCount, unsigned int vertexSize, bool recreateWhenDeviceLost);
+	VertexBuffer(APIInstance* pAPIInstance, IDirect3DVertexBuffer9* vertexBuffer, RenderAPI::ResourceUsage usage, bool isManaged, unsigned int vertexCount, unsigned int vertexSize);
 
 	~VertexBuffer();
 
@@ -34,7 +34,9 @@ public:
 private:
 	APIInstance* m_pAPIInstance;
 	RenderAPI::ResourceUsage m_usage;
-	const bool m_recreateWhenDeviceLost;
+	const bool m_isManaged;
+	const bool m_isDynamic;
+	const bool m_writeOnly;
 	unsigned int m_vertexCount;
 	unsigned int m_vertexStride;
 	unsigned int m_bufferLength;

@@ -74,3 +74,5 @@ list(APPEND ${THIS_TARGET}_SOURCE_FILES
 link_directories(../DXSDK/Lib/x86)
 add_library(${THIS_TARGET} SHARED ${${THIS_TARGET}_SOURCE_FILES})
 target_link_libraries(${THIS_TARGET} d3dx9.lib dxguid.lib)
+set_target_properties( ${THIS_TARGET} PROPERTIES OUTPUT_NAME_DEBUG "DX9API_d")
+set_target_properties( ${THIS_TARGET} PROPERTIES OUTPUT_NAME_RELEASET "DX9API")

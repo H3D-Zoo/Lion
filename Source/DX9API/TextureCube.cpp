@@ -17,12 +17,13 @@ namespace
 	};
 }
 
-TextureCube::TextureCube(APIInstance* pAPIInstance, IDirect3DCubeTexture9* texture, RenderAPI::TextureFormat format, RenderAPI::ResourceUsage usage, unsigned int edgeLength, bool autoGenMipmaps, bool recreateWhenDeviceLost)
+TextureCube::TextureCube(APIInstance* pAPIInstance, IDirect3DCubeTexture9* texture, RenderAPI::TextureFormat format, RenderAPI::ResourceUsage usage, bool isManaged, unsigned int edgeLength, bool autoGenMipmaps)
 	: m_pAPIInstance(pAPIInstance)
 	, m_texFormat(format)
 	, m_usage(usage)
 	, m_autoGenMipmaps(autoGenMipmaps)
-	, m_recreateWhenDeviceLost(recreateWhenDeviceLost)
+	, m_isManaged(isManaged)
+	, m_isDynamic(usage == RenderAPI::RESUSAGE_Dynamic || usage == RenderAPI::RESUSAGE_DynamicManaged)
 	, m_pTexture(texture)
 	, m_texEdgeLength(edgeLength)
 {
@@ -58,15 +59,10 @@ IDirect3DCubeTexture9 * TextureCube::GetD3DTexture()
 RenderAPI::MappedResource TextureCube::LockRect(RenderAPI::CubemapFace face, unsigned int layer, RenderAPI::LockOption lockOption)
 {
 	RenderAPI::MappedResource ret;
-
-	if (m_usage == RenderAPI::RESUSAGE_Immuable)
-	{
-		ret.Success = false;
-	}
-	else
+	if (m_isDynamic || m_isManaged)
 	{
 		D3DLOCKED_RECT lockedRect;
-		HRESULT hr = m_pTexture->LockRect(s_d3dCubeFaces[face], layer, &lockedRect, NULL, GetLockOption(lockOption, m_usage));
+		HRESULT hr = m_pTexture->LockRect(s_d3dCubeFaces[face], layer, &lockedRect, NULL, s_lockOptions[lockOption]);
 		if (S_OK == hr)
 		{
 			ret.Success = true;
@@ -76,22 +72,20 @@ RenderAPI::MappedResource TextureCube::LockRect(RenderAPI::CubemapFace face, uns
 		else
 		{
 			ret.Success = false;
-			m_pAPIInstance->LogError("TextureCube::UnlockRect", "Lock failed.", hr);
+			m_pAPIInstance->LogError("TextureCube::LockRect", "Lock failed.", hr);
 		}
+	}
+	else
+	{
+		ret.Success = false;
+		m_pAPIInstance->LogError("TextureCube::LockRect", "Only Dynamic or Managed Texture can be loked.");
 	}
 	return ret;
 }
 
 void TextureCube::UnlockRect(RenderAPI::CubemapFace face, unsigned int layer)
 {
-	if (m_usage == RenderAPI::RESUSAGE_Immuable)
-	{
-		m_pAPIInstance->LogError("TextureCube::UnlockRect", "Immuable Texture cannot be locked.");
-	}
-	else
-	{
-		m_pTexture->UnlockRect(s_d3dCubeFaces[face], layer);
-	}
+	m_pTexture->UnlockRect(s_d3dCubeFaces[face], layer);
 }
 
 void TextureCube::GenerateMipmaps()
@@ -106,7 +100,7 @@ bool TextureCube::AutoGenMipmaps() const
 
 bool TextureCube::NeedRecreateWhenDeviceLost() const
 {
-	return m_recreateWhenDeviceLost;
+	return !m_isManaged;
 }
 
 bool TextureCube::IsCubemap() const

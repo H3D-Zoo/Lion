@@ -18,7 +18,7 @@ RenderTarget::RenderTarget(APIInstance* pAPI, IDirect3DTexture9* rtTexture, Rend
 	, m_rtTexture(NULL)
 {
 	rtTexture->GetSurfaceLevel(0, &m_rtSurface);
-	m_rtTexture = new Texture2D(pAPI, rtTexture, format, RenderAPI::RESUSAGE_Default, width, height, false, true, true);
+	m_rtTexture = new Texture2D(pAPI, rtTexture, format, RenderAPI::RESUSAGE_StaticWO, false, width, height, false, true);
 }
 
 RenderTarget::~RenderTarget()

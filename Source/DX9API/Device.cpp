@@ -16,13 +16,49 @@
 namespace
 {
 	const int kD3DUsageCount = 5;
+
 	unsigned int s_d3dBufferUsage[kD3DUsageCount] =
 	{
 		D3DUSAGE_WRITEONLY,
-		D3DUSAGE_WRITEONLY | D3DUSAGE_DYNAMIC,
-		D3DUSAGE_WRITEONLY,
 		0,
-		D3DUSAGE_DYNAMIC
+		D3DUSAGE_WRITEONLY | D3DUSAGE_DYNAMIC,
+		0,
+		D3DUSAGE_DYNAMIC,
+	};
+
+	struct DeclFormat
+	{
+		D3DDECLTYPE Type;
+		int Length;
+	};
+
+	DeclFormat s_declTypes[] =
+	{
+		{ D3DDECLTYPE_FLOAT1, sizeof(float) },
+		{ D3DDECLTYPE_FLOAT2, sizeof(float) * 2 },
+		{ D3DDECLTYPE_FLOAT3, sizeof(float) * 3 },
+		{ D3DDECLTYPE_FLOAT4, sizeof(float) * 4 },
+		{ D3DDECLTYPE_D3DCOLOR, sizeof(unsigned char) * 4 },
+		{ D3DDECLTYPE_UBYTE4, sizeof(unsigned char) * 4 },
+		{ D3DDECLTYPE_SHORT2, sizeof(short) * 2 },
+		{ D3DDECLTYPE_SHORT4, sizeof(short) * 4 },
+		{ D3DDECLTYPE_UBYTE4N, sizeof(unsigned char) * 4 },
+		{ D3DDECLTYPE_SHORT2N, sizeof(short) * 2 },
+		{ D3DDECLTYPE_SHORT4N, sizeof(short) * 4 },
+		{ D3DDECLTYPE_USHORT2N, sizeof(unsigned short) * 2 },
+		{ D3DDECLTYPE_USHORT4N, sizeof(unsigned short) * 4 },
+	};
+
+	D3DDECLUSAGE s_declUsages[] =
+	{
+		D3DDECLUSAGE_POSITION,
+		D3DDECLUSAGE_COLOR,
+		D3DDECLUSAGE_NORMAL,
+		D3DDECLUSAGE_TEXCOORD,
+		D3DDECLUSAGE_TANGENT,
+		D3DDECLUSAGE_BINORMAL,
+		D3DDECLUSAGE_BLENDWEIGHT,
+		D3DDECLUSAGE_BLENDINDICES
 	};
 }
 
@@ -123,53 +159,32 @@ RenderAPI::SwapChain * Device::CreateAdditionalSwapChain(const RenderAPI::SwapCh
 	}
 }
 
-RenderAPI::VertexBuffer* Device::CreateVertexBuffer(RenderAPI::ResourceUsage usage, unsigned int vertexCount, unsigned int vertexSize, void * initialData)
+RenderAPI::VertexBuffer* Device::CreateVertexBuffer(RenderAPI::ResourceUsage usage, unsigned int vertexCount, unsigned int vertexSize)
 {
 	if (vertexCount == 0 || vertexSize == 0)
 	{
 		m_pAPI->LogError("CreateVertexBuffer", "Vertex Count and Vertex Size cannot be 0.");
 		return NULL;
 	}
-
-	bool immuable = usage == RenderAPI::RESUSAGE_Immuable;
-	bool dynamic = usage == RenderAPI::RESUSAGE_Dynamic || usage == RenderAPI::RESUSAGE_DynamicRW;
-	if (initialData == NULL && immuable)
-	{
-		m_pAPI->LogError("CreateVertexBuffer", "InitialData should be provided when VertexBuffer is Immuable.");
-		return NULL;
-	}
+	bool dynamic = usage == RenderAPI::RESUSAGE_Dynamic || usage == RenderAPI::RESUSAGE_DynamicManaged;
+	bool managed = m_pAPI->IsSupportManaged() && (usage == RenderAPI::RESUSAGE_DynamicManaged || usage == RenderAPI::RESUSAGE_StaticManaged);
 
 	IDirect3DVertexBuffer9* pVertexBuffer = NULL;
 	unsigned int d3dUsage = s_d3dBufferUsage[usage];
 	unsigned int bufferSize = vertexCount * vertexSize;
-
-	D3DPOOL pool = (m_pAPI->IsSupportManaged() && immuable) ? D3DPOOL_MANAGED : D3DPOOL_DEFAULT;
-	HRESULT hr = m_pDevice->CreateVertexBuffer(bufferSize, d3dUsage, 0, pool, &pVertexBuffer, NULL);
+	D3DPOOL d3dPool = managed ? D3DPOOL_MANAGED : D3DPOOL_DEFAULT;
+	HRESULT hr = m_pDevice->CreateVertexBuffer(bufferSize, d3dUsage, 0, d3dPool, &pVertexBuffer, NULL);
 	if (hr != S_OK)
 	{
 		m_pAPI->LogError("CreateVertexBuffer", "CreateVertexBuffer failed", hr);
 		return NULL;
 	}
 
-	if (initialData != NULL)
-	{
-		void* dataPtr = NULL;
-		if (S_OK == pVertexBuffer->Lock(0, bufferSize, &dataPtr, dynamic ? D3DLOCK_DISCARD : 0))
-		{
-			memcpy(dataPtr, initialData, bufferSize);
-			pVertexBuffer->Unlock();
-		}
-		else
-		{
-			m_pAPI->LogError("CreateVertexBuffer", "Cannot lock VertexBuffer when upload.", hr);
-		}
-	}
-
-	return new VertexBuffer(m_pAPI, pVertexBuffer, usage, vertexCount, vertexSize, pool != D3DPOOL_MANAGED);
+	return new VertexBuffer(m_pAPI, pVertexBuffer, usage, managed, vertexCount, vertexSize);
 
 }
 
-RenderAPI::IndexBuffer* Device::CreateIndexBuffer(RenderAPI::ResourceUsage usage, RenderAPI::IndexFormat format, unsigned int indexCount, void * initialData)
+RenderAPI::IndexBuffer* Device::CreateIndexBuffer(RenderAPI::ResourceUsage usage, RenderAPI::IndexFormat format, unsigned int indexCount)
 {
 	if (indexCount == 0)
 	{
@@ -177,19 +192,14 @@ RenderAPI::IndexBuffer* Device::CreateIndexBuffer(RenderAPI::ResourceUsage usage
 		return NULL;
 	}
 
-	bool immuable = usage == RenderAPI::RESUSAGE_Immuable;
-	bool dynamic = usage == RenderAPI::RESUSAGE_Dynamic || usage == RenderAPI::RESUSAGE_DynamicRW;
-	if (initialData == NULL && immuable)
-	{
-		m_pAPI->LogError("CreateIndexBuffer", "InitialData should be provided when Buffer is Immuable.");
-		return NULL;
-	}
-
+	bool dynamic = usage == RenderAPI::RESUSAGE_Dynamic || usage == RenderAPI::RESUSAGE_DynamicManaged;
+	bool managed = m_pAPI->IsSupportManaged() && (usage == RenderAPI::RESUSAGE_DynamicManaged || usage == RenderAPI::RESUSAGE_StaticManaged);
+	
 	IDirect3DIndexBuffer9* pIndexBuffer = NULL;
 	unsigned int d3dUsage = s_d3dBufferUsage[usage];
 	unsigned int bufferSize = indexCount * s_IndexLengths[format];
-	D3DPOOL pool = (m_pAPI->IsSupportManaged() && immuable) ? D3DPOOL_MANAGED : D3DPOOL_DEFAULT;
-	HRESULT hr = m_pDevice->CreateIndexBuffer(bufferSize, d3dUsage, s_IndexFormats[format], pool, &pIndexBuffer, NULL);
+	D3DPOOL d3dPool = managed ? D3DPOOL_MANAGED : D3DPOOL_DEFAULT;
+	HRESULT hr = m_pDevice->CreateIndexBuffer(bufferSize, d3dUsage, s_IndexFormats[format], d3dPool, &pIndexBuffer, NULL);
 
 	if (hr != S_OK)
 	{
@@ -197,60 +207,9 @@ RenderAPI::IndexBuffer* Device::CreateIndexBuffer(RenderAPI::ResourceUsage usage
 		return NULL;
 	}
 
-	if (initialData != NULL)
-	{
-		void* dataPtr = NULL;
-		if (S_OK == pIndexBuffer->Lock(0, bufferSize, &dataPtr, dynamic ? D3DLOCK_DISCARD : 0))
-		{
-			memcpy(dataPtr, initialData, bufferSize);
-			pIndexBuffer->Unlock();
-		}
-		else
-		{
-			m_pAPI->LogError("CreateIndexBuffer", "Cannot lock IndexBuffer when upload.", hr);
-		}
-	}
-
-	return new IndexBuffer(m_pAPI, pIndexBuffer, usage, format, indexCount, pool != D3DPOOL_MANAGED);
+	return new IndexBuffer(m_pAPI, pIndexBuffer, usage, format, managed, indexCount);
 }
 
-namespace
-{
-	struct DeclFormat
-	{
-		D3DDECLTYPE Type;
-		int Length;
-	};
-
-	DeclFormat s_declTypes[] =
-	{
-		{ D3DDECLTYPE_FLOAT1, sizeof(float) },
-		{ D3DDECLTYPE_FLOAT2, sizeof(float) * 2 },
-		{ D3DDECLTYPE_FLOAT3, sizeof(float) * 3 },
-		{ D3DDECLTYPE_FLOAT4, sizeof(float) * 4 },
-		{ D3DDECLTYPE_D3DCOLOR, sizeof(unsigned char) * 4 },
-		{ D3DDECLTYPE_UBYTE4, sizeof(unsigned char) * 4 },
-		{ D3DDECLTYPE_SHORT2, sizeof(short) * 2 },
-		{ D3DDECLTYPE_SHORT4, sizeof(short) * 4 },
-		{ D3DDECLTYPE_UBYTE4N, sizeof(unsigned char) * 4 },
-		{ D3DDECLTYPE_SHORT2N, sizeof(short) * 2 },
-		{ D3DDECLTYPE_SHORT4N, sizeof(short) * 4 },
-		{ D3DDECLTYPE_USHORT2N, sizeof(unsigned short) * 2 },
-		{ D3DDECLTYPE_USHORT4N, sizeof(unsigned short) * 4 },
-	};
-
-	D3DDECLUSAGE s_declUsages[] =
-	{
-		D3DDECLUSAGE_POSITION,
-		D3DDECLUSAGE_COLOR,
-		D3DDECLUSAGE_NORMAL,
-		D3DDECLUSAGE_TEXCOORD,
-		D3DDECLUSAGE_TANGENT,
-		D3DDECLUSAGE_BINORMAL,
-		D3DDECLUSAGE_BLENDWEIGHT,
-		D3DDECLUSAGE_BLENDINDICES
-	};
-}
 RenderAPI::VertexDeclaration* Device::CreateVertexDeclaration(const RenderAPI::VertexElement * elements, unsigned int elementCount)
 {
 	if (elementCount == 0 || elements == NULL)
@@ -306,7 +265,7 @@ RenderAPI::VertexDeclaration* Device::CreateVertexDeclaration(const RenderAPI::V
 	}
 }
 
-RenderAPI::Texture2D * Device::CreateTexture2D(RenderAPI::ResourceUsage usage, RenderAPI::TextureFormat format, unsigned int width, unsigned int height, unsigned int layer, bool autoGenMipmaps, void* initialData, int dataLinePitch, int dataHeight)
+RenderAPI::Texture2D * Device::CreateTexture2D(RenderAPI::ResourceUsage usage, RenderAPI::TextureFormat format, unsigned int width, unsigned int height, unsigned int layer, bool autoGenMipmaps)
 {
 	if (width == 0 || height == 0)
 	{
@@ -314,24 +273,6 @@ RenderAPI::Texture2D * Device::CreateTexture2D(RenderAPI::ResourceUsage usage, R
 		return NULL;
 	}
 
-	bool immuable = usage == RenderAPI::RESUSAGE_Immuable;
-	if (initialData == NULL)
-	{
-		if (immuable)
-		{
-			m_pAPI->LogError("CreateTexture2D", "Initial Data should be provided when Texture is Immuable");
-			return NULL;
-		}
-	}
-	else
-	{
-		if (dataLinePitch == 0 || dataHeight == 0)
-		{
-			m_pAPI->LogError("CreateTexture2D", "Pitch and height of initialData is invalid.");
-			return NULL;
-		}
-	}
-
 	if (autoGenMipmaps && layer == 1)
 	{
 		layer = 0;
@@ -341,41 +282,26 @@ RenderAPI::Texture2D * Device::CreateTexture2D(RenderAPI::ResourceUsage usage, R
 		layer = 1;
 	}
 
+
+	bool dynamic = usage == RenderAPI::RESUSAGE_Dynamic || usage == RenderAPI::RESUSAGE_DynamicManaged;
+	bool managed = m_pAPI->IsSupportManaged() && (usage == RenderAPI::RESUSAGE_DynamicManaged || usage == RenderAPI::RESUSAGE_StaticManaged);
+
 	IDirect3DTexture9* pTexture = NULL;
 	unsigned int d3dUsage = autoGenMipmaps ? D3DUSAGE_AUTOGENMIPMAP : 0;
-	if (usage == RenderAPI::RESUSAGE_Dynamic || usage == RenderAPI::RESUSAGE_DynamicRW)
-		d3dUsage |= D3DUSAGE_DYNAMIC;
-	D3DPOOL pool = (m_pAPI->IsSupportManaged() && immuable) ? D3DPOOL_MANAGED : D3DPOOL_DEFAULT;
-	HRESULT hr = m_pDevice->CreateTexture(width, height, layer, d3dUsage, s_TextureFormats[format], pool, &pTexture, NULL);
-
+	if (dynamic) d3dUsage |= D3DUSAGE_DYNAMIC;
+	D3DPOOL d3dPool = managed ? D3DPOOL_MANAGED : D3DPOOL_DEFAULT;
+	HRESULT hr = m_pDevice->CreateTexture(width, height, layer, d3dUsage, s_TextureFormats[format], d3dPool, &pTexture, NULL);
 	if (hr != S_OK)
 	{
 		m_pAPI->LogError("CreateTexture2D", "CreateTexture failed.", hr);
 		return NULL;
 	}
 
-	::Texture2D* texture = new ::Texture2D(m_pAPI, pTexture, format, usage, width, height, autoGenMipmaps, pool != D3DPOOL_MANAGED, false);
-
-	if (initialData != NULL)
-	{
-		RenderAPI::MappedResource res = texture->LockRect(0, RenderAPI::LOCK_Discard);
-
-		if (res.Success)
-		{
-			unsigned int linePitch = (unsigned int)dataLinePitch > res.LinePitch ? res.LinePitch : dataLinePitch;
-			char* dstPtr = (char*)res.DataPtr;
-			char* srcPtr = (char*)initialData;
-			for (int i = 0; i < dataHeight; i++)
-			{
-				memcpy(dstPtr + i * res.LinePitch, srcPtr + i* dataLinePitch, linePitch);
-			}
-			texture->UnlockRect(0);
-		}
-	}
+	::Texture2D* texture = new ::Texture2D(m_pAPI, pTexture, format, usage, managed, width, height, autoGenMipmaps, false);
 	return texture;
 }
 
-RenderAPI::TextureCube * Device::CreateTextureCube(RenderAPI::ResourceUsage usage, RenderAPI::TextureFormat format, unsigned int edgeLength, unsigned int layer, bool autoGenMipmaps, void ** initialData, int dataLinePitch, int dataHeight)
+RenderAPI::TextureCube * Device::CreateTextureCube(RenderAPI::ResourceUsage usage, RenderAPI::TextureFormat format, unsigned int edgeLength, unsigned int layer, bool autoGenMipmaps)
 {
 	if (edgeLength == 0)
 	{
@@ -383,24 +309,6 @@ RenderAPI::TextureCube * Device::CreateTextureCube(RenderAPI::ResourceUsage usag
 		return NULL;
 	}
 
-	bool immuable = usage == RenderAPI::RESUSAGE_Immuable;
-	if (initialData == NULL)
-	{
-		if (immuable)
-		{
-			m_pAPI->LogError("CreateTextureCube", "Initial Data should be provided when Texture is Immuable");
-			return NULL;
-		}
-	}
-	else
-	{
-		if (dataLinePitch == 0 || dataHeight == 0)
-		{
-			m_pAPI->LogError("CreateTextureCube", "Pitch and height of initialData is invalid.");
-			return NULL;
-		}
-	}
-
 	if (autoGenMipmaps && layer == 1)
 	{
 		layer = 0;
@@ -410,12 +318,15 @@ RenderAPI::TextureCube * Device::CreateTextureCube(RenderAPI::ResourceUsage usag
 		layer = 1;
 	}
 
+
+	bool dynamic = usage == RenderAPI::RESUSAGE_Dynamic || usage == RenderAPI::RESUSAGE_DynamicManaged;
+	bool managed = m_pAPI->IsSupportManaged() && (usage == RenderAPI::RESUSAGE_DynamicManaged || usage == RenderAPI::RESUSAGE_StaticManaged);
+
 	IDirect3DCubeTexture9* pTexture = NULL;
 	unsigned int d3dUsage = autoGenMipmaps ? D3DUSAGE_AUTOGENMIPMAP : 0;
-	if (usage == RenderAPI::RESUSAGE_Dynamic || usage == RenderAPI::RESUSAGE_DynamicRW)
-		d3dUsage |= D3DUSAGE_DYNAMIC;
-	D3DPOOL pool = (m_pAPI->IsSupportManaged() && immuable) ? D3DPOOL_MANAGED : D3DPOOL_DEFAULT;
-	HRESULT hr = m_pDevice->CreateCubeTexture(edgeLength, layer, d3dUsage, s_TextureFormats[format], pool, &pTexture, NULL);
+	if (dynamic) d3dUsage |= D3DUSAGE_DYNAMIC;
+	D3DPOOL d3dPool = managed ? D3DPOOL_MANAGED : D3DPOOL_DEFAULT;
+	HRESULT hr = m_pDevice->CreateCubeTexture(edgeLength, layer, d3dUsage, s_TextureFormats[format], d3dPool, &pTexture, NULL);
 
 	if (hr != S_OK)
 	{
@@ -423,37 +334,7 @@ RenderAPI::TextureCube * Device::CreateTextureCube(RenderAPI::ResourceUsage usag
 		return NULL;
 	}
 
-	::TextureCube* texture = new ::TextureCube(m_pAPI, pTexture, format, usage, edgeLength, autoGenMipmaps, pool != D3DPOOL_MANAGED);
-	if (initialData != NULL)
-	{
-		RenderAPI::CubemapFace faces[6] = {
-			RenderAPI::CUBE_PositiveZ,
-			RenderAPI::CUBE_NegativeZ,
-			RenderAPI::CUBE_NegativeX,
-			RenderAPI::CUBE_PositiveX,
-			RenderAPI::CUBE_NegativeY,
-			RenderAPI::CUBE_PositiveY
-		};
-		
-		for( int i = 0; i < 6; i++)
-		{
-			RenderAPI::CubemapFace face = faces[i];
-			RenderAPI::MappedResource res = texture->LockRect(face, 0, RenderAPI::LOCK_Discard);
-			char* pSrcData = (char*)initialData[i];
-
-			if (res.Success)
-			{
-				unsigned int linePitch = (unsigned int)dataLinePitch > res.LinePitch ? res.LinePitch : dataLinePitch;
-				char* dstPtr = (char*)res.DataPtr;
-				char* srcPtr = pSrcData;
-				for (int i = 0; i < dataHeight; i++)
-				{
-					memcpy(dstPtr + i * res.LinePitch, srcPtr + i* dataLinePitch, linePitch);
-				}
-				texture->UnlockRect(face, 0);
-			}
-		}
-	}
+	::TextureCube* texture = new ::TextureCube(m_pAPI, pTexture, format, usage, managed, edgeLength, autoGenMipmaps);
 	return texture;
 }
 

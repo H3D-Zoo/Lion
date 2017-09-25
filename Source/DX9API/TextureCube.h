@@ -10,7 +10,7 @@ class DepthStencil;
 class TextureCube : public RenderAPI::TextureCube
 {
 public:
-	TextureCube(APIInstance* pAPIInstance, IDirect3DCubeTexture9* texture, RenderAPI::TextureFormat format, RenderAPI::ResourceUsage usage, unsigned int edgeLength, bool autoGenMipmaps, bool recreateWhenDeviceLost);
+	TextureCube(APIInstance* pAPIInstance, IDirect3DCubeTexture9* texture, RenderAPI::TextureFormat format, RenderAPI::ResourceUsage usage, bool isManaged, unsigned int edgeLength, bool autoGenMipmaps);
 
 	~TextureCube();
 
@@ -39,7 +39,8 @@ private:
 	RenderAPI::ResourceUsage m_usage;
 	RenderAPI::TextureFormat m_texFormat;
 	const bool m_autoGenMipmaps;
-	const bool m_recreateWhenDeviceLost;
+	const bool m_isManaged;
+	const bool m_isDynamic;
 	IDirect3DCubeTexture9* m_pTexture;
 	unsigned int m_texEdgeLength;
 };

@@ -7,7 +7,7 @@
 class IndexBuffer : public RenderAPI::IndexBuffer
 {
 public:
-	IndexBuffer(APIInstance* pAPI, IDirect3DIndexBuffer9* indexBuffer, RenderAPI::ResourceUsage usage, RenderAPI::IndexFormat format, unsigned int count, bool recreateWhenDeviceLost);
+	IndexBuffer(APIInstance* pAPI, IDirect3DIndexBuffer9* indexBuffer, RenderAPI::ResourceUsage usage, RenderAPI::IndexFormat format, bool isManaged, unsigned int count);
 
 	~IndexBuffer();
 
@@ -35,7 +35,9 @@ private:
 	APIInstance* m_pAPIInstance;
 	RenderAPI::ResourceUsage m_usage;
 	RenderAPI::IndexFormat m_indexFormat;
-	const bool m_recreateWhenDeviceLost;
+	const bool m_isManaged;
+	const bool m_isDynamic;
+	const bool m_writeOnly;
 	unsigned int m_indexCount;
 	unsigned int m_bufferLength;
 	IDirect3DIndexBuffer9* m_pIndexBuffer;

@@ -4,14 +4,15 @@
 #include "DepthStencil.h"
 #include "EnumMapping.h"
 
-Texture2D::Texture2D(APIInstance* pAPIInstance, IDirect3DTexture9* texture, RenderAPI::TextureFormat format, RenderAPI::ResourceUsage usage,
+Texture2D::Texture2D(APIInstance* pAPIInstance, IDirect3DTexture9* texture, RenderAPI::TextureFormat format, RenderAPI::ResourceUsage usage, bool isManaged,
 	unsigned int width, unsigned int height,
-	bool autoGenMipmaps, bool recreateWhenDeviceLost, bool isRenderTexture)
+	bool autoGenMipmaps, bool isRenderTexture)
 	: m_pAPIInstance(pAPIInstance)
 	, m_texFormat(format)
 	, m_usage(usage)
 	, m_autoGenMipmaps(autoGenMipmaps)
-	, m_recreateWhenDeviceLost(recreateWhenDeviceLost)
+	, m_isManaged(isManaged)
+	, m_isDynamic(usage == RenderAPI::RESUSAGE_Dynamic || usage == RenderAPI::RESUSAGE_DynamicManaged)
 	, m_isRenderTexture(isRenderTexture)
 	, m_pTexture(texture)
 	, m_pTempTextureForUpdate(NULL)
@@ -88,18 +89,16 @@ RenderAPI::MappedResource Texture2D::LockRect(unsigned int layer, RenderAPI::Loc
 	RenderAPI::MappedResource ret;
 	if (m_isRenderTexture)
 	{
+		//This method cannot retrieve data from a texture resource created with D3DUSAGE_RENDERTARGET
+		//because such a texture must be assigned to D3DPOOL_DEFAULT memory and is therefore not lockable.
 		m_pAPIInstance->LogError("Texture2D::Lock", " Render Texture cannot be locked because.");
 		ret.Success = false;
 	}
-	else if (m_usage == RenderAPI::RESUSAGE_Immuable)
+	else if (m_isDynamic || m_isManaged)
 	{
-		m_pAPIInstance->LogError("Texture2D::Lock", "Immuable Texture cannot be locked.");
-		ret.Success = false;
-	}
-	else if (m_usage == RenderAPI::RESUSAGE_Dynamic || m_usage == RenderAPI::RESUSAGE_DynamicRW)
-	{
+		//Textures created with D3DPOOL_DEFAULT are not lockable. Textures created in video memory are lockable when created with USAGE_DYNAMIC.
 		D3DLOCKED_RECT lockedRect;
-		HRESULT hr = m_pTexture->LockRect(layer, &lockedRect, NULL, GetLockOption(lockOption, m_usage));
+		HRESULT hr = m_pTexture->LockRect(layer, &lockedRect, NULL, s_lockOptions[lockOption]);
 		if (S_OK == hr)
 		{
 			ret.Success = true;
@@ -129,7 +128,7 @@ RenderAPI::MappedResource Texture2D::LockRect(unsigned int layer, RenderAPI::Loc
 			if (hr == S_OK)
 			{
 				D3DLOCKED_RECT lockedRect;
-				if (S_OK == pTextureForUpdate->LockRect(layer, &lockedRect, NULL, GetLockOption(lockOption, m_usage)))
+				if (S_OK == pTextureForUpdate->LockRect(layer, &lockedRect, NULL, D3DLOCK_DISCARD))
 				{
 					ret.Success = true;
 					ret.DataPtr = lockedRect.pBits;
@@ -153,10 +152,7 @@ RenderAPI::MappedResource Texture2D::LockRect(unsigned int layer, RenderAPI::Loc
 
 void Texture2D::UnlockRect(unsigned int layer)
 {
-	if (m_usage == RenderAPI::RESUSAGE_Immuable)
-	{
-	}
-	else if (m_usage == RenderAPI::RESUSAGE_Dynamic || m_usage == RenderAPI::RESUSAGE_DynamicRW)
+	if (m_isDynamic || m_isManaged)
 	{
 		m_pTexture->UnlockRect(layer);
 	}
@@ -232,7 +228,7 @@ unsigned int Texture2D::GetLayerCount() const
 
 bool Texture2D::NeedRecreateWhenDeviceLost() const
 {
-	return m_recreateWhenDeviceLost;
+	return !m_isManaged;
 }
 
 bool Texture2D::AutoGenMipmaps() const

@@ -48,6 +48,14 @@ D3DMULTISAMPLE_TYPE s_sampleTypes[kMSFormatCount] =
 	D3DMULTISAMPLE_10_SAMPLES,
 };
 
+unsigned int s_lockOptions[kLockOptionCount] =
+{
+	0,
+	D3DLOCK_DISCARD,
+	D3DLOCK_READONLY,
+	D3DLOCK_NOOVERWRITE,
+};
+
 D3DXIMAGE_FILEFORMAT s_d3dxFileFormat[kImageFormatCount] =
 {
 	D3DXIFF_BMP,
@@ -160,25 +168,4 @@ RenderAPI::StencilOp StencilOpMapping(unsigned int sop)
 	case D3DSTENCILOP_INCR: return RenderAPI::STENCIL_IncreaseRevert;
 	case D3DSTENCILOP_DECR: return RenderAPI::STENCIL_DecreaseRevert;
 	}
-}
-
-unsigned int GetLockOption(RenderAPI::LockOption option, RenderAPI::ResourceUsage usage)
-{
-	unsigned int ret = 0;
-	if (usage == RenderAPI::RESUSAGE_Dynamic || usage == RenderAPI::RESUSAGE_DynamicRW)
-	{
-		switch (option)
-		{	
-		case RenderAPI::LOCK_Discard:
-			ret = D3DLOCK_DISCARD;
-			break;
-		case RenderAPI::LOCK_ReadOnly:
-			ret = D3DLOCK_READONLY;
-			break;
-		case RenderAPI::LOCK_NoOverWrite:
-			ret = D3DLOCK_NOOVERWRITE;
-			break;
-		}
-	}
-	return ret;
 }
