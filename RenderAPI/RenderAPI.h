@@ -903,6 +903,10 @@ namespace RenderAPI
 
 		virtual DepthTestingState GetDepthTestingState() const = 0;
 
+		virtual void SetClipPlaneState(bool isEnable) = 0;
+
+		virtual bool GetClipPlaneState() const = 0;
+
 		virtual void SetStencilTestingState(const StencilTestingState& state) = 0;
 
 		virtual StencilTestingState GetStencilTestingState() const = 0;

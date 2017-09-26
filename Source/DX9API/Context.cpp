@@ -423,7 +423,14 @@ RenderAPI::DepthTestingState Context::GetDepthTestingState() const
 {
 	return m_renderStateManager.GetDepthTestingState();
 }
-
+void Context::SetClipPlaneState(bool enable)
+{
+	m_renderStateManager.SetClipPlaneState(enable);
+}
+bool Context::GetClipPlaneState() const
+{
+	return m_renderStateManager.GetClipplaneenable();
+}
 void Context::SetStencilTestingState(const RenderAPI::StencilTestingState& state)
 {
 	if (state.IsEnable)

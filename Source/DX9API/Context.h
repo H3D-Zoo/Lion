@@ -86,6 +86,9 @@ public:
 	virtual void SetDepthTestingState(const RenderAPI::DepthTestingState& state);
 
 	virtual RenderAPI::DepthTestingState GetDepthTestingState() const;
+	virtual void SetClipPlaneState(bool isEnable);
+
+	virtual bool GetClipPlaneState() const;
 
 	virtual void SetStencilTestingState(const RenderAPI::StencilTestingState& state);
 

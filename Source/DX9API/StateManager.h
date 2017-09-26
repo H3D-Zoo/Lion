@@ -77,6 +77,7 @@ public:
 	void SetAlphaBlending(bool enable);
 	
 	void SetSeparateAlphaBlending(bool enable);
+	void SetClipPlaneState(bool isEnable);
 	
 	void SetBlendingOp(RenderAPI::BlendOperator blendOp);
 
@@ -118,6 +119,7 @@ public:
 
 	SSDefine(MaxAnisotropy, D3DSAMP_MAXANISOTROPY);
 
+	bool GetClipplaneenable() const { return m_isClipplaneenable; }
 	RenderAPI::BlendState GetBlendState() const { return m_blendState; }
 
 	RenderAPI::BlendState GetAlphaSeparateBlendState() const { return m_alphaSeparateBlendState; }
@@ -149,6 +151,7 @@ protected:
 	std::vector<DWORD> m_TSSValues[TextureSlotCount];
 	std::vector<DWORD> m_SSValues[TextureSlotCount];
 
+	bool m_isClipplaneenable;
 	RenderAPI::BlendState m_blendState;
 	RenderAPI::BlendState m_alphaSeparateBlendState;
 	RenderAPI::AlphaTestingState m_alphaTestState;

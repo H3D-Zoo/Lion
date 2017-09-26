@@ -181,6 +181,7 @@ StateManager::StateManager(IDirect3DDevice9* pDevice)
 #undef GetRS
 
 	//设置各种状态的默认值
+	m_isClipplaneenable = m_RSValues[D3DRS_CLIPPLANEENABLE] == TRUE;
 	m_blendState.IsEnable = m_RSValues[D3DRS_ALPHABLENDENABLE] == TRUE;
 	m_blendState.SrcBlend = BlendFactorMapping(m_RSValues[D3DRS_SRCBLEND]);
 	m_blendState.DstBlend = BlendFactorMapping(m_RSValues[D3DRS_DESTBLEND]);	
@@ -484,6 +485,12 @@ void StateManager::SetSeparateAlphaBlending(bool enable)
 	SetRS(D3DRS_SEPARATEALPHABLENDENABLE, enable ? TRUE : FALSE);
 	m_alphaSeparateBlendState.IsEnable = enable;
 }
+void StateManager::SetClipPlaneState(bool enable)
+{
+	SetRS(D3DRS_CLIPPLANEENABLE, enable ? TRUE : FALSE);
+	m_isClipplaneenable = enable;
+}
+
 
 void StateManager::SetBlendingOp(RenderAPI::BlendOperator blendOp)
 {
