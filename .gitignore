@@ -15,6 +15,7 @@
 [Rr]elease_MT/
 [Rr]eleases/
 [Bb]uild/
+[Oo]uput/
 x64/
 x86/
 
@@ -24,3 +25,4 @@ x86/
 # Visual Studio Preview file
 *.db
 *.opendb
+*.aps

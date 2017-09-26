@@ -126,12 +126,12 @@ void APIInstance::Deinit()
 	::FreeLibrary(m_hDLL);
 }
 
-bool APIInstance::IsSupportD3D9EX()
+bool APIInstance::IsSupportD3D9EX() const
 {
 	return m_d3d9ExPtr != NULL;
 }
 
-bool APIInstance::IsSupportOcclusionQuery() { return m_supportOcclusionQuery; }
+bool APIInstance::IsSupportOcclusionQuery() const { return m_supportOcclusionQuery; }
 
 bool APIInstance::CheckFormatValidate(D3DFORMAT & renderTarget, D3DFORMAT depthStencil) const
 {
@@ -508,6 +508,8 @@ RenderAPI::DriverVersion APIInstance::GetDriverVersion() const
 {
 	return m_driverVersion;
 }
+
+bool APIInstance::IsSupportEx() const { return IsSupportD3D9EX(); }
 
 void APIInstance::PerfBegin(unsigned int color, const char* name)
 {

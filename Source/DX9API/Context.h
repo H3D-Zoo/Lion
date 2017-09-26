@@ -38,7 +38,7 @@ private:
 	unsigned int m_maxTextureStage;
 };
 
-class Context :public RenderAPI::Context
+class Context :public RenderAPI::Context, public RenderAPI::ContextLegacy
 {
 public:
 	Context(APIInstance* pAPIContext, IDirect3DDevice9* device, RenderAPI::RenderTarget* defRT, RenderAPI::DepthStencil* defDS);
@@ -93,10 +93,6 @@ public:
 
 	virtual void SetDepthWriting(bool enable);
 
-	virtual void SetTextureColorBlendingState(unsigned int slot, const RenderAPI::TextureBlendingState& state);
-
-	virtual void SetTextureAlphaBlendingState(unsigned int slot, const RenderAPI::TextureBlendingState& state);
-
 	virtual void SetTextureSampler(unsigned int slot, const RenderAPI::TextureSampler& sampler);
 
 	virtual void SetScissorState(const RenderAPI::ScissorState& state);
@@ -149,7 +145,30 @@ public:
 
 	virtual void EvictManagedResources();
 
+	virtual RenderAPI::ContextLegacy* GetContextLegacy();
+
 	virtual void Release();
+
+	// Context Legacy
+	virtual void SetTextureColorBlendingState(unsigned int slot, const RenderAPI::TextureBlendingState& state);
+
+	virtual void SetTextureAlphaBlendingState(unsigned int slot, const RenderAPI::TextureBlendingState& state);
+
+	void DisableTexcoordTransform(unsigned int slot);
+
+	virtual void ResetTexcoordIndex(unsigned int slot);
+
+	virtual void DisableCustomShaderUsage();
+
+	virtual void SetCustomFVF(unsigned int fvf);
+
+	virtual void SetWorldMatrix(const float* matrix);
+
+	virtual void SetViewMatrix(const float* matrix);
+
+	virtual void SetProjectionMatrix(const float* matrix);
+
+	virtual void SetTextureMatrix(unsigned int slot, const float* matrix);
 
 	ID3DXEffectStateManager* GetStateManager();
 

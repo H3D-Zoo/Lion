@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.3)
 
-set(THIS_TARGET NullAPI)
+set(THIS_TARGET nullrenderer)
 set(DIR_COMMON ../Common)
 
 include_directories(
@@ -10,10 +10,12 @@ include_directories(
 set(RENDERAPI_SOURCE_FILES_COMMON
 	${DIR_COMMON}/RefCount.hpp
 	${DIR_COMMON}/Logger.h
-	${DIR_COMMON}/Logger.cpp	
-	${DIR_COMMON}/BaseAPIGlobal.h
-	${DIR_COMMON}/BaseAPIGlobal.cpp
+	${DIR_COMMON}/Logger.cpp
+	${DIR_COMMON}/BaseAPIInstance.h
+	${DIR_COMMON}/BaseAPIInstance.cpp
 	${DIR_COMMON}/RenderAPIExport.def
+	${DIR_COMMON}/RenderAPI.rc
+	${DIR_COMMON}/resource.h
 )
 
 set(RENDERAPI_INCLUDE_FILES
@@ -63,3 +65,13 @@ list(APPEND ${THIS_TARGET}_SOURCE_FILES
 )
 
 add_library(${THIS_TARGET} SHARED ${${THIS_TARGET}_SOURCE_FILES})
+set_target_properties( ${THIS_TARGET} PROPERTIES OUTPUT_NAME_DEBUG "${THIS_TARGET}_d")
+set_target_properties( ${THIS_TARGET} PROPERTIES OUTPUT_NAME_RELEASE "${THIS_TARGET}")
+
+set (CMAKE_SHARED_LINKER_FLAGS_RELEASE "/DEBUG")
+set_target_properties( ${THIS_TARGET} PROPERTIES LINK_FLAGS_DEBUG "/NXCOMPAT")
+set_target_properties( ${THIS_TARGET} PROPERTIES LINK_FLAGS_RELEASE "/OPT:REF /OPT:ICF")
+
+#TODO
+#install (TARGETS ${THIS_TARGET} RUNTIME DESTINATION .)
+#install (FILES $<TARGET_PDB_FILE:${THIS_TARGET}> DESTINATION .)

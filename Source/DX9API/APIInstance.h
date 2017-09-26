@@ -24,9 +24,9 @@ public:
 
 	bool Init();
 
-	bool IsSupportD3D9EX();
+	bool IsSupportD3D9EX() const;
 
-	bool IsSupportOcclusionQuery();
+	bool IsSupportOcclusionQuery() const;
 
 	bool CheckFormatValidate(D3DFORMAT & renderTarget, D3DFORMAT depthStencil) const;
 
@@ -56,6 +56,8 @@ public:
 	virtual bool CheckMultiSampleSupport(RenderAPI::RenderTargetFormat, RenderAPI::DepthStencilFormat, RenderAPI::AAMode, bool fullscreen) const;
 
 	virtual RenderAPI::DriverVersion GetDriverVersion() const;
+
+	virtual bool IsSupportEx() const;
 
 	virtual void PerfBegin(unsigned int color, const char* name);
 

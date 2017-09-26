@@ -16,10 +16,10 @@ elseif(MSVC_VERSION EQUAL 1900)
 endif()
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
+set(CMAKE_INSTALL_PREFIX ${CMAKE_SOURCE_DIR}/output/${MSVC_VERSION_STR}) 
 
-
-add_subdirectory(Source/DX9API DX9API)
-add_subdirectory(Source/NullAPI NullAPI)
+add_subdirectory(Source/DX9API d3d9renderer)
+add_subdirectory(Source/NullAPI nullrenderer)
 
 if(MSVC_VERSION GREATER 1800)
 add_subdirectory(Win32TestBed Win32TestBed)

@@ -833,6 +833,30 @@ namespace RenderAPI
 		virtual void* GetImplementPtr() = 0;
 	};
 	
+	class ContextLegacy
+	{
+	public:
+		virtual void SetTextureColorBlendingState(unsigned int slot, const TextureBlendingState& state) = 0;
+
+		virtual void SetTextureAlphaBlendingState(unsigned int slot, const TextureBlendingState& state) = 0;
+
+		virtual void DisableTexcoordTransform(unsigned int slot) = 0;
+
+		virtual void ResetTexcoordIndex(unsigned int slot) = 0;
+
+		virtual void DisableCustomShaderUsage() = 0;
+
+		virtual void SetCustomFVF(unsigned int fvf) = 0;
+
+		virtual void SetWorldMatrix(const float* matrix) = 0;
+
+		virtual void SetViewMatrix(const float* matrix) = 0;
+
+		virtual void SetProjectionMatrix(const float* matrix) = 0;
+
+		virtual void SetTextureMatrix(unsigned int slot, const float* matrix) = 0;
+	};
+
 	// 渲染命令接口
 	class Context : public RObject
 	{
@@ -885,10 +909,6 @@ namespace RenderAPI
 
 		virtual void SetDepthWriting(bool enable) = 0;
 
-		virtual void SetTextureColorBlendingState(unsigned int slot, const TextureBlendingState& state) = 0;
-
-		virtual void SetTextureAlphaBlendingState(unsigned int slot, const TextureBlendingState& state) = 0;
-
 		virtual void SetTextureSampler(unsigned int slot, const TextureSampler& sampler) = 0;
 
 		virtual void SetScissorState(const ScissorState& state) = 0;
@@ -940,6 +960,8 @@ namespace RenderAPI
 		virtual DeviceState ResetDevice(const SwapChainDesc& desc, bool isFullscreen, bool useVerticalSync) = 0;
 
 		virtual void EvictManagedResources() = 0;
+
+		virtual ContextLegacy* GetContextLegacy() = 0;
 	};
 
 	// RenderAPI 总入口
@@ -978,6 +1000,8 @@ namespace RenderAPI
 		virtual unsigned int GetVendorID() const = 0;
 
 		virtual DriverVersion GetDriverVersion() const = 0;
+
+		virtual bool IsSupportEx() const = 0;
 
 		virtual void PerfBegin(unsigned int color, const char* name) = 0;
 

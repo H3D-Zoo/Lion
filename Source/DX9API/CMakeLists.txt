@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.3)
 
-set(THIS_TARGET DX9API)
+set(THIS_TARGET d3d9renderer)
 set(DIR_COMMON ../Common)
 
 include_directories(
@@ -15,6 +15,8 @@ set(RENDERAPI_SOURCE_FILES_COMMON
 	${DIR_COMMON}/BaseAPIInstance.h
 	${DIR_COMMON}/BaseAPIInstance.cpp
 	${DIR_COMMON}/RenderAPIExport.def
+	${DIR_COMMON}/RenderAPI.rc
+	${DIR_COMMON}/resource.h
 )
 
 set(RENDERAPI_INCLUDE_FILES
@@ -46,6 +48,7 @@ set(RENDERAPI_IMPL_SOURCE_FILES
 	./APIInstance.cpp
 	./Device.cpp
 	./Context.cpp
+	./ContextLegacy.cpp
 	./SwapChain.cpp
 	./RenderTarget.cpp
 	./DepthStencil.cpp
@@ -74,5 +77,13 @@ list(APPEND ${THIS_TARGET}_SOURCE_FILES
 link_directories(../DXSDK/Lib/x86)
 add_library(${THIS_TARGET} SHARED ${${THIS_TARGET}_SOURCE_FILES})
 target_link_libraries(${THIS_TARGET} d3dx9.lib dxguid.lib)
-set_target_properties( ${THIS_TARGET} PROPERTIES OUTPUT_NAME_DEBUG "DX9API_d")
-set_target_properties( ${THIS_TARGET} PROPERTIES OUTPUT_NAME_RELEASET "DX9API")
+
+set_target_properties( ${THIS_TARGET} PROPERTIES OUTPUT_NAME_DEBUG "${THIS_TARGET}_d")
+set_target_properties( ${THIS_TARGET} PROPERTIES OUTPUT_NAME_RELEASE "${THIS_TARGET}")
+
+set (CMAKE_SHARED_LINKER_FLAGS_RELEASE "/DEBUG")
+set_target_properties( ${THIS_TARGET} PROPERTIES LINK_FLAGS_DEBUG "/NXCOMPAT")
+set_target_properties( ${THIS_TARGET} PROPERTIES LINK_FLAGS_RELEASE "/OPT:REF /OPT:ICF")
+
+install (TARGETS ${THIS_TARGET} RUNTIME DESTINATION .)
+install (FILES $<TARGET_PDB_FILE:${THIS_TARGET}> DESTINATION .)
