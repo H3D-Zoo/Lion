@@ -782,7 +782,6 @@ void* Context::GetImplementPtr()
 	return m_pDevice;
 }
 
-
 bool operator<(const D3DVERTEXELEMENT9& left, const D3DVERTEXELEMENT9& right)
 {
 	return memcmp(&left, &right, sizeof(D3DVERTEXELEMENT9)) < 0;

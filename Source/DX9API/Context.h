@@ -153,6 +153,8 @@ public:
 	virtual void Release();
 
 	// Context Legacy
+	virtual void* GetImplementPtr();
+
 	virtual void SetTextureColorBlendingState(unsigned int slot, const RenderAPI::TextureBlendingState& state);
 
 	virtual void SetTextureAlphaBlendingState(unsigned int slot, const RenderAPI::TextureBlendingState& state);
@@ -173,8 +175,9 @@ public:
 
 	virtual void SetTextureMatrix(unsigned int slot, const float* matrix);
 
+	virtual void SetFog(const RenderAPI::FogSetting& fog);
+
 	ID3DXEffectStateManager* GetStateManager();
-	virtual void* GetImplementPtr();
 
 private:
 	APIInstance* m_pAPI;

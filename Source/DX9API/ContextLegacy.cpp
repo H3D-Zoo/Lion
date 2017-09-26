@@ -1,4 +1,13 @@
 #include "Context.h"
+namespace
+{
+	DWORD s_d3dFogTableMode[] =
+	{
+		D3DFOG_LINEAR,
+		D3DFOG_EXP,
+		D3DFOG_EXP2
+	};
+}
 
 RenderAPI::ContextLegacy * Context::GetContextLegacy()
 {
@@ -46,5 +55,32 @@ void Context::SetTextureMatrix(unsigned int slot, const float * matrix)
 	if (slot < 8)
 	{	
 		m_pDevice->SetTransform((D3DTRANSFORMSTATETYPE)(D3DTS_TEXTURE0 + slot), (const D3DMATRIX*)matrix);
+	}
+}
+
+void Context::SetFog(const RenderAPI::FogSetting & fog)
+{
+	if (fog.IsEnable)
+	{
+		m_renderStateManager.SetFog(TRUE);
+		m_renderStateManager.SetFogTableMode(s_d3dFogTableMode[fog.TableMode]);
+		m_renderStateManager.SetFogColor(fog.FogColor);
+
+		if (fog.TableMode == RenderAPI::FOG_Linear)
+		{
+			DWORD* start = (DWORD*)&(fog.StartDepth);
+			DWORD* end = (DWORD*)&(fog.EndDepth);
+			m_renderStateManager.SetFogStartDepth(*start);
+			m_renderStateManager.SetFogEndDepth(*end);
+		}
+		else
+		{
+			DWORD* density = (DWORD*)&(fog.FogDensity);
+			m_renderStateManager.SetFogDensity(*density);
+		}
+	}
+	else
+	{
+		m_renderStateManager.SetFog(FALSE);
 	}
 }

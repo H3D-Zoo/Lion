@@ -77,7 +77,20 @@ public:
 	void SetAlphaBlending(bool enable);
 	
 	void SetSeparateAlphaBlending(bool enable);
+
 	void SetClipPlaneState(bool isEnable);
+
+	RSDefine(Fog, D3DRS_FOGENABLE);
+
+	RSDefine(FogTableMode, D3DRS_FOGTABLEMODE);
+
+	RSDefine(FogStartDepth, D3DRS_FOGSTART);
+
+	RSDefine(FogEndDepth, D3DRS_FOGEND);
+
+	RSDefine(FogDensity, D3DRS_FOGDENSITY);
+
+	RSDefine(FogColor, D3DRS_FOGCOLOR);
 	
 	void SetBlendingOp(RenderAPI::BlendOperator blendOp);
 

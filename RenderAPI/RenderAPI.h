@@ -244,6 +244,13 @@ namespace RenderAPI
 		//!不支持
 		POW2_None = 2,
 	};
+
+	enum FogMode
+	{
+		FOG_Linear = 0,
+		FOG_Exp = 1,
+		FOG_ExpSquare = 2,
+	};
 	
 	class Device;
 	class Context;
@@ -399,6 +406,27 @@ namespace RenderAPI
 
 		bool IsEnable;
 		CompareMethod Function;
+	};
+
+	struct FogSetting
+	{
+		FogSetting()
+			:IsEnable(false)
+			, TableMode(FOG_Linear)
+			, StartDepth(1.0f)
+			, EndDepth(1.0f)
+			, FogDensity(1.0f)
+			, FogColor(0xFFFFFFFF)
+		{
+
+		}
+
+		bool IsEnable;
+		FogMode TableMode;
+		float StartDepth;
+		float EndDepth;
+		float FogDensity;
+		unsigned int FogColor;
 	};
 
 	struct StencilOps
@@ -835,6 +863,9 @@ namespace RenderAPI
 	class ContextLegacy
 	{
 	public:
+		//为了引擎临时加上去的，等一下一步在去掉吧
+		virtual void* GetImplementPtr() = 0;
+
 		virtual void SetTextureColorBlendingState(unsigned int slot, const TextureBlendingState& state) = 0;
 
 		virtual void SetTextureAlphaBlendingState(unsigned int slot, const TextureBlendingState& state) = 0;
@@ -854,8 +885,8 @@ namespace RenderAPI
 		virtual void SetProjectionMatrix(const float* matrix) = 0;
 
 		virtual void SetTextureMatrix(unsigned int slot, const float* matrix) = 0;
-		//为了引擎临时加上去的，等一下一步在去掉吧
-		virtual void* GetImplementPtr() = 0;
+		
+		virtual void SetFog(const FogSetting& fog) = 0;
 	};
 
 	// 渲染命令接口
