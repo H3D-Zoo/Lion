@@ -777,6 +777,11 @@ ID3DXEffectStateManager* Context::GetStateManager()
 {
 	return &m_renderStateManager;
 }
+void* Context::GetImplementPtr()
+{
+	return m_pDevice;
+}
+
 
 bool operator<(const D3DVERTEXELEMENT9& left, const D3DVERTEXELEMENT9& right)
 {

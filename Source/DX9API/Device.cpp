@@ -523,10 +523,6 @@ RenderAPI::OcclusionQuery* Device::CreateOcclusionQuery()
 	return NULL;
 }
 
-void* Device::GetImplementPtr()
-{
-	return m_pDevice;
-}
 
 ::DepthStencil* Device::CreateDepthStencilImplement(RenderAPI::DepthStencilFormat format, unsigned int width, unsigned int height)
 {

@@ -829,8 +829,7 @@ namespace RenderAPI
 
 		virtual OcclusionQuery* CreateOcclusionQuery() = 0;
 
-		//为了引擎临时加上去的，等一下一步在去掉吧
-		virtual void* GetImplementPtr() = 0;
+		
 	};
 	
 	class ContextLegacy
@@ -855,6 +854,8 @@ namespace RenderAPI
 		virtual void SetProjectionMatrix(const float* matrix) = 0;
 
 		virtual void SetTextureMatrix(unsigned int slot, const float* matrix) = 0;
+		//为了引擎临时加上去的，等一下一步在去掉吧
+		virtual void* GetImplementPtr() = 0;
 	};
 
 	// 渲染命令接口

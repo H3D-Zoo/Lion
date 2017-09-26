@@ -174,6 +174,7 @@ public:
 	virtual void SetTextureMatrix(unsigned int slot, const float* matrix);
 
 	ID3DXEffectStateManager* GetStateManager();
+	virtual void* GetImplementPtr();
 
 private:
 	APIInstance* m_pAPI;
