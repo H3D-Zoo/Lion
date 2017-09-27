@@ -856,8 +856,6 @@ namespace RenderAPI
 		virtual DepthStencil* CreateDepthStencil(DepthStencilFormat format, unsigned int width, unsigned int height) = 0;
 
 		virtual OcclusionQuery* CreateOcclusionQuery() = 0;
-
-		
 	};
 	
 	class ContextLegacy
@@ -984,10 +982,6 @@ namespace RenderAPI
 		virtual bool UpdateTexture(Texture2D* src, Texture2D* dst) = 0;
 
 		virtual bool StretchTexture(Texture2D* src, Texture2D* dst, SamplerFilter filter) = 0;
-
-		virtual bool GetRenderTargetData(RenderTarget* rt, TextureSurface* surface) = 0;
-
-		virtual bool GetDepthStencilData(DepthStencil* ds, TextureSurface* surface) = 0;
 
 		virtual DeviceState Present() = 0;
 

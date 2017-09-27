@@ -86,6 +86,7 @@ public:
 	virtual void SetDepthTestingState(const RenderAPI::DepthTestingState& state);
 
 	virtual RenderAPI::DepthTestingState GetDepthTestingState() const;
+
 	virtual void SetClipPlaneState(bool isEnable);
 
 	virtual bool GetClipPlaneState() const;
@@ -136,10 +137,6 @@ public:
 
 	virtual bool StretchTexture(RenderAPI::Texture2D* src, RenderAPI::Texture2D* dst, RenderAPI::SamplerFilter filter);
 
-	virtual bool GetRenderTargetData(RenderAPI::RenderTarget* rt, RenderAPI::TextureSurface* surface);
-
-	virtual bool GetDepthStencilData(RenderAPI::DepthStencil* ds, RenderAPI::TextureSurface* surface);
-
 	virtual RenderAPI::DeviceState Context::Present();
 
 	virtual RenderAPI::DeviceState GetState();
@@ -180,6 +177,8 @@ public:
 	ID3DXEffectStateManager* GetStateManager();
 
 private:
+	bool CopyTexture(IDirect3DTexture9* pSource, IDirect3DTexture9* pDest, unsigned int lines);
+
 	APIInstance* m_pAPI;
 	FXStateManager m_renderStateManager;
 	IDirect3DDevice9* m_pDevice;

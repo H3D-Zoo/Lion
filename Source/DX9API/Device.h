@@ -39,8 +39,6 @@ public:
 
 	virtual RenderAPI::OcclusionQuery* CreateOcclusionQuery();
 
-	
-
 	virtual void Release();
 
 private:

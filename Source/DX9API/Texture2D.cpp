@@ -15,7 +15,6 @@ Texture2D::Texture2D(APIInstance* pAPIInstance, IDirect3DTexture9* texture, Rend
 	, m_isDynamic(usage == RenderAPI::RESUSAGE_Dynamic || usage == RenderAPI::RESUSAGE_DynamicManaged)
 	, m_isRenderTexture(isRenderTexture)
 	, m_pTexture(texture)
-	, m_pTempTextureForUpdate(NULL)
 	, m_texWidth(width)
 	, m_texHeight(height)
 {
@@ -33,6 +32,7 @@ Texture2D::~Texture2D()
 			pSurface->Release();
 		}
 	}
+	ReleaseCopiedSystemTexture();
 	m_surfaces.clear();
 	m_pTexture->Release();
 	m_pTexture = NULL;
@@ -55,6 +55,7 @@ unsigned int Texture2D::GetHeight() const
 
 void Texture2D::Release()
 {
+	ReleaseCopiedSystemTexture();
 	if (0 == --m_refCount)
 	{
 		delete this;
@@ -63,6 +64,7 @@ void Texture2D::Release()
 
 void Texture2D::Resize(unsigned int width, unsigned int height)
 {
+	ReleaseCopiedSystemTexture();
 	m_texWidth = width;
 	m_texHeight = height;
 }
@@ -77,6 +79,52 @@ IDirect3DTexture9 * Texture2D::GetD3DTexture()
 	return m_pTexture;
 }
 
+IDirect3DTexture9* Texture2D::GetCopiedSystemTexture()
+{
+	IDirect3DDevice9* pDevice = NULL;
+	m_pTexture->GetDevice(&pDevice);
+	if (pDevice == NULL)
+	{
+		return NULL;
+	}
+
+	IDirect3DTexture9*& pTextureForUpdate = *TextureForUpdate(0);
+	if (pTextureForUpdate == NULL)
+	{
+		pDevice->CreateTexture(m_texWidth, m_texHeight, 0, D3DUSAGE_DYNAMIC, s_TextureFormats[m_texFormat], D3DPOOL_SYSTEMMEM, &pTextureForUpdate, NULL);
+	}
+
+	if (pTextureForUpdate != NULL)
+	{
+		IDirect3DSurface9* pSrcSurface = NULL, *pDstSurface = NULL;
+		m_pTexture->GetSurfaceLevel(0, &pSrcSurface);
+		pTextureForUpdate->GetSurfaceLevel(0, &pDstSurface);
+
+		if (pSrcSurface != NULL && pDstSurface != NULL)
+		{
+			pDevice->GetRenderTargetData(pSrcSurface, pDstSurface);
+			pSrcSurface->Release();
+			pDstSurface->Release();
+		}
+		else
+		{
+			if (pSrcSurface != NULL) pSrcSurface->Release();
+			if (pDstSurface != NULL) pDstSurface->Release();
+		}
+	}
+	return pTextureForUpdate;
+}
+
+void Texture2D::ReleaseCopiedSystemTexture()
+{
+	IDirect3DTexture9*& pTextureForUpdate = *TextureForUpdate(0);
+	if (pTextureForUpdate != NULL)
+	{
+		pTextureForUpdate->Release();
+		pTextureForUpdate = NULL;
+	}
+}
+
 IDirect3DTexture9 ** Texture2D::TextureForUpdate(unsigned int index)
 {
 	if (m_pTempTextureForUpdate.size() <= index)
@@ -89,10 +137,22 @@ RenderAPI::MappedResource Texture2D::LockRect(unsigned int layer, RenderAPI::Loc
 	RenderAPI::MappedResource ret;
 	if (m_isRenderTexture)
 	{
-		//This method cannot retrieve data from a texture resource created with D3DUSAGE_RENDERTARGET
-		//because such a texture must be assigned to D3DPOOL_DEFAULT memory and is therefore not lockable.
-		m_pAPIInstance->LogError("Texture2D::Lock", " Render Texture cannot be locked because.");
-		ret.Success = false;
+		IDirect3DTexture9* pCopiedTexture = GetCopiedSystemTexture();
+		if (pCopiedTexture != NULL)
+		{
+			D3DLOCKED_RECT lockedRect;
+			HRESULT hr = pCopiedTexture->LockRect(layer, &lockedRect, NULL, s_lockOptions[lockOption]);
+			if (hr == S_OK)
+			{
+				ret.DataPtr = lockedRect.pBits;
+				ret.LinePitch = lockedRect.Pitch;
+				ret.Success = false;
+			}
+			else
+			{
+				m_pAPIInstance->LogError("Texture2D::Lock", " Render Texture cannot be locked because.");
+			}
+		}
 	}
 	else if (m_isDynamic || m_isManaged)
 	{
@@ -119,12 +179,10 @@ RenderAPI::MappedResource Texture2D::LockRect(unsigned int layer, RenderAPI::Loc
 		if (hr == S_OK)
 		{
 			IDirect3DTexture9*& pTextureForUpdate = *TextureForUpdate(layer);
-			if (pTextureForUpdate != NULL)
+			if (pTextureForUpdate == NULL)
 			{
-				pTextureForUpdate->Release();
+				hr = pDevice->CreateTexture(m_texWidth, m_texHeight, 0, D3DUSAGE_DYNAMIC, s_TextureFormats[m_texFormat], D3DPOOL_SYSTEMMEM, &pTextureForUpdate, NULL);
 			}
-
-			hr = pDevice->CreateTexture(m_texWidth, m_texHeight, 0, D3DUSAGE_DYNAMIC, s_TextureFormats[m_texFormat], D3DPOOL_SYSTEMMEM, &pTextureForUpdate, NULL);
 			if (hr == S_OK)
 			{
 				D3DLOCKED_RECT lockedRect;
@@ -152,7 +210,17 @@ RenderAPI::MappedResource Texture2D::LockRect(unsigned int layer, RenderAPI::Loc
 
 void Texture2D::UnlockRect(unsigned int layer)
 {
-	if (m_isDynamic || m_isManaged)
+	if (m_isRenderTexture)
+	{
+		IDirect3DTexture9*& pTextureForUpdate = *TextureForUpdate(layer);
+		if (pTextureForUpdate != NULL)
+		{
+			pTextureForUpdate->UnlockRect(layer);
+			pTextureForUpdate->Release();
+			pTextureForUpdate = NULL;
+		}
+	}
+	else if (m_isDynamic || m_isManaged)
 	{
 		m_pTexture->UnlockRect(layer);
 	}
@@ -191,7 +259,10 @@ void Texture2D::UnlockRect(unsigned int layer)
 
 void Texture2D::GenerateMipmaps()
 {
-	m_pTexture->GenerateMipSubLevels();
+	if (m_autoGenMipmaps)
+	{
+		m_pTexture->GenerateMipSubLevels();
+	}
 }
 
 RenderAPI::TextureSurface* Texture2D::GetSurface(unsigned int index)

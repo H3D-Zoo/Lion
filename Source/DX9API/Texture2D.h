@@ -78,6 +78,10 @@ public:
 
 	IDirect3DTexture9* GetD3DTexture();
 
+	IDirect3DTexture9* GetCopiedSystemTexture();
+
+	void ReleaseCopiedSystemTexture();
+
 private:
 	APIInstance* m_pAPIInstance;
 	IDirect3DTexture9** TextureForUpdate(unsigned int index);
