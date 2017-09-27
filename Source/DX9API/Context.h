@@ -174,6 +174,14 @@ public:
 
 	virtual void SetFog(const RenderAPI::FogSetting& fog);
 
+	virtual void SetLight(const RenderAPI::PointLight& pLight);
+
+	virtual void SetLight(const RenderAPI::DirectionalLight& pLight);
+
+	virtual void DisableLight();
+
+	virtual void SetMaterial(const RenderAPI::Material& mat);
+
 	ID3DXEffectStateManager* GetStateManager();
 
 private:

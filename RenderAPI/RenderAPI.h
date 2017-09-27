@@ -258,6 +258,19 @@ namespace RenderAPI
 	typedef unsigned int HEffectParam;
 	const HEffectParam hInvalidParam = 0xFFFFFFFF;
 
+	struct  Float3
+	{
+		Float3()
+			:x(0.0f)
+			,y(0.0f)
+			,z(0.0f)
+		{
+
+		}
+		float x;
+		float y;
+		float z;
+	};
 	// 如果 backbufferWidth 和 backbufferHeight 同时被设为 0，将会使用 hWindow 默认的大小作为 backbuffer 的大小
 	struct SwapChainDesc
 	{
@@ -427,6 +440,66 @@ namespace RenderAPI
 		float EndDepth;
 		float FogDensity;
 		unsigned int FogColor;
+	};
+	struct PointLight
+	{
+		PointLight()
+			:IsEnable(false)
+			, Diffuse()
+			, Ambient()
+			, Specular()
+			, Position()
+			, Range(0.0f)
+		{
+
+		}
+		bool IsEnable;
+		Float3 Diffuse;
+		Float3 Ambient;
+		Float3 Specular;
+		Float3 Position;
+		float Range;
+
+
+	};
+	struct DirectionalLight
+	{
+		DirectionalLight()
+			:IsEnable(false)
+			, Diffuse()
+			, Ambient()
+			, Specular()
+			, Direction()
+		{
+
+		}
+		bool IsEnable;
+		Float3 Diffuse;
+		Float3 Ambient;
+		Float3 Specular;
+		Float3 Direction;
+	};
+	struct Material
+	{
+		Material()
+			: Diffuse()
+			, DiffuseA(0.0f)
+			, Ambient()
+			, AmbientA(0.0f)
+			, Specular()
+			, SpecularA(0.0f)
+			, Power(0.0f)
+		{
+
+		}
+		Float3 Diffuse;
+		float DiffuseA;
+		Float3 Ambient;
+		float AmbientA;
+		Float3 Specular;
+		float SpecularA;
+		float Power;
+
 	};
 
 	struct StencilOps
@@ -885,6 +958,14 @@ namespace RenderAPI
 		virtual void SetTextureMatrix(unsigned int slot, const float* matrix) = 0;
 		
 		virtual void SetFog(const FogSetting& fog) = 0;
+
+		virtual void SetLight(const PointLight& pLight) = 0;
+
+		virtual void SetLight(const DirectionalLight& pLight) = 0;
+
+		virtual void DisableLight() = 0;
+
+		virtual void SetMaterial(const Material& mat) = 0;
 	};
 
 	// 渲染命令接口
@@ -980,7 +1061,7 @@ namespace RenderAPI
 		virtual void DrawIndexedWithDynamicVertex(Primitive primitive, unsigned int vertexCount, unsigned int primitiveCount, const unsigned short* pIndexData, const void* pVertexData, unsigned int vertexStride) = 0;
 
 		virtual bool UpdateTexture(Texture2D* src, Texture2D* dst) = 0;
-
+		
 		virtual bool StretchTexture(Texture2D* src, Texture2D* dst, SamplerFilter filter) = 0;
 
 		virtual DeviceState Present() = 0;
