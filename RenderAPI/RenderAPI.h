@@ -985,6 +985,10 @@ namespace RenderAPI
 		virtual void GenViewMatrix(float outMatrix[16], const Float3& eye, const Float3& lookAt, const Float3& upward) = 0;
 
 		virtual void ProjectVertexPos(Float3& inoutPos, const float matMV[16], const float matP[16], Viewport viewport) = 0;
+
+		virtual void SaveNXDebugRenderState() = 0;
+
+		virtual void RestoreNXDebugRenderState(bool lightsOn) = 0;
 	};
 
 	// ‰÷»æ√¸¡ÓΩ”ø⁄

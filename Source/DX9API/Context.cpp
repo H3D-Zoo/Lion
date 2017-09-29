@@ -139,6 +139,10 @@ Context::Context(APIInstance* pAPI, IDirect3DDevice9 * device, RenderAPI::Render
 	, m_pDevice(device)
 	, m_backBufferManager(device, defRT, defDS)
 	, m_renderStateManager(device)
+	, m_nNXCacheFVF(0)
+	, m_pNXCacheVertexShader(NULL)
+	, m_pNXCachePixelShader(NULL)
+	, m_pm_nNXCacheTexture(NULL)
 {
 	m_pAPI->pContext = this;
 	if (m_pAPI->IsSupportD3D9EX())

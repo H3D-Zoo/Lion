@@ -252,3 +252,47 @@ void Context::ProjectVertexPos(RenderAPI::Float3 & inoutPos, const float matMV[1
 	inoutPos.y = vertOut.y;
 	inoutPos.z = vertOut.z;
 }
+
+void Context::SaveNXDebugRenderState()
+{
+	m_pDevice->GetFVF(&m_nNXCacheFVF);
+	m_pDevice->GetVertexShader(&m_pNXCacheVertexShader);
+	m_pDevice->GetPixelShader(&m_pNXCachePixelShader);
+	m_pDevice->GetTexture(0, &m_pm_nNXCacheTexture);
+
+	m_pDevice->SetRenderState(D3DRS_LIGHTING, FALSE);
+	m_pDevice->SetVertexShader(0);
+	m_pDevice->SetPixelShader(0);
+	m_pDevice->SetTexture(0, 0);
+
+	m_pDevice->SetFVF(D3DFVF_DIFFUSE | D3DFVF_XYZ);
+}
+
+void Context::RestoreNXDebugRenderState(bool lightsOn)
+{
+	if (lightsOn)
+	{
+		m_renderStateManager.SetRS(D3DRS_LIGHTING, TRUE);
+	}
+
+	m_pDevice->SetFVF(m_nNXCacheFVF);
+	m_pDevice->SetVertexShader(m_pNXCacheVertexShader);
+	m_pDevice->SetPixelShader(m_pNXCachePixelShader);
+	m_pDevice->SetTexture(0, m_pm_nNXCacheTexture);
+
+	if (m_pNXCacheVertexShader != NULL)
+	{
+		m_pNXCacheVertexShader->Release();
+		m_pNXCacheVertexShader = NULL;
+	}
+	if (m_pNXCachePixelShader != NULL)
+	{
+		m_pNXCachePixelShader->Release();
+		m_pNXCachePixelShader = NULL;
+	}
+	if (m_pm_nNXCacheTexture != NULL)
+	{
+		m_pm_nNXCacheTexture->Release();
+		m_pm_nNXCacheTexture = NULL;
+	}
+}

@@ -192,6 +192,10 @@ public:
 
 	virtual void ProjectVertexPos(RenderAPI::Float3& inoutPos, const float matMV[16], const float matP[16], RenderAPI::Viewport viewport);
 
+	virtual void SaveNXDebugRenderState();
+
+	virtual void RestoreNXDebugRenderState(bool lightsOn);
+
 	ID3DXEffectStateManager* GetStateManager();
 
 private:
@@ -205,4 +209,9 @@ private:
 	unsigned int m_indexBufferOffset;
 	unsigned int m_vertexBufferCount;
 	mutable RenderAPI::ScissorState m_scissorState;
+
+	DWORD m_nNXCacheFVF;
+	IDirect3DVertexShader9* m_pNXCacheVertexShader;
+	IDirect3DPixelShader9* m_pNXCachePixelShader;
+	IDirect3DBaseTexture9* m_pm_nNXCacheTexture;
 };
