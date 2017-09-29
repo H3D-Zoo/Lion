@@ -154,6 +154,7 @@ Context::Context(APIInstance* pAPI, IDirect3DDevice9 * device, RenderAPI::Render
 	m_scissorState.Bottom = scissorRect.bottom;
 
 	RenderAPI::DeviceCaps caps = GetDeviceCaps();
+	m_renderStateManager.SetIsSupportANISOTROPIC(caps.TextureFilterCaps == D3DPTFILTERCAPS_MAGFANISOTROPIC);
 	m_backBufferManager.SetMaxTextureStage(caps.MaxTextureStage);
 }
 
@@ -190,9 +191,10 @@ RenderAPI::DeviceCaps Context::GetDeviceCaps()
 	caps.MaxVertexBlendMatrix = d3dcaps.MaxVertexBlendMatrices;
 	caps.MaxVertexBlendMatrixIndex = d3dcaps.MaxVertexBlendMatrixIndex;
 
-
 	caps.VertexShaderVersion = D3DSHADER_VERSION_MAJOR(d3dcaps.VertexShaderVersion) * 10 + D3DSHADER_VERSION_MINOR(d3dcaps.VertexShaderVersion);
 	caps.PixelShaderVersion = D3DSHADER_VERSION_MAJOR(d3dcaps.PixelShaderVersion) * 10 + D3DSHADER_VERSION_MINOR(d3dcaps.PixelShaderVersion);
+
+	caps.TextureFilterCaps = d3dcaps.TextureFilterCaps;
 
 	caps.SupportIndex32 = d3dcaps.MaxVertexIndex > 0x0000FFFF;
 	caps.SupportsDynamicTexture = (d3dcaps.Caps2&D3DCAPS2_DYNAMICTEXTURES) != 0;

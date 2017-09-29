@@ -11,6 +11,8 @@ inline LPCWSTR FXStateManager::EndFrameStats()
 	return m_wszFrameStats;
 }
 
+
+
 HRESULT FXStateManager::QueryInterface(THIS_ REFIID iid, LPVOID *ppv)
 {
 	if (iid == IID_IUnknown || iid == IID_ID3DXEffectStateManager)
@@ -138,6 +140,7 @@ StateManager::StateManager(IDirect3DDevice9* pDevice)
 	: m_pDevice(pDevice)
 	, m_RSValues(RenderStateCount)
 {
+	m_isSupportAnisotropic = false;
 	pDevice->AddRef();
 	for (int i = 0; i < TextureSlotCount; i++)
 	{
@@ -277,6 +280,14 @@ HRESULT StateManager::SetTSS(unsigned int slot, D3DTEXTURESTAGESTATETYPE type, D
 
 HRESULT StateManager::SetSS(unsigned int slot, D3DSAMPLERSTATETYPE type, DWORD value)
 {
+	if (value == D3DTEXF_ANISOTROPIC)
+	{
+		if (!m_isSupportAnisotropic)
+		{
+			value = D3DTEXF_LINEAR;
+		}
+
+	}
 	DWORD& cv = m_SSValues[slot][type];
 	if (cv != value)
 	{

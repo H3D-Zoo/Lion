@@ -149,6 +149,9 @@ public:
 
 	bool IsScissorTestEnable() const;
 
+	void SetIsSupportANISOTROPIC(bool isSupport) { m_isSupportAnisotropic = isSupport; }
+
+
 protected:
 	IDirect3DDevice9* m_pDevice;
 
@@ -165,6 +168,7 @@ protected:
 	std::vector<DWORD> m_SSValues[TextureSlotCount];
 
 	bool m_isClipplaneenable;
+	bool m_isSupportAnisotropic;
 	RenderAPI::BlendState m_blendState;
 	RenderAPI::BlendState m_alphaSeparateBlendState;
 	RenderAPI::AlphaTestingState m_alphaTestState;
@@ -184,7 +188,6 @@ public:
 	FXStateManager(IDirect3DDevice9* pDevice);
 
 	virtual LPCWSTR EndFrameStats();
-
 	// methods inherited from ID3DXEffectStateManager
 	STDMETHOD(QueryInterface)(THIS_ REFIID iid, LPVOID *ppv);
 

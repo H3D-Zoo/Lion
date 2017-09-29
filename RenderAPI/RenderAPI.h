@@ -362,6 +362,8 @@ namespace RenderAPI
 		ENONPOW2Support NonePOW2Support;
 		//!≥ı ºœ‘¥Ê ˝
 		unsigned int InitVideoMemory;
+		//Texture-filtering capabilities for a texture
+		unsigned int TextureFilterCaps;
 	};
 	
 	struct VertexElement
