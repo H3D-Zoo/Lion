@@ -46,4 +46,5 @@ private:
 	::DepthStencil* CreateDepthStencilImplement(RenderAPI::DepthStencilFormat format, unsigned int width, unsigned int height);
 	::SwapChain* m_pDefaultSwapChain;
 	IDirect3DDevice9* m_pDevice;
+	bool m_notSupportDynamicTexture;
 };

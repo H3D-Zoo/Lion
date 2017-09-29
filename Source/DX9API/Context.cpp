@@ -153,9 +153,13 @@ Context::Context(APIInstance* pAPI, IDirect3DDevice9 * device, RenderAPI::Render
 	m_scissorState.Top = scissorRect.top;
 	m_scissorState.Bottom = scissorRect.bottom;
 
-	RenderAPI::DeviceCaps caps = GetDeviceCaps();
-	m_renderStateManager.SetIsSupportANISOTROPIC(caps.TextureFilterCaps == D3DPTFILTERCAPS_MAGFANISOTROPIC);
-	m_backBufferManager.SetMaxTextureStage(caps.MaxTextureStage);
+	D3DCAPS9 d3dcaps;
+	m_pDevice->GetDeviceCaps(&d3dcaps);
+	bool minAnisotropic = (d3dcaps.TextureFilterCaps & D3DPTFILTERCAPS_MINFANISOTROPIC) != 0;
+	bool magAnisotropic = (d3dcaps.TextureFilterCaps & D3DPTFILTERCAPS_MAGFANISOTROPIC) != 0;
+	m_renderStateManager.SetSupportMinAnisotropic(minAnisotropic);
+	m_renderStateManager.SetSupportMagAnisotropic(magAnisotropic);
+	m_backBufferManager.SetMaxTextureStage(d3dcaps.MaxTextureBlendStages);
 }
 
 Context::~Context()
@@ -171,9 +175,9 @@ RenderAPI::DeviceCaps Context::GetDeviceCaps()
 {
 	//获取D3D信息
 	D3DCAPS9 d3dcaps;
-	RenderAPI::DeviceCaps caps;
 	m_pDevice->GetDeviceCaps(&d3dcaps);
 
+	RenderAPI::DeviceCaps caps;
 	caps.MaxTextureWidth = d3dcaps.MaxTextureWidth;
 	caps.MaxTextureHeight = d3dcaps.MaxTextureHeight;
 	caps.MaxAnisotropy = d3dcaps.MaxAnisotropy;
@@ -193,8 +197,6 @@ RenderAPI::DeviceCaps Context::GetDeviceCaps()
 
 	caps.VertexShaderVersion = D3DSHADER_VERSION_MAJOR(d3dcaps.VertexShaderVersion) * 10 + D3DSHADER_VERSION_MINOR(d3dcaps.VertexShaderVersion);
 	caps.PixelShaderVersion = D3DSHADER_VERSION_MAJOR(d3dcaps.PixelShaderVersion) * 10 + D3DSHADER_VERSION_MINOR(d3dcaps.PixelShaderVersion);
-
-	caps.TextureFilterCaps = d3dcaps.TextureFilterCaps;
 
 	caps.SupportIndex32 = d3dcaps.MaxVertexIndex > 0x0000FFFF;
 	caps.SupportsDynamicTexture = (d3dcaps.Caps2&D3DCAPS2_DYNAMICTEXTURES) != 0;
@@ -505,18 +507,21 @@ void Context::SetTextureAlphaBlendingState(unsigned int slot, const RenderAPI::T
 
 void Context::SetTextureSampler(unsigned int slot, const RenderAPI::TextureSampler& sampler)
 {
-	DWORD magFilter = s_d3dSamplerFilter[sampler.MagFilter == RenderAPI::FILTER_Anisotropic ? RenderAPI::FILTER_Linear : sampler.MagFilter];
 	m_renderStateManager.SetSamplerMinFilter(slot, s_d3dSamplerFilter[sampler.MinFilter]);
-	m_renderStateManager.SetSamplerMagFilter(slot, magFilter);
+	m_renderStateManager.SetSamplerMagFilter(slot, s_d3dSamplerFilter[sampler.MagFilter]);
 	m_renderStateManager.SetSamplerMipFilter(slot, s_d3dSamplerFilter[sampler.MipFilter]);
 	m_renderStateManager.SetSamplerAddressU(slot, s_textureAddress[sampler.AddressU]);
 	m_renderStateManager.SetSamplerAddressV(slot, s_textureAddress[sampler.AddressV]);
 	m_renderStateManager.SetSamplerAddressW(slot, s_textureAddress[sampler.AddressW]);
-	if (sampler.AddressU == RenderAPI::TEX_ADDRESS_Border || sampler.AddressV == RenderAPI::TEX_ADDRESS_Border || sampler.AddressW == RenderAPI::TEX_ADDRESS_Border)
+	if (sampler.AddressU == RenderAPI::TEX_ADDRESS_Border ||
+		sampler.AddressV == RenderAPI::TEX_ADDRESS_Border ||
+		sampler.AddressW == RenderAPI::TEX_ADDRESS_Border)
 	{
 		m_renderStateManager.SetSamplerBorderColor(slot, sampler.BorderColor);
 	};
-	if (sampler.MagFilter == RenderAPI::FILTER_Anisotropic)
+
+	if (sampler.MinFilter == RenderAPI::FILTER_Anisotropic ||
+		sampler.MagFilter == RenderAPI::FILTER_Anisotropic)
 	{
 		m_renderStateManager.SetMaxAnisotropy(slot, s_sampleTypes[sampler.OptionalAnisotropicFilter]);
 	}

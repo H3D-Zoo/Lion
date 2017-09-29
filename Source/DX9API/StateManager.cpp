@@ -139,8 +139,9 @@ HRESULT FXStateManager::SetPixelShaderConstantB(THIS_ unsigned int RegisterIndex
 StateManager::StateManager(IDirect3DDevice9* pDevice)
 	: m_pDevice(pDevice)
 	, m_RSValues(RenderStateCount)
+	, m_notSupportMinAnisotropic(true)
+	, m_notSupportMagAnisotropic(true)
 {
-	m_isSupportAnisotropic = false;
 	pDevice->AddRef();
 	for (int i = 0; i < TextureSlotCount; i++)
 	{
@@ -282,11 +283,18 @@ HRESULT StateManager::SetSS(unsigned int slot, D3DSAMPLERSTATETYPE type, DWORD v
 {
 	if (value == D3DTEXF_ANISOTROPIC)
 	{
-		if (!m_isSupportAnisotropic)
+		if (type == D3DSAMP_MINFILTER && m_notSupportMinAnisotropic)
 		{
 			value = D3DTEXF_LINEAR;
 		}
-
+		else if (type == D3DSAMP_MAGFILTER && m_notSupportMagAnisotropic)
+		{
+			value = D3DTEXF_LINEAR;
+		}
+		else if (type == D3DSAMP_MIPFILTER)
+		{
+			value = D3DTEXF_LINEAR;
+		}
 	}
 	DWORD& cv = m_SSValues[slot][type];
 	if (cv != value)

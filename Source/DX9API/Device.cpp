@@ -75,6 +75,10 @@ Device::Device(APIInstance* pAPIContext, IDirect3DDevice9* device, const RenderA
 	m_pDevice->GetDepthStencilSurface(&pDSSurafce);
 	::DepthStencil* pDepthStencil = new DepthStencil(pDSSurafce, desc.zbufferFormat, desc.backbufferWidth, desc.backbufferHeight);
 	m_pDefaultSwapChain = new ::SwapChain(pSwapChain, pDepthStencil, desc);
+
+	D3DCAPS9 d3dcaps;
+	m_pDevice->GetDeviceCaps(&d3dcaps);
+	m_notSupportDynamicTexture = (d3dcaps.Caps2&D3DCAPS2_DYNAMICTEXTURES) == 0;
 }
 
 Device::~Device()
@@ -226,8 +230,10 @@ RenderAPI::IndexBuffer* Device::CreateIndexBuffer(RenderAPI::ResourceUsage usage
 		return NULL;
 	}
 
+	
 	bool managed;
 	bool dynamic;
+
 	if (m_pAPI->IsSupportManaged())
 	{
 		if (usage == RenderAPI::RESUSAGE_StaticWOManaged)
@@ -259,6 +265,7 @@ RenderAPI::IndexBuffer* Device::CreateIndexBuffer(RenderAPI::ResourceUsage usage
 		{
 			usage = RenderAPI::RESUSAGE_StaticWO;
 		}
+		
 	}
 	
 	IDirect3DIndexBuffer9* pIndexBuffer = NULL;
@@ -350,28 +357,41 @@ RenderAPI::Texture2D * Device::CreateTexture2D(RenderAPI::ResourceUsage usage, R
 
 	bool managed;
 	bool dynamic;
+	if (m_notSupportDynamicTexture)
+	{
+		if (usage == RenderAPI::RESUSAGE_DynamicManaged)
+		{
+			usage = RenderAPI::RESUSAGE_StaticManaged;
+		}
+		else if (usage == RenderAPI::RESUSAGE_Dynamic)
+		{
+			usage = RenderAPI::RESUSAGE_Static;
+		}
+		dynamic = false;
+	}
+	else
+	{
+		dynamic = usage == RenderAPI::RESUSAGE_DynamicManaged || usage == RenderAPI::RESUSAGE_Dynamic;
+	}
+
+
 	if (m_pAPI->IsSupportManaged())
 	{
 		if (usage == RenderAPI::RESUSAGE_StaticWOManaged)
 		{
 			usage = RenderAPI::RESUSAGE_StaticManaged;
 			managed = true;
-			dynamic = false;
 		}
 		else
 		{
 			managed = usage == RenderAPI::RESUSAGE_DynamicManaged || usage == RenderAPI::RESUSAGE_StaticManaged;
-			dynamic = usage == RenderAPI::RESUSAGE_Dynamic || usage == RenderAPI::RESUSAGE_DynamicManaged;
 		}
 	}
 	else
 	{
-		managed = false;
-		dynamic = false;
 		if (usage == RenderAPI::RESUSAGE_DynamicManaged)
 		{
 			usage = RenderAPI::RESUSAGE_Dynamic;
-			dynamic = true;
 		}
 		else if (usage == RenderAPI::RESUSAGE_StaticManaged ||
 			usage == RenderAPI::RESUSAGE_StaticWOManaged ||
@@ -379,6 +399,7 @@ RenderAPI::Texture2D * Device::CreateTexture2D(RenderAPI::ResourceUsage usage, R
 		{
 			usage = RenderAPI::RESUSAGE_Static;
 		}
+		managed = false;
 	}
 
 	IDirect3DTexture9* pTexture = NULL;
@@ -415,28 +436,42 @@ RenderAPI::TextureCube * Device::CreateTextureCube(RenderAPI::ResourceUsage usag
 
 	bool managed;
 	bool dynamic;
+
+	if (m_notSupportDynamicTexture)
+	{
+		if (usage == RenderAPI::RESUSAGE_DynamicManaged)
+		{
+			usage = RenderAPI::RESUSAGE_StaticManaged;
+		}
+		else if (usage == RenderAPI::RESUSAGE_Dynamic)
+		{
+			usage = RenderAPI::RESUSAGE_Static;
+		}
+		dynamic = false;
+	}
+	else
+	{
+		dynamic = usage == RenderAPI::RESUSAGE_DynamicManaged || usage == RenderAPI::RESUSAGE_Dynamic;
+	}
+
+
 	if (m_pAPI->IsSupportManaged())
 	{
 		if (usage == RenderAPI::RESUSAGE_StaticWOManaged)
 		{
 			usage = RenderAPI::RESUSAGE_StaticManaged;
 			managed = true;
-			dynamic = false;
 		}
 		else
 		{
 			managed = usage == RenderAPI::RESUSAGE_DynamicManaged || usage == RenderAPI::RESUSAGE_StaticManaged;
-			dynamic = usage == RenderAPI::RESUSAGE_Dynamic || usage == RenderAPI::RESUSAGE_DynamicManaged;
 		}
 	}
 	else
 	{
-		managed = false;
-		dynamic = false;
 		if (usage == RenderAPI::RESUSAGE_DynamicManaged)
 		{
 			usage = RenderAPI::RESUSAGE_Dynamic;
-			dynamic = true;
 		}
 		else if (usage == RenderAPI::RESUSAGE_StaticManaged ||
 			usage == RenderAPI::RESUSAGE_StaticWOManaged ||
@@ -444,6 +479,7 @@ RenderAPI::TextureCube * Device::CreateTextureCube(RenderAPI::ResourceUsage usag
 		{
 			usage = RenderAPI::RESUSAGE_Static;
 		}
+		managed = false;
 	}
 
 	IDirect3DCubeTexture9* pTexture = NULL;

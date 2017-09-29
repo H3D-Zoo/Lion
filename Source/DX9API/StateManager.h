@@ -149,7 +149,9 @@ public:
 
 	bool IsScissorTestEnable() const;
 
-	void SetIsSupportANISOTROPIC(bool isSupport) { m_isSupportAnisotropic = isSupport; }
+	void SetSupportMinAnisotropic(bool isSupport) { m_notSupportMinAnisotropic = !isSupport; }
+
+	void SetSupportMagAnisotropic(bool isSupport) { m_notSupportMagAnisotropic = !isSupport; }
 
 
 protected:
@@ -168,7 +170,8 @@ protected:
 	std::vector<DWORD> m_SSValues[TextureSlotCount];
 
 	bool m_isClipplaneenable;
-	bool m_isSupportAnisotropic;
+	bool m_notSupportMinAnisotropic;
+	bool m_notSupportMagAnisotropic;
 	RenderAPI::BlendState m_blendState;
 	RenderAPI::BlendState m_alphaSeparateBlendState;
 	RenderAPI::AlphaTestingState m_alphaTestState;

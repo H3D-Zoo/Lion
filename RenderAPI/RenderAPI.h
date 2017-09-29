@@ -239,7 +239,7 @@ namespace RenderAPI
 	{
 		//!完全支持
 		POW2_Support = 0,
-		//!有条件支持
+		//!有条件支持：不支持DXT5，只允许CLAMP，不是用MIPMAPS
 		POW2_Conditional = 1,
 		//!不支持
 		POW2_None = 2,
@@ -362,8 +362,6 @@ namespace RenderAPI
 		ENONPOW2Support NonePOW2Support;
 		//!初始显存数
 		unsigned int InitVideoMemory;
-		//Texture-filtering capabilities for a texture
-		unsigned int TextureFilterCaps;
 	};
 	
 	struct VertexElement
