@@ -41,6 +41,7 @@ set(RENDERAPI_IMPL_INCLUDE_FILES
 	./FXEffect.h
 	./StateManager.h
 	./OcclusionQuery.h
+	./TextBox.h
 )
 
 set(RENDERAPI_IMPL_SOURCE_FILES
@@ -60,6 +61,7 @@ set(RENDERAPI_IMPL_SOURCE_FILES
 	./FXEffect.cpp
 	./StateManager.cpp
 	./OcclusionQuery.cpp
+	./TextBox.cpp
 )
 
 source_group(include FILES ${DIR_INTERFACE})

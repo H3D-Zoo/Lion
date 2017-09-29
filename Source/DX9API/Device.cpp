@@ -12,6 +12,7 @@
 #include "AutoPtr.hpp"
 #include "EnumMapping.h"
 #include "OcclusionQuery.h"
+#include "TextBox.h"
 
 namespace
 {
@@ -559,6 +560,26 @@ RenderAPI::OcclusionQuery* Device::CreateOcclusionQuery()
 	return NULL;
 }
 
+RenderAPI::TextBox * Device::CreateTextBox(int screen_x, int screen_y, int width, int height)
+{
+
+	ID3DXFont* pFont = NULL;
+	
+	HRESULT hr = D3DXCreateFontA(m_pDevice, -12, 0, FW_BOLD, 1, FALSE, DEFAULT_CHARSET,
+		OUT_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH | FF_DONTCARE, "System", &pFont);
+	
+	if (hr != S_OK)
+	{
+		return NULL;
+	}
+	else
+	{
+		TextBox* tB = new TextBox(pFont, screen_x, screen_y, width, height);
+		return tB;
+	}
+
+	
+}
 
 ::DepthStencil* Device::CreateDepthStencilImplement(RenderAPI::DepthStencilFormat format, unsigned int width, unsigned int height)
 {

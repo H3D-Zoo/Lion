@@ -39,6 +39,8 @@ public:
 
 	virtual RenderAPI::OcclusionQuery* CreateOcclusionQuery();
 
+	virtual RenderAPI::TextBox* CreateTextBox(int screenX, int screenY, int width, int height);
+
 	virtual void Release();
 
 private:

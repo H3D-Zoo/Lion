@@ -264,6 +264,7 @@ namespace RenderAPI
 	class Device;
 	class Context;
 	class VertexBuffer;
+	class APIInstance;
 	typedef unsigned int HEffectParam;
 	const HEffectParam hInvalidParam = 0xFFFFFFFF;
 
@@ -901,7 +902,27 @@ namespace RenderAPI
 		// 否则表示设备丢失，使用Context::CheckDeviceLost来查询设备状态，以确认是否需要重建
 		virtual DeviceState Present() = 0;
 	};
+	class TextBox :public RObject
+	{
+	public:
+		virtual void Release() = 0;
 
+		virtual void SetPosSize(int x, int y, int width, int height) = 0;
+
+		virtual void SetText(const char* str, bool bWordWrap) = 0;
+
+		virtual void Clear() = 0;
+
+		virtual void SetTextColor(float r, float g, float b, float a) = 0;
+
+		virtual void Show(bool bShow) = 0;
+
+		virtual void Render() = 0;
+
+		virtual void OnLostDevice() = 0;
+
+		virtual void OnResetDevice() = 0;
+	};
 	class OcclusionQuery : public RObject
 	{
 	public:
@@ -938,6 +959,8 @@ namespace RenderAPI
 		virtual DepthStencil* CreateDepthStencil(DepthStencilFormat format, unsigned int width, unsigned int height) = 0;
 
 		virtual OcclusionQuery* CreateOcclusionQuery() = 0;
+
+		virtual TextBox* CreateTextBox(int screenX, int screenY, int width, int height) = 0;
 	};
 	
 	class ContextLegacy
