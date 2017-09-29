@@ -193,3 +193,53 @@ void Context::SetMaterial(const RenderAPI::Material & mat)
 	m_renderStateManager.SetMaterial(&mtrl);
 
 }
+
+void Context::GenPerspectiveMatrixRH(float outMatrix[16], float fovRadian, float aspect, float nearZ, float farZ)
+{
+	D3DXMatrixPerspectiveFovRH((D3DXMATRIX*)outMatrix, fovRadian, aspect, nearZ, farZ);
+}
+
+void Context::GenOrthoCenterMatrixRH(float outMatrix[16], float width, float height, float nearZ, float farZ)
+{
+	D3DXMatrixOrthoRH((D3DXMATRIX*)outMatrix, width, height, nearZ, farZ);
+}
+
+void Context::GenOrthoOffCenterMatrixRH(float outMatrix[16], float left, float right, float bottom, float top, float nearZ, float farZ)
+{
+	D3DXMatrixOrthoOffCenterRH((D3DXMATRIX*)outMatrix, left, right, bottom, top, nearZ, farZ);
+}
+
+void Context::GenViewMatrix(float outMatrix[16], const RenderAPI::Float3 & eyePos, const RenderAPI::Float3 & lookAt, const RenderAPI::Float3 & upward)
+{
+	D3DXMATRIX d3dViewMatrixRH;
+	D3DXVECTOR3 eye(eyePos.x, eyePos.y, eyePos.z);
+	D3DXVECTOR3 at(lookAt.x, lookAt.y, lookAt.z);
+	D3DXVECTOR3 up(upward.x, upward.y, upward.z);
+	D3DXMatrixLookAtRH((D3DXMATRIX*)outMatrix, &eye, &at, &up);
+
+}
+
+void Context::ProjectVertexPos(RenderAPI::Float3 & inoutPos, const float matMV[16], const float matP[16], RenderAPI::Viewport viewport)
+{
+	D3DXVECTOR3 vertOut;
+	D3DXVECTOR3  vertIn;
+	D3DVIEWPORT9 vp;
+	D3DXMATRIX world, view, proj;
+	D3DXMatrixIdentity(&world);
+
+	vp.X = viewport.Left;
+	vp.Y = viewport.Top;
+	vp.Width = viewport.Width;
+	vp.Height = viewport.Height;
+	vp.MinZ = viewport.MinZ;
+	vp.MaxZ = viewport.MaxZ;
+
+	vertIn.x = inoutPos.x;
+	vertIn.y = inoutPos.y;
+	vertIn.z = inoutPos.z;
+
+	D3DXVec3Project(&vertOut, &vertIn, &vp, (D3DXMATRIX*)matP, (D3DXMATRIX*)matMV, &world);
+	inoutPos.x = vertOut.x;
+	inoutPos.y = vertOut.y;
+	inoutPos.z = vertOut.z;
+}
