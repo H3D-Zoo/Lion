@@ -251,6 +251,15 @@ namespace RenderAPI
 		FOG_Exp = 1,
 		FOG_ExpSquare = 2,
 	};
+
+	enum TextureTransform
+	{
+		TT_Disable = 0,
+		TT_Dim2 = 1,
+		TT_Dim3 = 2,
+		TT_Dim4 = 3,
+		TT_Dim4Proj = 4,
+	};
 	
 	class Device;
 	class Context;
@@ -941,7 +950,7 @@ namespace RenderAPI
 
 		virtual void SetTextureAlphaBlendingState(unsigned int slot, const TextureBlendingState& state) = 0;
 
-		virtual void DisableTexcoordTransform(unsigned int slot) = 0;
+		virtual void SetTexcoordTransform(unsigned int slot, TextureTransform transform) = 0;
 
 		virtual void ResetTexcoordIndex(unsigned int slot) = 0;
 

@@ -7,6 +7,15 @@ namespace
 		D3DFOG_EXP,
 		D3DFOG_EXP2
 	};
+
+	DWORD s_d3dTextureTransformFlag[] =
+	{
+		D3DTTFF_DISABLE,
+		D3DTTFF_COUNT2,
+		D3DTTFF_COUNT3,
+		D3DTTFF_COUNT4,
+		D3DTTFF_COUNT4 | D3DTTFF_PROJECTED,
+	};
 }
 
 RenderAPI::ContextLegacy * Context::GetContextLegacy()
@@ -14,9 +23,9 @@ RenderAPI::ContextLegacy * Context::GetContextLegacy()
 	return this;
 }
 
-void Context::DisableTexcoordTransform(unsigned int slot)
+void Context::SetTexcoordTransform(unsigned int slot, RenderAPI::TextureTransform transform)
 {
-	m_renderStateManager.SetTextureStageState(slot, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_DISABLE);
+	m_renderStateManager.SetTextureStageState(slot, D3DTSS_TEXTURETRANSFORMFLAGS, s_d3dTextureTransformFlag[transform]);
 }
 
 void Context::ResetTexcoordIndex(unsigned int slot)

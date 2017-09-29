@@ -156,7 +156,7 @@ public:
 
 	virtual void SetTextureAlphaBlendingState(unsigned int slot, const RenderAPI::TextureBlendingState& state);
 
-	void DisableTexcoordTransform(unsigned int slot);
+	virtual void SetTexcoordTransform(unsigned int slot, RenderAPI::TextureTransform transform);
 
 	virtual void ResetTexcoordIndex(unsigned int slot);
 
