@@ -1,7 +1,8 @@
 #include "StateManager.h"
 #include "EnumMapping.h"
+#include "Context.h"
 
-FXStateManager::FXStateManager(IDirect3DDevice9 * pDevice) : StateManager(pDevice)
+FXStateManager::FXStateManager(IDirect3DDevice9 * pDevice, RenderStatistic& pRenderStatisticsData) : StateManager(pDevice, pRenderStatisticsData)
 {
 	m_wszFrameStats[0] = 0;
 }
@@ -62,21 +63,25 @@ HRESULT FXStateManager::SetTextureStageState(THIS_ DWORD dwStage, D3DTEXTURESTAG
 
 HRESULT FXStateManager::SetTexture(THIS_ DWORD dwStage, LPDIRECT3DBASETEXTURE9 pTexture)
 {
+	m_renderStatistic.OnSetTexture();
 	return m_pDevice->SetTexture(dwStage, pTexture);
 }
 
 HRESULT FXStateManager::SetVertexShader(THIS_ LPDIRECT3DVERTEXSHADER9 pShader)
 {
+	m_renderStatistic.OnSetVertexShader();
 	return m_pDevice->SetVertexShader(pShader);
 }
 
 HRESULT FXStateManager::SetPixelShader(THIS_ LPDIRECT3DPIXELSHADER9 pShader)
 {
+	m_renderStatistic.OnSetPixelShader();
 	return m_pDevice->SetPixelShader(pShader);
 }
 
 HRESULT FXStateManager::SetFVF(THIS_ DWORD dwFVF)
 {
+	m_renderStatistic.OnSetCustomFVF();
 	return m_pDevice->SetFVF(dwFVF);
 }
 
@@ -136,11 +141,12 @@ HRESULT FXStateManager::SetPixelShaderConstantB(THIS_ unsigned int RegisterIndex
 }
 
 
-StateManager::StateManager(IDirect3DDevice9* pDevice)
+StateManager::StateManager(IDirect3DDevice9* pDevice, RenderStatistic& renderStatistic)
 	: m_pDevice(pDevice)
 	, m_RSValues(RenderStateCount)
 	, m_notSupportMinAnisotropic(true)
 	, m_notSupportMagAnisotropic(true)
+	, m_renderStatistic(renderStatistic)
 {
 	pDevice->AddRef();
 	for (int i = 0; i < TextureSlotCount; i++)
@@ -257,6 +263,7 @@ HRESULT StateManager::SetRS(D3DRENDERSTATETYPE type, DWORD value)
 	if (cv != value)
 	{
 		cv = value;
+		m_renderStatistic.OnSetRenderState();
 		return m_pDevice->SetRenderState(type, value);
 	}
 	else
@@ -271,6 +278,7 @@ HRESULT StateManager::SetTSS(unsigned int slot, D3DTEXTURESTAGESTATETYPE type, D
 	if (cv != value)
 	{
 		cv = value;
+		m_renderStatistic.OnSetSetTextureStageState();
 		return m_pDevice->SetTextureStageState(slot, type, value);
 	}
 	else
@@ -300,6 +308,7 @@ HRESULT StateManager::SetSS(unsigned int slot, D3DSAMPLERSTATETYPE type, DWORD v
 	if (cv != value)
 	{
 		cv = value;
+		m_renderStatistic.OnSetSamplerState();
 		return m_pDevice->SetSamplerState(slot, type, value);
 	}
 	else

@@ -59,7 +59,9 @@ unsigned int TransformCustomFVF(unsigned int legacyFVF)
 
 void Context::SetCustomFVF(unsigned int fvf)
 {
-	m_pDevice->SetFVF(TransformCustomFVF(fvf));
+	m_pDevice->SetFVF(fvf);
+
+	m_renderStatistic.OnSetCustomFVF();
 }
 
 void Context::SetWorldMatrix(const float * matrix)
@@ -284,6 +286,8 @@ void Context::SaveNXDebugRenderState()
 	m_pDevice->SetTexture(0, 0);
 
 	m_pDevice->SetFVF(D3DFVF_DIFFUSE | D3DFVF_XYZ);
+
+	m_renderStatistic.OnSetCustomFVF();
 }
 
 void Context::RestoreNXDebugRenderState(bool lightsOn)
@@ -292,7 +296,6 @@ void Context::RestoreNXDebugRenderState(bool lightsOn)
 	{
 		m_renderStateManager.SetRS(D3DRS_LIGHTING, TRUE);
 	}
-
 	m_pDevice->SetFVF(m_nNXCacheFVF);
 	m_pDevice->SetVertexShader(m_pNXCacheVertexShader);
 	m_pDevice->SetPixelShader(m_pNXCachePixelShader);
@@ -313,4 +316,9 @@ void Context::RestoreNXDebugRenderState(bool lightsOn)
 		m_pNXCacheTexture->Release();
 		m_pNXCacheTexture = NULL;
 	}
+
+	m_renderStatistic.OnSetVertexShader();
+	m_renderStatistic.OnSetPixelShader();
+	m_renderStatistic.OnSetCustomFVF();
+	m_renderStatistic.OnSetTexture();
 }

@@ -271,7 +271,6 @@ namespace RenderAPI
 	class Device;
 	class Context;
 	class VertexBuffer;
-	class APIInstance;
 	typedef unsigned int HEffectParam;
 	const HEffectParam hInvalidParam = 0xFFFFFFFF;
 
@@ -379,6 +378,36 @@ namespace RenderAPI
 		ENONPOW2Support NonePOW2Support;
 		//!初始显存数
 		unsigned int InitVideoMemory;
+	};
+	
+	//渲染信息
+	struct RenderStatisticsData
+	{
+		unsigned int NumDraw;
+		unsigned int NumDrawUp;
+		unsigned int NumDrawIndexed;
+		unsigned int NumDrawIndexedUp;
+
+		unsigned int NumSetStaticStreamSource;
+		unsigned int NumSetDynamicStreamSource;
+		unsigned int NumSetStaticIndices;
+		unsigned int NumSetDynamicIndices;
+		unsigned int NumSetVertexDeclaration;
+		unsigned int NumSetCustomFVF;
+		unsigned int NumSetVertexShader;
+		unsigned int NumSetPixelShader;
+		unsigned int NumSetTexture;
+		unsigned int NumSetRenderState;
+		unsigned int NumSetSamplerState;
+		unsigned int NumSetTextureStageState;
+
+		unsigned int ByteFrameStaticVertexBuffer;
+		unsigned int ByteFrameDynamicVertexBuffer;
+		unsigned int ByteFrameStaticIndexBuffer;
+		unsigned int ByteFrameDynamicIndexBuffer;
+
+		unsigned int NumFrameVertices;
+		unsigned int NumFrameTriangles;
 	};
 	
 	struct VertexElement
@@ -1045,9 +1074,9 @@ namespace RenderAPI
 	class Context : public RObject
 	{
 	public:
-		virtual DeviceCaps GetDeviceCaps() = 0;
+		virtual const DeviceCaps& GetDeviceCaps() const = 0;
 
-		virtual unsigned int GetAvailableTextureMemory() = 0;
+		virtual unsigned int GetAvailableTextureMemory() const = 0;
 
 		virtual void ClearRenderTarget(unsigned int color) = 0;
 
@@ -1144,6 +1173,10 @@ namespace RenderAPI
 		virtual DeviceState ResetDevice(const SwapChainDesc& desc, bool isFullscreen, bool useVerticalSync) = 0;
 
 		virtual void EvictManagedResources() = 0;
+
+		virtual const RenderAPI::RenderStatisticsData& GetRenderStatisticsData() const = 0;
+
+		virtual void ClearRenderStatisticsData() = 0;
 
 		virtual ContextLegacy* GetContextLegacy() = 0;
 	};

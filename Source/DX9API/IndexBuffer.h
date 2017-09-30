@@ -31,6 +31,8 @@ public:
 
 	IDirect3DIndexBuffer9* GetD3DIndexBuffer();
 
+	bool IsDynamic() { return m_isDynamic; }
+
 private:
 	APIInstance* m_pAPIInstance;
 	RenderAPI::ResourceUsage m_usage;

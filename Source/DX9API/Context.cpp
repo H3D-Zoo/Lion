@@ -133,12 +133,11 @@ namespace
 		D3DTEXF_ANISOTROPIC,
 	};
 }
-
 Context::Context(APIInstance* pAPI, IDirect3DDevice9 * device, RenderAPI::RenderTarget* defRT, RenderAPI::DepthStencil* defDS)
 	: m_pAPI(pAPI)
 	, m_pDevice(device)
-	, m_backBufferManager(device, defRT, defDS)
-	, m_renderStateManager(device)
+	, m_backBufferManager(device, defRT, defDS, m_renderStatistic)
+	, m_renderStateManager(device, m_renderStatistic)
 	, m_nNXCacheFVF(0)
 	, m_pNXCacheVertexShader(NULL)
 	, m_pNXCachePixelShader(NULL)
@@ -164,6 +163,8 @@ Context::Context(APIInstance* pAPI, IDirect3DDevice9 * device, RenderAPI::Render
 	m_renderStateManager.SetSupportMinAnisotropic(minAnisotropic);
 	m_renderStateManager.SetSupportMagAnisotropic(magAnisotropic);
 	m_backBufferManager.SetMaxTextureStage(d3dcaps.MaxTextureBlendStages);
+
+	InitDeviceCaps(d3dcaps);
 }
 
 Context::~Context()
@@ -175,71 +176,13 @@ Context::~Context()
 	m_pAPI = NULL;
 }
 
-RenderAPI::DeviceCaps Context::GetDeviceCaps()
+const RenderAPI::DeviceCaps& Context::GetDeviceCaps() const
 {
-	//获取D3D信息
-	D3DCAPS9 d3dcaps;
-	m_pDevice->GetDeviceCaps(&d3dcaps);
 
-	RenderAPI::DeviceCaps caps;
-	caps.MaxTextureWidth = d3dcaps.MaxTextureWidth;
-	caps.MaxTextureHeight = d3dcaps.MaxTextureHeight;
-	caps.MaxAnisotropy = d3dcaps.MaxAnisotropy;
-	caps.MaxTextureStage = d3dcaps.MaxTextureBlendStages;
-	caps.MaxSimultaneousTextures = d3dcaps.MaxSimultaneousTextures;
-	caps.MaxUserClipPlanes = d3dcaps.MaxUserClipPlanes;
-	caps.MaxPrimitiveCount = d3dcaps.MaxPrimitiveCount;
-	caps.MaxVertexIndex = d3dcaps.MaxVertexIndex;
-	caps.MaxStreams = d3dcaps.MaxStreams;
-	caps.MaxStreamStride = d3dcaps.MaxStreamStride;
-	caps.MaxVertexShaderConsts = d3dcaps.MaxVertexShaderConst;
-	caps.MaxMRTs = d3dcaps.NumSimultaneousRTs;
-	caps.MaxVertexShaderInstruction = d3dcaps.MaxVShaderInstructionsExecuted;
-	caps.MaxPixelShaderInstruction = d3dcaps.MaxPShaderInstructionsExecuted;
-	caps.MaxVertexBlendMatrix = d3dcaps.MaxVertexBlendMatrices;
-	caps.MaxVertexBlendMatrixIndex = d3dcaps.MaxVertexBlendMatrixIndex;
-
-	caps.VertexShaderVersion = D3DSHADER_VERSION_MAJOR(d3dcaps.VertexShaderVersion) * 10 + D3DSHADER_VERSION_MINOR(d3dcaps.VertexShaderVersion);
-	caps.PixelShaderVersion = D3DSHADER_VERSION_MAJOR(d3dcaps.PixelShaderVersion) * 10 + D3DSHADER_VERSION_MINOR(d3dcaps.PixelShaderVersion);
-
-	caps.SupportIndex32 = d3dcaps.MaxVertexIndex > 0x0000FFFF;
-	caps.SupportsDynamicTexture = (d3dcaps.Caps2&D3DCAPS2_DYNAMICTEXTURES) != 0;
-	caps.SupportTextureAlphaChannel = (d3dcaps.TextureCaps&D3DPTEXTURECAPS_ALPHA) != 0;
-	caps.SupportOnlySquareTexture = (d3dcaps.TextureCaps&D3DPTEXTURECAPS_SQUAREONLY) != 0;
-
-	if (d3dcaps.TextureCaps&D3DPTEXTURECAPS_POW2)
-	{
-		if (d3dcaps.TextureCaps&D3DPTEXTURECAPS_NONPOW2CONDITIONAL)
-		{
-			caps.NonePOW2Support = RenderAPI::POW2_Conditional;
-		}
-		else
-		{
-			caps.NonePOW2Support = RenderAPI::POW2_None;
-		}
-	}
-	else
-	{
-		if ((d3dcaps.TextureCaps&D3DPTEXTURECAPS_NONPOW2CONDITIONAL) == 0)
-		{
-			caps.NonePOW2Support = RenderAPI::POW2_Support;
-		}
-	}
-
-	caps.InitVideoMemory = 0;
-	if (m_pAPI->GetVendorID() != 0x8086)
-	{
-		DDrawX ddrawX;
-		caps.InitVideoMemory = ddrawX.GetAvailableVideoMemory();
-	}
-	if (caps.InitVideoMemory == 0)
-	{
-		caps.InitVideoMemory = GetAvailableTextureMemory();
-	}
-	return caps;
+	return m_deviceCaps;
 }
 
-unsigned int Context::GetAvailableTextureMemory()
+unsigned int Context::GetAvailableTextureMemory() const
 {
 	return m_pDevice->GetAvailableTextureMem();
 }
@@ -309,13 +252,13 @@ void Context::SetVertexBuffers(RenderAPI::VertexBufferInfo* buffers, unsigned in
 	{
 		if (buffers[i].BufferPtr != NULL)
 		{
-			::VertexBuffer* pVertexBuffe = (::VertexBuffer*)buffers[i].BufferPtr;
-			IDirect3DVertexBuffer9* vertexBufferPtr = pVertexBuffe->GetBufferPtr();
+			::VertexBuffer* pVertexBuffer = (::VertexBuffer*)buffers[i].BufferPtr;
+			IDirect3DVertexBuffer9* vertexBufferPtr = pVertexBuffer->GetBufferPtr();
 			
 
-			if (m_vertexBufferCount == 0 || m_vertexBufferCount > pVertexBuffe->GetVertexCount())
+			if (m_vertexBufferCount == 0 || m_vertexBufferCount > pVertexBuffer->GetVertexCount())
 			{
-				m_vertexBufferCount = pVertexBuffe->GetVertexCount();
+				m_vertexBufferCount = pVertexBuffer->GetVertexCount();
 			}
 			HRESULT hr = m_pDevice->SetStreamSource(i, vertexBufferPtr, buffers[i].Offset, buffers[i].BufferPtr->GetVertexStride());
 
@@ -335,6 +278,7 @@ void Context::SetVertexBuffers(RenderAPI::VertexBufferInfo* buffers, unsigned in
 			}
 
 			//统计信息
+			m_renderStatistic.OnSetSourceStream(pVertexBuffer);
 		}
 	}
 }
@@ -343,9 +287,11 @@ void Context::SetIndexBuffer(RenderAPI::IndexBuffer* buffer, unsigned int offset
 {
 	if (buffer != NULL)
 	{
-		IDirect3DIndexBuffer9* indexBufferPtr = ((::IndexBuffer*)buffer)->GetD3DIndexBuffer();
-		m_pDevice->SetIndices(indexBufferPtr);
+		::IndexBuffer* pIndexBuffer = (::IndexBuffer*)buffer;
+		m_pDevice->SetIndices(pIndexBuffer->GetD3DIndexBuffer());
 		m_indexBufferOffset = offset;
+
+		m_renderStatistic.OnSetIndexBuffer(pIndexBuffer);
 	}
 }
 
@@ -360,6 +306,8 @@ void Context::SetVertexDeclaration(RenderAPI::VertexDeclaration * decl)
 	{
 		m_pDevice->SetVertexDeclaration(NULL);
 	}
+
+	m_renderStatistic.OnSetVertexDeclaration();
 }
 
 void Context::SetTexture(unsigned int slot, RenderAPI::Texture* texture)
@@ -373,6 +321,8 @@ void Context::SetTexture(unsigned int slot, RenderAPI::Texture* texture)
 			pTexture = ((::Texture2D*)texture)->GetD3DTexture();
 	}
 	m_pDevice->SetTexture(slot, pTexture);
+
+	m_renderStatistic.OnSetTexture();
 }
 
 void Context::SetBlendState(const RenderAPI::BlendState& state)
@@ -641,28 +591,39 @@ void Context::EndScene()
 void Context::Draw(RenderAPI::Primitive primitive, unsigned int startVertex, unsigned int primitiveCount)
 {
 	m_pDevice->DrawPrimitive(s_primitives[primitive], startVertex, primitiveCount);
+
+	m_renderStatistic.OnDraw(primitive, primitiveCount);
 }
 
 void Context::DrawWithDynamicVertex(RenderAPI::Primitive primitive, unsigned int primitiveCount, const void* pVertexData, unsigned int vertexStride)
 {
 	m_pDevice->DrawPrimitiveUP(s_primitives[primitive], primitiveCount, pVertexData, vertexStride);
+
+	m_renderStatistic.OnDrawUp(primitive, primitiveCount);
 }
 
 void Context::DrawIndexed(RenderAPI::Primitive primitive, unsigned int baseVertex, unsigned int vertexCount, unsigned int startIndex, unsigned int primitiveCount)
 {
 	if (vertexCount == 0)
 		vertexCount = m_vertexBufferCount;
+
 	m_pDevice->DrawIndexedPrimitive(s_primitives[primitive], baseVertex, 0, vertexCount, startIndex, primitiveCount);
+
+	m_renderStatistic.OnDrawIndexed(primitive, primitiveCount);
 }
 
 void Context::DrawIndexedWithDynamicVertex(RenderAPI::Primitive primitive, unsigned int vertexCount, unsigned int primitiveCount, const unsigned int* pIndexData, const void* pVertexData, unsigned int vertexStride)
 {
 	m_pDevice->DrawIndexedPrimitiveUP(s_primitives[primitive], 0, vertexCount, primitiveCount, pIndexData, D3DFMT_INDEX32, pVertexData, vertexStride);
+
+	m_renderStatistic.OnDrawIndexedUp(primitive, primitiveCount);
 }
 
 void Context::DrawIndexedWithDynamicVertex(RenderAPI::Primitive primitive, unsigned int vertexCount, unsigned int primitiveCount, const unsigned short* pIndexData, const void* pVertexData, unsigned int vertexStride)
 {
 	m_pDevice->DrawIndexedPrimitiveUP(s_primitives[primitive], 0, vertexCount, primitiveCount, pIndexData, D3DFMT_INDEX16, pVertexData, vertexStride);
+
+	m_renderStatistic.OnDrawIndexedUp(primitive, primitiveCount);
 }
 
 bool Context::UpdateTexture(RenderAPI::Texture2D * src, RenderAPI::Texture2D * dst)
@@ -723,7 +684,7 @@ bool Context::CopyTexture(IDirect3DTexture9 * pSource, IDirect3DTexture9 * pDest
 		}
 		else
 		{
-			
+
 			D3DLOCKED_RECT srcLockedRect;
 			D3DLOCKED_RECT dstLockedRect;
 			HRESULT hrSrcLocked = pSource->LockRect(0, &srcLockedRect, NULL, D3DLOCK_READONLY);
@@ -753,6 +714,62 @@ bool Context::CopyTexture(IDirect3DTexture9 * pSource, IDirect3DTexture9 * pDest
 		if (pSrcSurface != NULL)pSrcSurface->Release();
 		if (pDstSurface != NULL)pDstSurface->Release();
 		return false;
+	}
+}
+
+void Context::InitDeviceCaps(const D3DCAPS9& d3dcaps)
+{
+	m_deviceCaps.MaxTextureWidth = d3dcaps.MaxTextureWidth;
+	m_deviceCaps.MaxTextureHeight = d3dcaps.MaxTextureHeight;
+	m_deviceCaps.MaxAnisotropy = d3dcaps.MaxAnisotropy;
+	m_deviceCaps.MaxTextureStage = d3dcaps.MaxTextureBlendStages;
+	m_deviceCaps.MaxSimultaneousTextures = d3dcaps.MaxSimultaneousTextures;
+	m_deviceCaps.MaxUserClipPlanes = d3dcaps.MaxUserClipPlanes;
+	m_deviceCaps.MaxPrimitiveCount = d3dcaps.MaxPrimitiveCount;
+	m_deviceCaps.MaxVertexIndex = d3dcaps.MaxVertexIndex;
+	m_deviceCaps.MaxStreams = d3dcaps.MaxStreams;
+	m_deviceCaps.MaxStreamStride = d3dcaps.MaxStreamStride;
+	m_deviceCaps.MaxVertexShaderConsts = d3dcaps.MaxVertexShaderConst;
+	m_deviceCaps.MaxMRTs = d3dcaps.NumSimultaneousRTs;
+	m_deviceCaps.MaxVertexShaderInstruction = d3dcaps.MaxVShaderInstructionsExecuted;
+	m_deviceCaps.MaxPixelShaderInstruction = d3dcaps.MaxPShaderInstructionsExecuted;
+	m_deviceCaps.MaxVertexBlendMatrix = d3dcaps.MaxVertexBlendMatrices;
+	m_deviceCaps.MaxVertexBlendMatrixIndex = d3dcaps.MaxVertexBlendMatrixIndex;
+	m_deviceCaps.VertexShaderVersion = D3DSHADER_VERSION_MAJOR(d3dcaps.VertexShaderVersion) * 10 + D3DSHADER_VERSION_MINOR(d3dcaps.VertexShaderVersion);
+	m_deviceCaps.PixelShaderVersion = D3DSHADER_VERSION_MAJOR(d3dcaps.PixelShaderVersion) * 10 + D3DSHADER_VERSION_MINOR(d3dcaps.PixelShaderVersion);
+	m_deviceCaps.SupportIndex32 = d3dcaps.MaxVertexIndex > 0x0000FFFF;
+	m_deviceCaps.SupportsDynamicTexture = (d3dcaps.Caps2&D3DCAPS2_DYNAMICTEXTURES) != 0;
+	m_deviceCaps.SupportTextureAlphaChannel = (d3dcaps.TextureCaps&D3DPTEXTURECAPS_ALPHA) != 0;
+	m_deviceCaps.SupportOnlySquareTexture = (d3dcaps.TextureCaps&D3DPTEXTURECAPS_SQUAREONLY) != 0;
+
+	if (d3dcaps.TextureCaps&D3DPTEXTURECAPS_POW2)
+	{
+		if (d3dcaps.TextureCaps&D3DPTEXTURECAPS_NONPOW2CONDITIONAL)
+		{
+			m_deviceCaps.NonePOW2Support = RenderAPI::POW2_Conditional;
+		}
+		else
+		{
+			m_deviceCaps.NonePOW2Support = RenderAPI::POW2_None;
+		}
+	}
+	else
+	{
+		if ((d3dcaps.TextureCaps&D3DPTEXTURECAPS_NONPOW2CONDITIONAL) == 0)
+		{
+			m_deviceCaps.NonePOW2Support = RenderAPI::POW2_Support;
+		}
+	}
+
+	m_deviceCaps.InitVideoMemory = 0;
+	if (m_pAPI->GetVendorID() != 0x8086)
+	{
+		DDrawX ddrawX;
+		m_deviceCaps.InitVideoMemory = ddrawX.GetAvailableVideoMemory();
+	}
+	if (m_deviceCaps.InitVideoMemory == 0)
+	{
+		m_deviceCaps.InitVideoMemory = GetAvailableTextureMemory();
 	}
 }
 
@@ -847,7 +864,7 @@ RenderAPI::DeviceState Context::ResetDevice(const RenderAPI::SwapChainDesc& desc
 				desc.backbufferHeight,
 				desc.backbufferFormat,
 				desc.zbufferFormat
-			);
+				);
 
 			RenderAPI::SwapChain* pSwapChain = m_pAPI->pDevice->GetDefaultSwapChain();
 			RenderAPI::RenderTarget* pRenderTarget = pSwapChain->GetRenderTarget();
@@ -865,6 +882,16 @@ RenderAPI::DeviceState Context::ResetDevice(const RenderAPI::SwapChainDesc& desc
 void Context::EvictManagedResources()
 {
 	m_pDevice->EvictManagedResources();
+}
+
+const RenderAPI::RenderStatisticsData& Context::GetRenderStatisticsData() const
+{
+	return m_renderStatistic.GetData();
+}
+
+void Context::ClearRenderStatisticsData()
+{
+	m_renderStatistic.Reset();
 }
 
 void Context::Release()
@@ -887,11 +914,12 @@ bool operator<(const D3DVERTEXELEMENT9& left, const D3DVERTEXELEMENT9& right)
 	return memcmp(&left, &right, sizeof(D3DVERTEXELEMENT9)) < 0;
 }
 
-BackBufferManager::BackBufferManager(IDirect3DDevice9 * device, RenderAPI::RenderTarget * defRT, RenderAPI::DepthStencil * defDS)
+BackBufferManager::BackBufferManager(IDirect3DDevice9 * device, RenderAPI::RenderTarget * defRT, RenderAPI::DepthStencil * defDS, RenderStatistic& renderStatistic)
 	: m_pDevice(device)
 	, m_pCurrentRTs(1)
 	, m_pDefaultRT(NULL)
 	, m_pDefaultDS(NULL)
+	, m_renderStatistic(renderStatistic)
 {
 	m_pDevice->AddRef();
 	m_pCurrentRTs[0] = ((::RenderTarget*)defRT)->GetD3DSurface();
@@ -942,6 +970,7 @@ void BackBufferManager::SetRenderTarget(unsigned int index, RenderAPI::RenderTar
 				if (pTexture == texture->GetD3DTexture())
 				{
 					m_pDevice->SetTexture(i, NULL);
+					m_renderStatistic.OnSetTexture();
 				}
 			}
 		}
@@ -1013,4 +1042,125 @@ bool operator != (const RenderAPI::VertexElement& left, const RenderAPI::VertexE
 		left.SemanticIndex != right.SemanticIndex ||
 		left.AlignOffset != right.AlignOffset ||
 		left.Format != right.Format);
+}
+
+void RenderStatistic::OnDrawcall(RenderAPI::Primitive primitive, unsigned int count)
+{
+	if (primitive == RenderAPI::PRIMITIVE_TriangleList)
+	{
+		m_data.NumFrameTriangles += count;
+		m_data.NumFrameVertices += count * 3;
+	}
+	else if (primitive == RenderAPI::PRIMITIVE_TriangleFan)
+	{
+		m_data.NumFrameTriangles += count;
+		m_data.NumFrameVertices += 1 + (count - 1) * 3;
+	}
+	else if (primitive == RenderAPI::PRIMITIVE_TriangleStrip)
+	{
+		m_data.NumFrameTriangles += count;
+		m_data.NumFrameVertices += 3 + (count - 1);
+	}
+}
+
+RenderStatistic::RenderStatistic()
+{
+	Reset();
+}
+
+void RenderStatistic::Reset()
+{
+	memset(&m_data, 0, sizeof(m_data));
+}
+
+void RenderStatistic::OnDraw(RenderAPI::Primitive primitive, unsigned int count)
+{
+	OnDrawcall(primitive, count);
+	++m_data.NumDraw;
+}
+
+void RenderStatistic::OnDrawUp(RenderAPI::Primitive primitive, unsigned int count)
+{
+	OnDrawcall(primitive, count);
+	++m_data.NumDrawUp;
+}
+
+void RenderStatistic::OnDrawIndexed(RenderAPI::Primitive primitive, unsigned int count)
+{
+	OnDrawcall(primitive, count);
+	++m_data.NumDrawIndexed;
+}
+
+void RenderStatistic::OnDrawIndexedUp(RenderAPI::Primitive primitive, unsigned int count)
+{
+	OnDrawcall(primitive, count);
+	++m_data.NumDrawIndexedUp;
+}
+
+void RenderStatistic::OnSetSourceStream(VertexBuffer* pVertexBuffer)
+{
+	if (pVertexBuffer->IsDynamic())
+	{
+		++m_data.NumSetDynamicStreamSource;
+		m_data.ByteFrameDynamicVertexBuffer += pVertexBuffer->GetLength();
+	}
+	else
+	{
+		++m_data.NumSetStaticStreamSource;
+		m_data.ByteFrameStaticVertexBuffer += pVertexBuffer->GetLength();
+	}
+}
+
+void RenderStatistic::OnSetIndexBuffer(IndexBuffer * pIndexBuffer)
+{
+	if (pIndexBuffer->IsDynamic())
+	{
+		++m_data.NumSetDynamicIndices;
+		m_data.ByteFrameDynamicIndexBuffer += pIndexBuffer->GetLength();
+	}
+	else
+	{
+		++m_data.NumSetStaticIndices;
+		m_data.ByteFrameStaticIndexBuffer += pIndexBuffer->GetLength();
+	}
+}
+
+void RenderStatistic::OnSetVertexDeclaration()
+{
+	++m_data.NumSetVertexDeclaration;
+}
+
+void RenderStatistic::OnSetTexture()
+{
+	++m_data.NumSetTexture;
+}
+
+void RenderStatistic::OnSetCustomFVF()
+{
+	++m_data.NumSetCustomFVF;
+}
+
+void RenderStatistic::OnSetVertexShader()
+{
+	++m_data.NumSetVertexShader;
+}
+
+void RenderStatistic::OnSetPixelShader()
+{
+	++m_data.NumSetPixelShader;
+}
+
+void RenderStatistic::OnSetRenderState()
+{
+	++m_data.NumSetRenderState;
+}
+
+void RenderStatistic::OnSetSamplerState()
+{
+	++m_data.NumSetSamplerState;
+}
+
+void RenderStatistic::OnSetSetTextureStageState()
+{
+	++m_data.NumSetTextureStageState;
 }

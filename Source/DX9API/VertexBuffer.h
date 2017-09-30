@@ -31,6 +31,8 @@ public:
 
 	IDirect3DVertexBuffer9* GetBufferPtr();
 
+	bool IsDynamic() {return m_isDynamic;}
+
 private:
 	APIInstance* m_pAPIInstance;
 	RenderAPI::ResourceUsage m_usage;

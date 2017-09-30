@@ -8,11 +8,13 @@
 #define TSSDefine(name, rs) void Set##name(unsigned int slot, DWORD value) { SetTSS(slot,rs, value); }
 #define SSDefine(name, rs) void Set##name(unsigned int slot, DWORD value) { SetSS(slot,rs, value); }
 
+class RenderStatistic;
+
 class StateManager
 {
 public:
 
-	StateManager(IDirect3DDevice9* pDevice);
+	StateManager(IDirect3DDevice9* pDevice, RenderStatistic& renderStatistic);
 
 	~StateManager();
 
@@ -179,6 +181,8 @@ protected:
 	RenderAPI::StencilTestingState m_stencilTestState;
 	RenderAPI::FillMode m_fillMode;
 	RenderAPI::CullMode m_cullMode;
+
+	RenderStatistic& m_renderStatistic;
 };
 
 class FXStateManager : public ID3DXEffectStateManager, public StateManager
@@ -188,7 +192,7 @@ protected:
 	WCHAR m_wszFrameStats[256];
 
 public:
-	FXStateManager(IDirect3DDevice9* pDevice);
+	FXStateManager(IDirect3DDevice9* pDevice, RenderStatistic& renderStatistic);
 
 	virtual LPCWSTR EndFrameStats();
 	// methods inherited from ID3DXEffectStateManager

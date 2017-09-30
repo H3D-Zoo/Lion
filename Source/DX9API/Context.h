@@ -7,11 +7,54 @@
 #include "DX9Include.h"
 
 class APIInstance;
+class VertexBuffer;
+class IndexBuffer;
+
+class RenderStatistic
+{
+	RenderAPI::RenderStatisticsData m_data;
+
+	void OnDrawcall(RenderAPI::Primitive primitive, unsigned int count);
+public:
+	RenderStatistic();
+
+	inline const RenderAPI::RenderStatisticsData& GetData() const { return m_data; }
+
+	void Reset();
+
+	void OnDraw(RenderAPI::Primitive primitive, unsigned int count);
+
+	void OnDrawUp(RenderAPI::Primitive primitive, unsigned int count);
+
+	void OnDrawIndexed(RenderAPI::Primitive primitive, unsigned int count);
+
+	void OnDrawIndexedUp(RenderAPI::Primitive primitive, unsigned int count);
+
+	void OnSetSourceStream(VertexBuffer* pVertexBuffer);
+
+	void OnSetIndexBuffer(IndexBuffer* pIndexBuffer);
+
+	void OnSetVertexDeclaration();
+
+	void OnSetTexture();
+
+	void OnSetCustomFVF();
+
+	void OnSetVertexShader();
+
+	void OnSetPixelShader();
+
+	void OnSetRenderState();
+
+	void OnSetSamplerState();
+
+	void OnSetSetTextureStageState();
+};
 
 class BackBufferManager
 {
 public:
-	BackBufferManager(IDirect3DDevice9* device, RenderAPI::RenderTarget* defRT, RenderAPI::DepthStencil* defDS);
+	BackBufferManager(IDirect3DDevice9* device, RenderAPI::RenderTarget* defRT, RenderAPI::DepthStencil* defDS, RenderStatistic& renderStatistic);
 
 	~BackBufferManager();
 
@@ -35,6 +78,7 @@ private:
 	IDirect3DSurface9* m_pCurrentDS;
 	IDirect3DSurface9* m_pDefaultRT;
 	IDirect3DSurface9* m_pDefaultDS;
+	RenderStatistic& m_renderStatistic;
 	unsigned int m_maxTextureStage;
 };
 
@@ -45,9 +89,9 @@ public:
 
 	~Context();
 
-	virtual RenderAPI::DeviceCaps GetDeviceCaps();
+	virtual const RenderAPI::DeviceCaps& GetDeviceCaps() const;
 
-	virtual unsigned int GetAvailableTextureMemory();
+	virtual unsigned int GetAvailableTextureMemory() const;
 
 	virtual void ClearRenderTarget(unsigned int color);
 
@@ -144,6 +188,10 @@ public:
 	virtual RenderAPI::DeviceState ResetDevice(const RenderAPI::SwapChainDesc& desc, bool isFullscreen, bool useVerticalSync);
 
 	virtual void EvictManagedResources();
+	
+	virtual const RenderAPI::RenderStatisticsData& GetRenderStatisticsData() const;
+	
+	virtual void ClearRenderStatisticsData();
 
 	virtual RenderAPI::ContextLegacy* GetContextLegacy();
 
@@ -195,17 +243,20 @@ public:
 	virtual void SaveNXDebugRenderState();
 
 	virtual void RestoreNXDebugRenderState(bool lightsOn);
-
+	
 	ID3DXEffectStateManager* GetStateManager();
 
 private:
 	bool CopyTexture(IDirect3DTexture9* pSource, IDirect3DTexture9* pDest, unsigned int lines);
 
+	void InitDeviceCaps(const D3DCAPS9& d3dcaps);
+	
 	APIInstance* m_pAPI;
 	FXStateManager m_renderStateManager;
 	IDirect3DDevice9* m_pDevice;
 	IDirect3DDevice9Ex* m_pDeviceEx;
 	BackBufferManager m_backBufferManager;
+	RenderAPI::DeviceCaps m_deviceCaps;
 	unsigned int m_indexBufferOffset;
 	unsigned int m_vertexBufferCount;
 	mutable RenderAPI::ScissorState m_scissorState;
@@ -214,4 +265,6 @@ private:
 	IDirect3DVertexShader9* m_pNXCacheVertexShader;
 	IDirect3DPixelShader9* m_pNXCachePixelShader;
 	IDirect3DBaseTexture9* m_pNXCacheTexture;
+
+	RenderStatistic m_renderStatistic;
 };
