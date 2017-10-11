@@ -142,7 +142,7 @@ Context::Context(APIInstance* pAPI, IDirect3DDevice9 * device, RenderAPI::Render
 	, m_nNXCacheFVF(0)
 	, m_pNXCacheVertexShader(NULL)
 	, m_pNXCachePixelShader(NULL)
-	, m_pm_nNXCacheTexture(NULL)
+	, m_pNXCacheTexture(NULL)
 {
 	m_pAPI->pContext = this;
 	if (m_pAPI->IsSupportD3D9EX())
@@ -299,6 +299,11 @@ void Context::SetDepthStencil(RenderAPI::DepthStencil* depthStencil)
 
 void Context::SetVertexBuffers(RenderAPI::VertexBufferInfo* buffers, unsigned int bufferCount)
 {
+	while (m_useStreamFrequency.size() < bufferCount)
+	{
+		m_useStreamFrequency.push_back(false);
+	}
+
 	m_vertexBufferCount = 0;
 	for (unsigned int i = 0; i < bufferCount; i++)
 	{
@@ -306,13 +311,30 @@ void Context::SetVertexBuffers(RenderAPI::VertexBufferInfo* buffers, unsigned in
 		{
 			::VertexBuffer* pVertexBuffe = (::VertexBuffer*)buffers[i].BufferPtr;
 			IDirect3DVertexBuffer9* vertexBufferPtr = pVertexBuffe->GetBufferPtr();
+			
 
 			if (m_vertexBufferCount == 0 || m_vertexBufferCount > pVertexBuffe->GetVertexCount())
 			{
 				m_vertexBufferCount = pVertexBuffe->GetVertexCount();
 			}
-
 			HRESULT hr = m_pDevice->SetStreamSource(i, vertexBufferPtr, buffers[i].Offset, buffers[i].BufferPtr->GetVertexStride());
+
+			bool useFreq = buffers->FrequencyMethod != RenderAPI::FREQUENCY_Normal;
+			if (useFreq)
+			{
+				unsigned int freqParam = (buffers->FrequencyMethod == RenderAPI::FREQUENCY_Instanced ? D3DSTREAMSOURCE_INSTANCEDATA : D3DSTREAMSOURCE_INDEXEDDATA) 
+					| buffers[i].OptionalFrequencyInterval;
+
+				m_pDevice->SetStreamSourceFreq(i, freqParam);
+				m_useStreamFrequency[i] = true;
+			}
+			else if (m_useStreamFrequency[i])
+			{
+				m_pDevice->SetStreamSourceFreq(i, 1);
+				m_useStreamFrequency[i] = false;
+			}
+
+			//统计信息
 		}
 	}
 }

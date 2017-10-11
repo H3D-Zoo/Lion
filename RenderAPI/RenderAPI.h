@@ -76,6 +76,13 @@ namespace RenderAPI
 		SEMANTIC_BlendIndices = 7,
 	};
 
+	enum StreamFrequncy
+	{
+		FREQUENCY_Normal = 0,
+		FREQUENCY_Indexed = 1,
+		FREQUENCY_Instanced = 2,		
+	};
+
 	enum TextureFormat
 	{
 		TEX_Unknown = 0,
@@ -623,10 +630,14 @@ namespace RenderAPI
 		VertexBufferInfo()
 			: BufferPtr(0)
 			, Offset(0)
+			, FrequencyMethod(FREQUENCY_Normal)
+			, OptionalFrequencyInterval(1)
 		{ }
 
 		VertexBuffer* BufferPtr;
 		unsigned int Offset;
+		StreamFrequncy FrequencyMethod;
+		unsigned int OptionalFrequencyInterval;
 	};
 
 	struct MappedResource
@@ -963,6 +974,22 @@ namespace RenderAPI
 		virtual TextBox* CreateTextBox(int screenX, int screenY, int width, int height) = 0;
 	};
 	
+	enum LegacyFVF
+	{
+		FVF_XYZ = 1 << 0,
+		FVF_NORMAL = 1 << 1,
+		FVF_DIFFUSE = 1 << 2,
+		FVF_SPECULAR = 1 << 3,
+		FVF_TEXCOORD0 = 1 << 4,
+		FVF_TEXCOORD1 = 1 << 5,
+		FVF_TEXCOORD2 = 1 << 6,
+		FVF_TEXCOORD3 = 1 << 7,
+		FVF_TEXCOORD4 = 1 << 8,
+		FVF_TEXCOORD5 = 1 << 9,
+		FVF_TEXCOORD6 = 1 << 10,
+		FVF_TEXCOORD7 = 1 << 11,
+	};
+
 	class ContextLegacy
 	{
 	public:

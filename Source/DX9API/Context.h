@@ -209,9 +209,9 @@ private:
 	unsigned int m_indexBufferOffset;
 	unsigned int m_vertexBufferCount;
 	mutable RenderAPI::ScissorState m_scissorState;
-
+	std::vector<bool> m_useStreamFrequency;
 	DWORD m_nNXCacheFVF;
 	IDirect3DVertexShader9* m_pNXCacheVertexShader;
 	IDirect3DPixelShader9* m_pNXCachePixelShader;
-	IDirect3DBaseTexture9* m_pm_nNXCacheTexture;
+	IDirect3DBaseTexture9* m_pNXCacheTexture;
 };

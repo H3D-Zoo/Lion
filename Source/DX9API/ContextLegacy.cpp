@@ -39,9 +39,27 @@ void Context::DisableCustomShaderUsage()
 	m_pDevice->SetPixelShader(NULL);
 }
 
+unsigned int TransformCustomFVF(unsigned int legacyFVF)
+{
+	unsigned int ret = 0;
+	if (legacyFVF&RenderAPI::FVF_XYZ)			ret |= D3DFVF_XYZ;
+	if (legacyFVF&RenderAPI::FVF_NORMAL)		ret |= D3DFVF_NORMAL;
+	if (legacyFVF&RenderAPI::FVF_DIFFUSE)		ret |= D3DFVF_DIFFUSE;
+	if (legacyFVF&RenderAPI::FVF_SPECULAR)		ret |= D3DFVF_SPECULAR;
+	if (legacyFVF&RenderAPI::FVF_TEXCOORD0)			ret |= D3DFVF_TEX0;
+	if (legacyFVF&RenderAPI::FVF_TEXCOORD1)			ret |= D3DFVF_TEX1;
+	if (legacyFVF&RenderAPI::FVF_TEXCOORD2)			ret |= D3DFVF_TEX2;
+	if (legacyFVF&RenderAPI::FVF_TEXCOORD3)			ret |= D3DFVF_TEX3;
+	if (legacyFVF&RenderAPI::FVF_TEXCOORD4)			ret |= D3DFVF_TEX4;
+	if (legacyFVF&RenderAPI::FVF_TEXCOORD5)			ret |= D3DFVF_TEX5;
+	if (legacyFVF&RenderAPI::FVF_TEXCOORD6)			ret |= D3DFVF_TEX6;
+	if (legacyFVF&RenderAPI::FVF_TEXCOORD7)			ret |= D3DFVF_TEX7;
+	return ret;
+}
+
 void Context::SetCustomFVF(unsigned int fvf)
 {
-	m_pDevice->SetFVF(fvf);
+	m_pDevice->SetFVF(TransformCustomFVF(fvf));
 }
 
 void Context::SetWorldMatrix(const float * matrix)
@@ -258,7 +276,7 @@ void Context::SaveNXDebugRenderState()
 	m_pDevice->GetFVF(&m_nNXCacheFVF);
 	m_pDevice->GetVertexShader(&m_pNXCacheVertexShader);
 	m_pDevice->GetPixelShader(&m_pNXCachePixelShader);
-	m_pDevice->GetTexture(0, &m_pm_nNXCacheTexture);
+	m_pDevice->GetTexture(0, &m_pNXCacheTexture);
 
 	m_pDevice->SetRenderState(D3DRS_LIGHTING, FALSE);
 	m_pDevice->SetVertexShader(0);
@@ -278,7 +296,7 @@ void Context::RestoreNXDebugRenderState(bool lightsOn)
 	m_pDevice->SetFVF(m_nNXCacheFVF);
 	m_pDevice->SetVertexShader(m_pNXCacheVertexShader);
 	m_pDevice->SetPixelShader(m_pNXCachePixelShader);
-	m_pDevice->SetTexture(0, m_pm_nNXCacheTexture);
+	m_pDevice->SetTexture(0, m_pNXCacheTexture);
 
 	if (m_pNXCacheVertexShader != NULL)
 	{
@@ -290,9 +308,9 @@ void Context::RestoreNXDebugRenderState(bool lightsOn)
 		m_pNXCachePixelShader->Release();
 		m_pNXCachePixelShader = NULL;
 	}
-	if (m_pm_nNXCacheTexture != NULL)
+	if (m_pNXCacheTexture != NULL)
 	{
-		m_pm_nNXCacheTexture->Release();
-		m_pm_nNXCacheTexture = NULL;
+		m_pNXCacheTexture->Release();
+		m_pNXCacheTexture = NULL;
 	}
 }
