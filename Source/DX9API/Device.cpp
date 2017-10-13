@@ -519,9 +519,11 @@ RenderAPI::FXEffect * Device::CreateFXEffectFromFile(const char * effectFilePath
 	}
 	else
 	{
-		std::string errorStr = (char*)pErrorBuffer->GetBufferPointer();
-		m_pAPI->LogError("Device::CreateFXEffectFromFile", errorStr.c_str(), hr);
-		pErrorBuffer->Release();
+		if (pErrorBuffer.IsNotNullPtr())
+		{
+			std::string errorStr = (char*)pErrorBuffer->GetBufferPointer();
+			m_pAPI->LogError("Device::CreateFXEffectFromFile", errorStr.c_str(), hr);
+		}
 		return NULL;
 	}
 
