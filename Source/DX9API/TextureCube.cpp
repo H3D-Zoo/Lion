@@ -26,6 +26,7 @@ TextureCube::TextureCube(APIInstance* pAPIInstance, IDirect3DCubeTexture9* textu
 	, m_isDynamic(usage == RenderAPI::RESUSAGE_Dynamic || usage == RenderAPI::RESUSAGE_DynamicManaged)
 	, m_pTexture(texture)
 	, m_texEdgeLength(edgeLength)
+	, ClearStamp(0)
 {
 
 }

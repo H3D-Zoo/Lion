@@ -36,6 +36,8 @@ public:
 
 	IDirect3DCubeTexture9* GetD3DTexture();
 
+	unsigned int ClearStamp;
+
 private:
 	APIInstance* m_pAPIInstance;
 	RenderAPI::ResourceUsage m_usage;

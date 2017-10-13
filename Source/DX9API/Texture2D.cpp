@@ -17,6 +17,7 @@ Texture2D::Texture2D(APIInstance* pAPIInstance, IDirect3DTexture9* texture, Rend
 	, m_pTexture(texture)
 	, m_texWidth(width)
 	, m_texHeight(height)
+	, ClearStamp(0)
 {
 	m_pAPIInstance->AddRef();
 }

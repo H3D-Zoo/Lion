@@ -408,12 +408,11 @@ namespace RenderAPI
 		unsigned int NumBeginFX;
 		unsigned int NumBeginPass;
 
-
 		unsigned int ByteFrameStaticVertexBuffer;
 		unsigned int ByteFrameDynamicVertexBuffer;
 		unsigned int ByteFrameStaticIndexBuffer;
 		unsigned int ByteFrameDynamicIndexBuffer;
-		unsigned int ByteFrameTextureBuffer;
+		unsigned int ByteFrameTexture;
 
 		unsigned int NumFrameVertices;
 		unsigned int NumFrameTriangles;

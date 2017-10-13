@@ -14,8 +14,6 @@ set(RENDERAPI_SOURCE_FILES_COMMON
 	${DIR_COMMON}/Logger.cpp
 	${DIR_COMMON}/BaseAPIInstance.h
 	${DIR_COMMON}/BaseAPIInstance.cpp
-	${DIR_COMMON}/RenderStatistic.h
-	${DIR_COMMON}/RenderStatistic.cpp
 	${DIR_COMMON}/RenderAPIExport.def
 	${DIR_COMMON}/RenderAPI.rc
 	${DIR_COMMON}/resource.h
@@ -44,6 +42,7 @@ set(RENDERAPI_IMPL_INCLUDE_FILES
 	./StateManager.h
 	./OcclusionQuery.h
 	./TextBox.h
+	./RenderStatistic.h
 )
 
 set(RENDERAPI_IMPL_SOURCE_FILES
@@ -64,6 +63,7 @@ set(RENDERAPI_IMPL_SOURCE_FILES
 	./StateManager.cpp
 	./OcclusionQuery.cpp
 	./TextBox.cpp
+	./RenderStatistic.cpp
 )
 
 source_group(include FILES ${DIR_INTERFACE})

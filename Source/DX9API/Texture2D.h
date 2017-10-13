@@ -84,6 +84,8 @@ public:
 
 	void ReleaseCopiedSystemTexture();
 
+	unsigned int ClearStamp;
+
 private:
 	APIInstance* m_pAPIInstance;
 	IDirect3DTexture9** TextureForUpdate(unsigned int index);

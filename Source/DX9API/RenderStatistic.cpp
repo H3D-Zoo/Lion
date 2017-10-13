@@ -1,6 +1,8 @@
 #include "RenderStatistic.h" 
-#include "../DX9API/VertexBuffer.h"
-#include "../DX9API/IndexBuffer.h"
+#include "VertexBuffer.h"
+#include "IndexBuffer.h"
+#include "Texture2D.h"
+#include "TextureCube.h"
 #include <vector>
 
 
@@ -21,10 +23,10 @@ unsigned int GetTextureLength(unsigned int w, unsigned int h, RenderAPI::Texture
 	case RenderAPI::TEX_D24S8:
 	case RenderAPI::TEX_D24X8:
 	case RenderAPI::TEX_D32:
-		surfaceSize=((w*32+31)/32)*((h * 32 + 31) / 32) *4;
+		surfaceSize = ((w * 32 + 31) / 32)*((h * 32 + 31) / 32) * 4;
 		break;
-	
-	case RenderAPI::TEX_R32F:	
+
+	case RenderAPI::TEX_R32F:
 		surfaceSize = w*h * 4;
 		break;
 	case RenderAPI::TEX_D16:
@@ -64,6 +66,7 @@ void RenderStatistic::OnDrawcall(RenderAPI::Primitive primitive, unsigned int co
 }
 
 RenderStatistic::RenderStatistic()
+	: m_clearStamp(1)
 {
 	Reset();
 }
@@ -71,6 +74,7 @@ RenderStatistic::RenderStatistic()
 void RenderStatistic::Reset()
 {
 	memset(&m_data, 0, sizeof(m_data));
+	++m_clearStamp;
 }
 
 void RenderStatistic::OnDraw(RenderAPI::Primitive primitive, unsigned int count)
@@ -135,17 +139,35 @@ void RenderStatistic::OnSetTexture(RenderAPI::Texture* pTexture)
 	++m_data.NumSetTexture;
 	if (pTexture)
 	{
-		++m_data.NumFrameTextures;
-		OnSetTextureOnlySize(pTexture);
-	}
 
+		if (pTexture->IsCubemap())
+		{
+			unsigned int& ClearStamp = ((TextureCube*)pTexture)->ClearStamp;
+			if(ClearStamp != m_clearStamp)
+			{
+				ClearStamp = m_clearStamp;
+				++m_data.NumFrameTextures;
+				OnSetTextureOnlySize(pTexture); 
+			}
+		}
+		else
+		{
+			unsigned int& ClearStamp = ((Texture2D*)pTexture)->ClearStamp;
+			if (ClearStamp != m_clearStamp)
+			{
+				ClearStamp = m_clearStamp;
+				++m_data.NumFrameTextures;
+				OnSetTextureOnlySize(pTexture);
+			}
+		}
+	}
 }
 
 void RenderStatistic::OnSetTextureOnlySize(RenderAPI::Texture * pTexture)
 {
 	if (pTexture)
 	{
-		m_data.ByteFrameTextureBuffer += pTexture->GetLength();
+		m_data.ByteFrameTexture += pTexture->GetLength();
 	}
 }
 
@@ -201,7 +223,7 @@ void RenderStatistic::OnEffectSetScalar()
 
 void RenderStatistic::OnEffectSetValue(unsigned int sizeInByte)
 {
-	if (sizeInByte>4)
+	if (sizeInByte > 4)
 	{
 		++m_data.NumEffectSetVector;
 	}
@@ -218,5 +240,5 @@ void RenderStatistic::OnEffectSetTexture()
 
 void RenderStatistic::OnEffectSetMatrix(unsigned int count)
 {
-	m_data.NumEffectSetMatrix+= count;
+	m_data.NumEffectSetMatrix += count;
 }

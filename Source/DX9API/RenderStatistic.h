@@ -8,6 +8,8 @@ unsigned int GetTextureLength(unsigned int w, unsigned int h, RenderAPI::Texture
 
 class RenderStatistic
 {
+	unsigned int m_clearStamp;
+
 	RenderAPI::RenderStatisticsData m_data;
 
 	void OnDrawcall(RenderAPI::Primitive primitive, unsigned int count);
@@ -61,4 +63,6 @@ public:
 	void OnEffectSetTexture();
 
 	void OnEffectSetMatrix(unsigned int count);
+
+	inline unsigned int GetCurrentStamp() const { return m_clearStamp; }
 };
