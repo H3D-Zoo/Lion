@@ -407,13 +407,14 @@ RenderAPI::CreationResult APIInstance::CreateDeviceAndContext(const RenderAPI::S
 
 			result.Success = true;
 			hDeviceWindow = (HWND)desc.hWindow;
-			LONG count = devicePtr->AddRef();
-			AddRef();
+			
+			devicePtr->AddRef();
+
 			result.DevicePtr = new ::Device(this, devicePtr, newDesc, isFullscreen, useVerticalSync);
+			
 			RenderAPI::SwapChain* swapChain = result.DevicePtr->GetDefaultSwapChain();
 			RenderAPI::RenderTarget* rt = swapChain->GetRenderTarget();
 			RenderAPI::DepthStencil* ds = swapChain->GetDepthStencil();
-			AddRef();
 			result.ContextPtr = new ::Context(this, devicePtr, rt, ds,m_renderStatistic);
 			rt->Release();
 			ds->Release();
@@ -431,11 +432,14 @@ bool APIInstance::CompileFXEffectFromFile(const char* sourceFXFile, const char* 
 	ID3DXEffectCompiler* pEffectCompile;
 	DWORD flags = D3DXSHADER_USE_LEGACY_D3DX9_31_DLL; //要想支持ps 1_x 需要使用这个。
 
-
 	HRESULT hr = D3DXCreateEffectCompilerFromFileA(sourceFXFile, NULL, &includeCallback, flags, &pEffectCompile, &pErrorBuffer);
 	if (FAILED(hr))
 	{
-		//PrintFxError("FX编译失败！D3DXCreateEffectCompilerFromFile Failed", pErrorBuffer);
+		if (pErrorBuffer.IsNotNullPtr())
+		{
+			std::string errorStr = (char*)pErrorBuffer->GetBufferPointer();
+			LogError("APIInstance::CompileFXEffectFromFile D3DXCreateEffectCompilerFromFileA Failed.", errorStr.c_str(), hr);
+		}
 		return false;
 	}
 
@@ -447,10 +451,16 @@ bool APIInstance::CompileFXEffectFromFile(const char* sourceFXFile, const char* 
 #else
 		0;
 #endif
+
+	pErrorBuffer.Release();
 	hr = pEffectCompile->CompileEffect(debugFlag, &pEffectBuffer, &pErrorBuffer);
 	if (FAILED(hr))
 	{
-		//PrintFxError("FX编译失败！CompileEffect Failed", pErrorBuffer);
+		if (pErrorBuffer.IsNotNullPtr())
+		{
+			std::string errorStr = (char*)pErrorBuffer->GetBufferPointer();
+			LogError("APIInstance::CompileFXEffectFromFile CompileEffect Failed.", errorStr.c_str(), hr);
+		}
 		return false;
 	}
 

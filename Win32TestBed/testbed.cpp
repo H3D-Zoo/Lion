@@ -582,7 +582,9 @@ void APITestBed::DrawRTTQuad()
 			if (!m_pEffectSimpleTexture->BeginPass(i))
 				continue;
 			m_pEffectSimpleTexture->SetValue("g_texelOffset", &(m_texelOffsetOffScreen[0]), sizeof(gml::vec4));
-			m_pEffectSimpleTexture->SetTexture(m_hParamTexture, m_pRenderTexture->GetTexturePtr());
+			RenderAPI::Texture2D* pTexture = m_pRenderTexture->GetTexturePtr();
+			m_pEffectSimpleTexture->SetTexture(m_hParamTexture, pTexture);
+			pTexture->Release();
 			m_pEffectSimpleTexture->CommitChange();
 			Quad.Set(m_pContext);
 			m_pContext->DrawIndexed(RenderAPI::PRIMITIVE_TriangleList, 0, 0, 0, 2);
@@ -601,7 +603,9 @@ void APITestBed::DrawRTTQuad()
 		{
 			if (!m_pEffectSimpleTexture->BeginPass(i))
 				continue;
-			m_pEffectSimpleTexture->SetTexture(m_hParamTexture, m_pRenderTexture->GetTexturePtr());
+			RenderAPI::Texture2D* pTexture = m_pRenderTexture->GetTexturePtr();
+			m_pEffectSimpleTexture->SetTexture(m_hParamTexture, pTexture);
+			pTexture->Release();
 			m_pEffectSimpleTexture->CommitChange();
 			Quad.Set(m_pContext);
 			m_pContext->DrawIndexed(RenderAPI::PRIMITIVE_TriangleList, 0, 0, 0, 2);

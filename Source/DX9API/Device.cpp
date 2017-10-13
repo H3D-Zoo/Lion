@@ -69,6 +69,7 @@ Device::Device(APIInstance* pAPIContext, IDirect3DDevice9* device, const RenderA
 	, m_pDefaultSwapChain(NULL)
 	, m_pDevice(device)
 {
+	m_pAPI->AddRef();
 	m_pAPI->pDevice = this;
 	IDirect3DSwapChain9* pSwapChain = NULL;
 	m_pDevice->GetSwapChain(0, &pSwapChain);
@@ -519,9 +520,11 @@ RenderAPI::FXEffect * Device::CreateFXEffectFromFile(const char * effectFilePath
 	}
 	else
 	{
-		std::string errorStr = (char*)pErrorBuffer->GetBufferPointer();
-		m_pAPI->LogError("Device::CreateFXEffectFromFile", errorStr.c_str(), hr);
-		pErrorBuffer->Release();
+		if (pErrorBuffer.IsNotNullPtr())
+		{
+			std::string errorStr = (char*)pErrorBuffer->GetBufferPointer();
+			m_pAPI->LogError("Device::CreateFXEffectFromFile", errorStr.c_str(), hr);
+		}
 		return NULL;
 	}
 

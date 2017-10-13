@@ -144,6 +144,7 @@ Context::Context(APIInstance* pAPI, IDirect3DDevice9 * device, RenderAPI::Render
 	, m_pNXCacheTexture(NULL)
 	, m_renderStatistic(renderStatic)
 {
+	m_pAPI->AddRef();
 	m_pAPI->pContext = this;
 	if (m_pAPI->IsSupportD3D9EX())
 	{
@@ -974,6 +975,8 @@ void BackBufferManager::SetRenderTarget(unsigned int index, RenderAPI::RenderTar
 					m_renderStatistic.OnSetTexture(NULL);
 				}
 			}
+
+			texture->Release();
 		}
 	}
 
