@@ -50,7 +50,10 @@ unsigned int RenderTarget::GetHeight() const
 
 RenderAPI::Texture2D* RenderTarget::GetTexturePtr()
 {
-	m_rtTexture->AddRef();
+	if (m_rtTexture != NULL)
+	{
+		m_rtTexture->AddRef();
+	}
 	return m_rtTexture;
 }
 
