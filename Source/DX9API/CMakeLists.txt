@@ -14,6 +14,8 @@ set(RENDERAPI_SOURCE_FILES_COMMON
 	${DIR_COMMON}/Logger.cpp
 	${DIR_COMMON}/BaseAPIInstance.h
 	${DIR_COMMON}/BaseAPIInstance.cpp
+	${DIR_COMMON}/RenderStatistic.h
+	${DIR_COMMON}/RenderStatistic.cpp
 	${DIR_COMMON}/RenderAPIExport.def
 	${DIR_COMMON}/RenderAPI.rc
 	${DIR_COMMON}/resource.h

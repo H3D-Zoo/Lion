@@ -288,6 +288,9 @@ void Context::SaveNXDebugRenderState()
 	m_pDevice->SetFVF(D3DFVF_DIFFUSE | D3DFVF_XYZ);
 
 	m_renderStatistic.OnSetCustomFVF();
+	m_renderStatistic.OnSetVertexShader();
+	m_renderStatistic.OnSetPixelShader();
+	m_renderStatistic.OnSetTexture(NULL);
 }
 
 void Context::RestoreNXDebugRenderState(bool lightsOn)
@@ -320,5 +323,5 @@ void Context::RestoreNXDebugRenderState(bool lightsOn)
 	m_renderStatistic.OnSetVertexShader();
 	m_renderStatistic.OnSetPixelShader();
 	m_renderStatistic.OnSetCustomFVF();
-	m_renderStatistic.OnSetTexture();
+	m_renderStatistic.OnSetTexture(NULL);
 }

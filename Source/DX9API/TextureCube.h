@@ -16,6 +16,8 @@ public:
 
 	virtual RenderAPI::TextureFormat GetFormat() const;
 
+	virtual unsigned int GetLength() const;
+
 	virtual void GenerateMipmaps();
 
 	virtual bool AutoGenMipmaps() const;

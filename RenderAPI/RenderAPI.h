@@ -397,17 +397,28 @@ namespace RenderAPI
 		unsigned int NumSetVertexShader;
 		unsigned int NumSetPixelShader;
 		unsigned int NumSetTexture;
+		unsigned int NumSetTransForm;
 		unsigned int NumSetRenderState;
 		unsigned int NumSetSamplerState;
 		unsigned int NumSetTextureStageState;
+		unsigned int NumEffectSetScalar;
+		unsigned int NumEffectSetVector;
+		unsigned int NumEffectSetTexture;
+		unsigned int NumEffectSetMatrix;
+		unsigned int NumBeginFX;
+		unsigned int NumBeginPass;
+
 
 		unsigned int ByteFrameStaticVertexBuffer;
 		unsigned int ByteFrameDynamicVertexBuffer;
 		unsigned int ByteFrameStaticIndexBuffer;
 		unsigned int ByteFrameDynamicIndexBuffer;
+		unsigned int ByteFrameTextureBuffer;
 
 		unsigned int NumFrameVertices;
 		unsigned int NumFrameTriangles;
+		unsigned int NumFrameTextures;
+
 	};
 	
 	struct VertexElement
@@ -775,6 +786,8 @@ namespace RenderAPI
 		virtual bool IsCubemap() const = 0;
 
 		virtual bool NeedRecreateWhenDeviceLost() const = 0;
+
+		virtual unsigned int GetLength()const = 0;
 	};
 
 	class TextureSurface : public RObject

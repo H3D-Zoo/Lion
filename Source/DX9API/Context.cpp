@@ -133,15 +133,16 @@ namespace
 		D3DTEXF_ANISOTROPIC,
 	};
 }
-Context::Context(APIInstance* pAPI, IDirect3DDevice9 * device, RenderAPI::RenderTarget* defRT, RenderAPI::DepthStencil* defDS)
+Context::Context(APIInstance* pAPI, IDirect3DDevice9 * device, RenderAPI::RenderTarget* defRT, RenderAPI::DepthStencil* defDS, RenderStatistic& renderStatic)
 	: m_pAPI(pAPI)
 	, m_pDevice(device)
-	, m_backBufferManager(device, defRT, defDS, m_renderStatistic)
-	, m_renderStateManager(device, m_renderStatistic)
+	, m_backBufferManager(device, defRT, defDS, renderStatic)
+	, m_renderStateManager(device, renderStatic)
 	, m_nNXCacheFVF(0)
 	, m_pNXCacheVertexShader(NULL)
 	, m_pNXCachePixelShader(NULL)
 	, m_pNXCacheTexture(NULL)
+	, m_renderStatistic(renderStatic)
 {
 	m_pAPI->pContext = this;
 	if (m_pAPI->IsSupportD3D9EX())
@@ -322,7 +323,7 @@ void Context::SetTexture(unsigned int slot, RenderAPI::Texture* texture)
 	}
 	m_pDevice->SetTexture(slot, pTexture);
 
-	m_renderStatistic.OnSetTexture();
+	m_renderStatistic.OnSetTexture(texture);
 }
 
 void Context::SetBlendState(const RenderAPI::BlendState& state)
@@ -970,7 +971,7 @@ void BackBufferManager::SetRenderTarget(unsigned int index, RenderAPI::RenderTar
 				if (pTexture == texture->GetD3DTexture())
 				{
 					m_pDevice->SetTexture(i, NULL);
-					m_renderStatistic.OnSetTexture();
+					m_renderStatistic.OnSetTexture(NULL);
 				}
 			}
 		}
@@ -1044,123 +1045,3 @@ bool operator != (const RenderAPI::VertexElement& left, const RenderAPI::VertexE
 		left.Format != right.Format);
 }
 
-void RenderStatistic::OnDrawcall(RenderAPI::Primitive primitive, unsigned int count)
-{
-	if (primitive == RenderAPI::PRIMITIVE_TriangleList)
-	{
-		m_data.NumFrameTriangles += count;
-		m_data.NumFrameVertices += count * 3;
-	}
-	else if (primitive == RenderAPI::PRIMITIVE_TriangleFan)
-	{
-		m_data.NumFrameTriangles += count;
-		m_data.NumFrameVertices += 1 + (count - 1) * 3;
-	}
-	else if (primitive == RenderAPI::PRIMITIVE_TriangleStrip)
-	{
-		m_data.NumFrameTriangles += count;
-		m_data.NumFrameVertices += 3 + (count - 1);
-	}
-}
-
-RenderStatistic::RenderStatistic()
-{
-	Reset();
-}
-
-void RenderStatistic::Reset()
-{
-	memset(&m_data, 0, sizeof(m_data));
-}
-
-void RenderStatistic::OnDraw(RenderAPI::Primitive primitive, unsigned int count)
-{
-	OnDrawcall(primitive, count);
-	++m_data.NumDraw;
-}
-
-void RenderStatistic::OnDrawUp(RenderAPI::Primitive primitive, unsigned int count)
-{
-	OnDrawcall(primitive, count);
-	++m_data.NumDrawUp;
-}
-
-void RenderStatistic::OnDrawIndexed(RenderAPI::Primitive primitive, unsigned int count)
-{
-	OnDrawcall(primitive, count);
-	++m_data.NumDrawIndexed;
-}
-
-void RenderStatistic::OnDrawIndexedUp(RenderAPI::Primitive primitive, unsigned int count)
-{
-	OnDrawcall(primitive, count);
-	++m_data.NumDrawIndexedUp;
-}
-
-void RenderStatistic::OnSetSourceStream(VertexBuffer* pVertexBuffer)
-{
-	if (pVertexBuffer->IsDynamic())
-	{
-		++m_data.NumSetDynamicStreamSource;
-		m_data.ByteFrameDynamicVertexBuffer += pVertexBuffer->GetLength();
-	}
-	else
-	{
-		++m_data.NumSetStaticStreamSource;
-		m_data.ByteFrameStaticVertexBuffer += pVertexBuffer->GetLength();
-	}
-}
-
-void RenderStatistic::OnSetIndexBuffer(IndexBuffer * pIndexBuffer)
-{
-	if (pIndexBuffer->IsDynamic())
-	{
-		++m_data.NumSetDynamicIndices;
-		m_data.ByteFrameDynamicIndexBuffer += pIndexBuffer->GetLength();
-	}
-	else
-	{
-		++m_data.NumSetStaticIndices;
-		m_data.ByteFrameStaticIndexBuffer += pIndexBuffer->GetLength();
-	}
-}
-
-void RenderStatistic::OnSetVertexDeclaration()
-{
-	++m_data.NumSetVertexDeclaration;
-}
-
-void RenderStatistic::OnSetTexture()
-{
-	++m_data.NumSetTexture;
-}
-
-void RenderStatistic::OnSetCustomFVF()
-{
-	++m_data.NumSetCustomFVF;
-}
-
-void RenderStatistic::OnSetVertexShader()
-{
-	++m_data.NumSetVertexShader;
-}
-
-void RenderStatistic::OnSetPixelShader()
-{
-	++m_data.NumSetPixelShader;
-}
-
-void RenderStatistic::OnSetRenderState()
-{
-	++m_data.NumSetRenderState;
-}
-
-void RenderStatistic::OnSetSamplerState()
-{
-	++m_data.NumSetSamplerState;
-}
-
-void RenderStatistic::OnSetSetTextureStageState()
-{
-	++m_data.NumSetTextureStageState;
-}

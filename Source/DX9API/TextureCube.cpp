@@ -41,6 +41,11 @@ RenderAPI::TextureFormat TextureCube::GetFormat() const
 	return m_texFormat;
 }
 
+unsigned int TextureCube::GetLength() const
+{
+	return 6 * GetTextureLength(m_texEdgeLength, m_texEdgeLength, m_texFormat, m_autoGenMipmaps);
+}
+
 unsigned int TextureCube::GetEdgeLength() const
 {
 	return m_texEdgeLength;

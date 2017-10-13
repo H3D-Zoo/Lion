@@ -4,6 +4,7 @@
 #include "SwapChain.h"
 #include "DepthStencil.h"
 #include "DX9Include.h"
+#include "RenderStatistic.h"
 
 class APIInstance;
 class Device : public RenderAPI::Device

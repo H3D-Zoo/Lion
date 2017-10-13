@@ -50,6 +50,8 @@ public:
 
 	virtual unsigned int GetHeight() const;
 
+	virtual unsigned int GetLength() const;
+
 	virtual RenderAPI::MappedResource LockRect(unsigned int layer, RenderAPI::LockOption lockOption);
 
 	virtual void UnlockRect(unsigned int layer);

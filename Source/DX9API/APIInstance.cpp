@@ -75,7 +75,6 @@ APIInstance::APIInstance()
 	, D3DPerfEndEvent(NULL)
 	, D3DPerfSetMarker(NULL)
 {
-
 }
 
 // D3D9EX API CREATION, 手动加载d3d9.dll来获取，以判断是否支持 [1/25/2013 YiKaiming]
@@ -415,7 +414,7 @@ RenderAPI::CreationResult APIInstance::CreateDeviceAndContext(const RenderAPI::S
 			RenderAPI::RenderTarget* rt = swapChain->GetRenderTarget();
 			RenderAPI::DepthStencil* ds = swapChain->GetDepthStencil();
 			AddRef();
-			result.ContextPtr = new ::Context(this, devicePtr, rt, ds);
+			result.ContextPtr = new ::Context(this, devicePtr, rt, ds,m_renderStatistic);
 			rt->Release();
 			ds->Release();
 			swapChain->Release();

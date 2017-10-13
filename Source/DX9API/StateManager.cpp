@@ -63,7 +63,7 @@ HRESULT FXStateManager::SetTextureStageState(THIS_ DWORD dwStage, D3DTEXTURESTAG
 
 HRESULT FXStateManager::SetTexture(THIS_ DWORD dwStage, LPDIRECT3DBASETEXTURE9 pTexture)
 {
-	m_renderStatistic.OnSetTexture();
+	m_renderStatistic.OnSetTexture(NULL);
 	return m_pDevice->SetTexture(dwStage, pTexture);
 }
 
@@ -87,6 +87,7 @@ HRESULT FXStateManager::SetFVF(THIS_ DWORD dwFVF)
 
 HRESULT FXStateManager::SetTransform(THIS_ D3DTRANSFORMSTATETYPE State, CONST D3DMATRIX *pMatrix)
 {
+	m_renderStatistic.OnSetTransForm();
 	return m_pDevice->SetTransform(State, pMatrix);
 }
 

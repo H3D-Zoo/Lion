@@ -5,51 +5,13 @@
 #include <map>
 #include "StateManager.h"
 #include "DX9Include.h"
+#include "RenderStatistic.h"
 
 class APIInstance;
 class VertexBuffer;
 class IndexBuffer;
 
-class RenderStatistic
-{
-	RenderAPI::RenderStatisticsData m_data;
 
-	void OnDrawcall(RenderAPI::Primitive primitive, unsigned int count);
-public:
-	RenderStatistic();
-
-	inline const RenderAPI::RenderStatisticsData& GetData() const { return m_data; }
-
-	void Reset();
-
-	void OnDraw(RenderAPI::Primitive primitive, unsigned int count);
-
-	void OnDrawUp(RenderAPI::Primitive primitive, unsigned int count);
-
-	void OnDrawIndexed(RenderAPI::Primitive primitive, unsigned int count);
-
-	void OnDrawIndexedUp(RenderAPI::Primitive primitive, unsigned int count);
-
-	void OnSetSourceStream(VertexBuffer* pVertexBuffer);
-
-	void OnSetIndexBuffer(IndexBuffer* pIndexBuffer);
-
-	void OnSetVertexDeclaration();
-
-	void OnSetTexture();
-
-	void OnSetCustomFVF();
-
-	void OnSetVertexShader();
-
-	void OnSetPixelShader();
-
-	void OnSetRenderState();
-
-	void OnSetSamplerState();
-
-	void OnSetSetTextureStageState();
-};
 
 class BackBufferManager
 {
@@ -85,7 +47,7 @@ private:
 class Context :public RenderAPI::Context, public RenderAPI::ContextLegacy
 {
 public:
-	Context(APIInstance* pAPIContext, IDirect3DDevice9* device, RenderAPI::RenderTarget* defRT, RenderAPI::DepthStencil* defDS);
+	Context(APIInstance* pAPIContext, IDirect3DDevice9* device, RenderAPI::RenderTarget* defRT, RenderAPI::DepthStencil* defDS,  RenderStatistic& renderStatic);
 
 	~Context();
 
@@ -266,5 +228,5 @@ private:
 	IDirect3DPixelShader9* m_pNXCachePixelShader;
 	IDirect3DBaseTexture9* m_pNXCacheTexture;
 
-	RenderStatistic m_renderStatistic;
+	RenderStatistic& m_renderStatistic;
 };

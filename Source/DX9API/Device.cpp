@@ -515,7 +515,7 @@ RenderAPI::FXEffect * Device::CreateFXEffectFromFile(const char * effectFilePath
 		//读fx文件
 		//LogInfo(ENGINE_INIT, OutPut_File, "LoadFxFromDisk:读fxo文件:%s", fxofilename.c_str());
 		pEffect->SetStateManager(m_pAPI->pContext->GetStateManager());
-		return new FXEffect(pEffect);
+		return new FXEffect(pEffect, m_pAPI->GetRenderStatistic());
 	}
 	else
 	{

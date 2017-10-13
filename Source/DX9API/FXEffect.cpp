@@ -3,8 +3,9 @@
 #include "TextureCube.h"
 
 
-FXEffect::FXEffect(ID3DXEffect * pEffect)
+FXEffect::FXEffect(ID3DXEffect * pEffect, RenderStatistic& renderStatic)
 	: m_pEffect(pEffect)
+	,m_renderStatistic(renderStatic)
 {
 }
 
@@ -22,6 +23,7 @@ void FXEffect::Release()
 unsigned int FXEffect::Begin(bool saveState)
 {
 	UINT passCount = 0;
+	m_renderStatistic.OnBeginFx();
 	if (FAILED(m_pEffect->Begin(&passCount, saveState ? 0 : D3DXFX_DONOTSAVESTATE)))
 	{
 		return 0;
@@ -34,6 +36,7 @@ unsigned int FXEffect::Begin(bool saveState)
 
 bool FXEffect::BeginPass(unsigned int passIndex)
 {
+	m_renderStatistic.OnBeginPass();
 	return SUCCEEDED(m_pEffect->BeginPass(passIndex));
 }
 
@@ -276,6 +279,7 @@ bool FXEffect::SetValue(const char* paramName, const void* pValue, unsigned int 
 	D3DXHANDLE handle = m_pEffect->GetParameterByName(NULL, paramName);
 	if (handle != NULL)
 	{
+		m_renderStatistic.OnEffectSetValue(sizeInByte);
 		return S_OK == m_pEffect->SetValue(handle, pValue, sizeInByte);
 	}
 	else
@@ -292,6 +296,7 @@ bool FXEffect::SetValueInArray(const char* paramName, const void* pValue, unsign
 		D3DXHANDLE subhandle = m_pEffect->GetParameterElement(handle, index);
 		if (subhandle != NULL)
 		{
+			m_renderStatistic.OnEffectSetValue(sizeInByte);
 			return S_OK == m_pEffect->SetValue(subhandle, pValue, sizeInByte);
 		}
 		else
@@ -310,6 +315,7 @@ bool FXEffect::SetFloat(const char* paramName, float fValue)
 	D3DXHANDLE handle = m_pEffect->GetParameterByName(NULL, paramName);
 	if (handle != NULL)
 	{
+		m_renderStatistic.OnEffectSetScalar();
 		return S_OK == m_pEffect->SetFloat(handle, fValue);
 	}
 	else
@@ -323,6 +329,8 @@ bool FXEffect::SetInt(const char * paramName, int iValue)
 	D3DXHANDLE handle = m_pEffect->GetParameterByName(NULL, paramName);
 	if (handle != NULL)
 	{
+		m_renderStatistic.OnEffectSetScalar();
+
 		return S_OK == m_pEffect->SetInt(handle, iValue);
 	}
 	else
@@ -345,6 +353,9 @@ bool FXEffect::SetTexture(const char* paramName, RenderAPI::Texture* texture)
 	D3DXHANDLE handle = m_pEffect->GetParameterByName(NULL, paramName);
 	if (handle != NULL)
 	{
+		//在stateManager中会统计数量这里只统计大小
+		m_renderStatistic.OnSetTextureOnlySize(texture);
+		m_renderStatistic.OnEffectSetTexture();
 		return S_OK == m_pEffect->SetTexture(handle, texturePtr);
 	}
 	else
@@ -369,6 +380,7 @@ bool FXEffect::SetMatrix(RenderAPI::HEffectParam hParam, const float* matrix)
 {
 	if (hParam < m_hParamIDs.size())
 	{
+		m_renderStatistic.OnEffectSetMatrix(1);
 		return S_OK == m_pEffect->SetMatrix(m_hParamIDs[hParam], (const D3DXMATRIX*)matrix);
 	}
 	else
@@ -381,6 +393,7 @@ bool FXEffect::SetMatrixTranspose(RenderAPI::HEffectParam hParam, const float* m
 {
 	if (hParam < m_hParamIDs.size())
 	{
+		m_renderStatistic.OnEffectSetMatrix(1);
 		return S_OK == m_pEffect->SetMatrixTranspose(m_hParamIDs[hParam], (const D3DXMATRIX*)matrix);
 	}
 	else
@@ -396,6 +409,7 @@ bool FXEffect::SetMatrixInArray(RenderAPI::HEffectParam hParam, const float* mat
 		D3DXHANDLE subhandle = m_pEffect->GetParameterElement(m_hParamIDs[hParam], index);
 		if (subhandle != NULL)
 		{
+			m_renderStatistic.OnEffectSetMatrix(1);
 			return S_OK == m_pEffect->SetMatrix(subhandle, (const D3DXMATRIX*)matrix);
 		}
 		else
@@ -416,6 +430,7 @@ bool FXEffect::SetMatrixTransposeInArray(RenderAPI::HEffectParam hParam, const f
 		D3DXHANDLE subhandle = m_pEffect->GetParameterElement(m_hParamIDs[hParam], index);
 		if (subhandle != NULL)
 		{
+			m_renderStatistic.OnEffectSetMatrix(1);
 			return S_OK == m_pEffect->SetMatrixTranspose(subhandle, (const D3DXMATRIX*)matrix);
 		}
 		else
@@ -433,6 +448,7 @@ bool FXEffect::SetMatrixArray(RenderAPI::HEffectParam hParam, const float* matri
 {
 	if (hParam < m_hParamIDs.size())
 	{
+		m_renderStatistic.OnEffectSetMatrix(count);
 		return S_OK == m_pEffect->SetMatrixArray(m_hParamIDs[hParam], (const D3DXMATRIX*)matrices, count);
 	}
 	else
@@ -445,6 +461,7 @@ bool FXEffect::SetMatrixTransposeArray(RenderAPI::HEffectParam hParam, const flo
 {
 	if (hParam < m_hParamIDs.size())
 	{
+		m_renderStatistic.OnEffectSetMatrix(count);
 		return S_OK == m_pEffect->SetMatrixTransposeArray(m_hParamIDs[hParam], (const D3DXMATRIX*)matrices, count);
 	}
 	else
@@ -457,6 +474,7 @@ bool FXEffect::SetValue(RenderAPI::HEffectParam hParam, const void * pValue, uns
 {
 	if (hParam < m_hParamIDs.size())
 	{
+		m_renderStatistic.OnEffectSetValue(sizeInByte);
 		return S_OK == m_pEffect->SetValue(m_hParamIDs[hParam], pValue, sizeInByte);
 	}
 	else
@@ -469,6 +487,7 @@ bool FXEffect::SetValueInArray(RenderAPI::HEffectParam hParam, const void * pVal
 {
 	if (hParam < m_hParamIDs.size())
 	{
+		m_renderStatistic.OnEffectSetValue(sizeInByte);
 		return S_OK == m_pEffect->SetValue(m_hParamIDs[hParam], pValue, sizeInByte);
 	}
 	else
@@ -481,6 +500,7 @@ bool FXEffect::SetFloat(RenderAPI::HEffectParam hParam, float fValue)
 {
 	if (hParam < m_hParamIDs.size())
 	{
+		m_renderStatistic.OnEffectSetScalar();
 		return S_OK == m_pEffect->SetFloat(m_hParamIDs[hParam], fValue);
 	}
 	else
@@ -493,6 +513,7 @@ bool FXEffect::SetInt(RenderAPI::HEffectParam hParam, int iValue)
 {
 	if (hParam < m_hParamIDs.size())
 	{
+		m_renderStatistic.OnEffectSetScalar();
 		return S_OK == m_pEffect->SetInt(m_hParamIDs[hParam], iValue);
 	}
 	else
@@ -510,6 +531,9 @@ bool FXEffect::SetTexture(RenderAPI::HEffectParam hParam, RenderAPI::Texture* te
 		{
 			texturePtr = ((::Texture2D*)(texture))->GetD3DTexture();
 		}
+		//在stateManager中会统计数量这里只统计大小
+		m_renderStatistic.OnSetTextureOnlySize(texture);
+		m_renderStatistic.OnEffectSetTexture();
 		return S_OK == m_pEffect->SetTexture(m_hParamIDs[hParam], texturePtr);
 	}
 	else
@@ -571,16 +595,19 @@ void FXEffect::SetTextureSampler(RenderAPI::HEffectParam hParam, unsigned int in
 	if (hAddressU != NULL)
 	{
 		value = s_textureAddress[sampler.AddressU];
+		m_renderStatistic.OnEffectSetValue(sizeof(DWORD));
 		m_pEffect->SetValue(hAddressU, &value, sizeof(DWORD));
 	}
 	if (hAddressV != NULL)
 	{
 		value = s_textureAddress[sampler.AddressV];
+		m_renderStatistic.OnEffectSetValue(sizeof(DWORD));
 		m_pEffect->SetValue(hAddressV, &value, sizeof(DWORD));
 	}
 	if (hAddressW != NULL)
 	{
 		value = s_textureAddress[sampler.AddressW];
+		m_renderStatistic.OnEffectSetValue(sizeof(DWORD));
 		m_pEffect->SetValue(hAddressW, &value, sizeof(DWORD));
 	}
 	if (hMagFilter != NULL)
@@ -593,7 +620,7 @@ void FXEffect::SetTextureSampler(RenderAPI::HEffectParam hParam, unsigned int in
 		{
 			value = s_d3dSamplerFilter[sampler.MagFilter];
 		}
-
+		m_renderStatistic.OnEffectSetValue(sizeof(DWORD));
 		m_pEffect->SetValue(hMagFilter, &value, sizeof(DWORD));
 	}
 
@@ -624,19 +651,21 @@ void FXEffect::SetTextureSampler(RenderAPI::HEffectParam hParam, unsigned int in
 		{
 			value = s_d3dSamplerFilter[sampler.MinFilter];
 		}
-
+		m_renderStatistic.OnEffectSetValue(sizeof(DWORD));
 		m_pEffect->SetValue(hMinFilter, &value, sizeof(DWORD));
 	}
 
 	if (hMipFilter != NULL)
 	{
 		value = s_d3dSamplerFilter[sampler.MipFilter];
+		m_renderStatistic.OnEffectSetValue(sizeof(DWORD));
 		m_pEffect->SetValue(hMipFilter, &value, sizeof(DWORD));
 	}
 
 	if (hBorderColor != NULL)
 	{
 		value = sampler.BorderColor;
+		m_renderStatistic.OnEffectSetValue(sizeof(DWORD));
 		m_pEffect->SetValue(hBorderColor, &value, sizeof(DWORD));
 	}
 }

@@ -3,13 +3,14 @@
 #include <map>
 #include <vector>
 #include <string>
+#include "RenderStatistic.h"
 #include "APIInstance.h"
 
 
 class FXEffect : public RenderAPI::FXEffect
 {
 public:
-	FXEffect(ID3DXEffect* pEffect);
+	FXEffect(ID3DXEffect* pEffect, RenderStatistic& renderStatic);
 
 	~FXEffect();
 
@@ -100,4 +101,5 @@ private:
 	std::vector<D3DXHANDLE> m_hTechniqueIDs;
 	std::map<std::string, unsigned int> m_hParamMapping;
 	std::map<std::string, unsigned int> m_hTechniqueMapping;
+	RenderStatistic& m_renderStatistic;
 };

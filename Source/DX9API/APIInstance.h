@@ -8,6 +8,7 @@
 #include <string>
 #include "BaseAPIInstance.h"
 #include "RefCount.hpp"
+#include "RenderStatistic.h"
 
 typedef int (WINAPI *LPD3DPERF_BeginEvent)(D3DCOLOR col, LPCWSTR wszName);
 typedef int (WINAPI *LPD3DPERF_EndEvent)(void);
@@ -15,7 +16,6 @@ typedef void (WINAPI *LPD3DPERF_SetMarker)(D3DCOLOR col, LPCWSTR wszName);
 
 class Device;
 class Context;
-
 class APIInstance : public BaseAPIInstance
 {
 public:
@@ -73,6 +73,7 @@ public:
 
 	void LogError(const char* action, const char* detail, HRESULT errorCode);
 
+	RenderStatistic& GetRenderStatistic() { return m_renderStatistic; }
 private:
 	void Deinit();
 
@@ -98,6 +99,8 @@ private:
 	unsigned int m_vendorID;
 	RenderAPI::DriverVersion m_driverVersion;
 	bool m_supportOcclusionQuery;
+	RenderStatistic m_renderStatistic;
+
 
 public:
 	// D3D导出函数的实际指针 [2/1/2013 YiKaiming]

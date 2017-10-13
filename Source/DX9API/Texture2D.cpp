@@ -53,6 +53,11 @@ unsigned int Texture2D::GetHeight() const
 	return m_texHeight;
 }
 
+unsigned int Texture2D::GetLength() const
+{
+	return GetTextureLength(m_texWidth, m_texHeight, m_texFormat, m_autoGenMipmaps);
+}
+
 void Texture2D::Release()
 {
 	ReleaseCopiedSystemTexture();
