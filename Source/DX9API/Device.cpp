@@ -69,6 +69,7 @@ Device::Device(APIInstance* pAPIContext, IDirect3DDevice9* device, const RenderA
 	, m_pDefaultSwapChain(NULL)
 	, m_pDevice(device)
 {
+	m_pAPI->AddRef();
 	m_pAPI->pDevice = this;
 	IDirect3DSwapChain9* pSwapChain = NULL;
 	m_pDevice->GetSwapChain(0, &pSwapChain);

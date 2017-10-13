@@ -18,6 +18,7 @@ Texture2D::Texture2D(APIInstance* pAPIInstance, IDirect3DTexture9* texture, Rend
 	, m_texWidth(width)
 	, m_texHeight(height)
 {
+	m_pAPIInstance->AddRef();
 }
 
 Texture2D::~Texture2D()
@@ -35,7 +36,10 @@ Texture2D::~Texture2D()
 	ReleaseCopiedSystemTexture();
 	m_surfaces.clear();
 	m_pTexture->Release();
+	m_pAPIInstance->Release();
 	m_pTexture = NULL;
+	m_pAPIInstance = NULL;
+	
 }
 
 RenderAPI::TextureFormat Texture2D::GetFormat() const

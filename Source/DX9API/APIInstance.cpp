@@ -407,13 +407,14 @@ RenderAPI::CreationResult APIInstance::CreateDeviceAndContext(const RenderAPI::S
 
 			result.Success = true;
 			hDeviceWindow = (HWND)desc.hWindow;
-			LONG count = devicePtr->AddRef();
-			AddRef();
+			
+			devicePtr->AddRef();
+
 			result.DevicePtr = new ::Device(this, devicePtr, newDesc, isFullscreen, useVerticalSync);
+			
 			RenderAPI::SwapChain* swapChain = result.DevicePtr->GetDefaultSwapChain();
 			RenderAPI::RenderTarget* rt = swapChain->GetRenderTarget();
 			RenderAPI::DepthStencil* ds = swapChain->GetDepthStencil();
-			AddRef();
 			result.ContextPtr = new ::Context(this, devicePtr, rt, ds,m_renderStatistic);
 			rt->Release();
 			ds->Release();
