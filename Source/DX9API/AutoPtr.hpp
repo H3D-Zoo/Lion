@@ -38,12 +38,12 @@ public:
 				Release();
 			}
 			pointer = other.pointer;
-			other.pointer = nullptr;
+			other.pointer = NULL;
 		}
 		return *this;
 	}
 
-	bool IsNullPtr() const { return pointer == nullptr; }
+	bool IsNullPtr() const { return pointer == NULL; }
 
 	bool IsNotNullPtr() const { return !IsNullPtr(); }
 

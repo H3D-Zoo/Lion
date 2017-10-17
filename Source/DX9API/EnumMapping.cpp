@@ -61,7 +61,8 @@ D3DXIMAGE_FILEFORMAT s_d3dxFileFormat[kImageFormatCount] =
 	D3DXIFF_BMP,
 	D3DXIFF_TGA,
 	D3DXIFF_PNG,
-	D3DXIFF_DDS
+	D3DXIFF_DDS,
+	D3DXIFF_JPG
 };
 
 unsigned int s_IndexLengths[kIndexLengthCount] =

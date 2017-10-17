@@ -116,6 +116,8 @@ namespace RenderAPI
 		IMG_TGA = 1,
 		IMG_PNG = 2,
 		IMG_DDS = 3,
+		IMG_JPG = 4,
+		IMG_ERR = 5,
 	};
 
 	enum BlendFactor

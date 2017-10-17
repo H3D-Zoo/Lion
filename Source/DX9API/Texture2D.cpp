@@ -329,6 +329,9 @@ bool Texture2D::IsRenderTexture() const
 
 bool Texture2D::SaveToFile(const char * fileName, RenderAPI::ImageFormat format)
 {
+	if (format == RenderAPI::IMG_ERR)
+		return false;
+
 	return S_OK == D3DXSaveTextureToFileA(fileName, s_d3dxFileFormat[format], NULL, NULL);
 }
 
@@ -366,6 +369,9 @@ void TextureSurface::ReleaseDC()
 
 bool TextureSurface::SaveToFile(const char * fileName, RenderAPI::ImageFormat format)
 {
+	if (format == RenderAPI::IMG_ERR)
+		return false;
+
 	return S_OK == D3DXSaveSurfaceToFile(fileName, s_d3dxFileFormat[format], m_pSurface, NULL, NULL);
 }
 

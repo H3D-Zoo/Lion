@@ -10,7 +10,7 @@ const int kTexFormatCount = 13;
 const int kIndexLengthCount = 6;
 const int kIndexFormatCount = 6;
 const int kLockOptionCount = 4;
-const int kImageFormatCount = 4;
+const int kImageFormatCount = 5;
 
 extern D3DFORMAT s_RTFormats[kRTFormatCount];
 extern D3DFORMAT s_DSFormats[kDSFormatCount];
