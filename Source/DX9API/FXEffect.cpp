@@ -1,7 +1,7 @@
 #include "FXEffect.h"
 #include "Texture2D.h"
 #include "TextureCube.h"
-
+#include "EnumMapping.h"
 
 FXEffect::FXEffect(ID3DXEffect * pEffect, RenderStatistic& renderStatic)
 	: m_pEffect(pEffect)
@@ -566,13 +566,6 @@ namespace
 		D3DTADDRESS_CLAMP,
 		D3DTADDRESS_MIRROR,
 		D3DTADDRESS_BORDER,
-	};
-	D3DTEXTUREFILTERTYPE s_d3dSamplerFilter[] =
-	{
-		D3DTEXF_NONE,
-		D3DTEXF_POINT,
-		D3DTEXF_LINEAR,
-		D3DTEXF_ANISOTROPIC,
 	};
 }
 

@@ -124,14 +124,6 @@ namespace
 		D3DTA_CURRENT,
 		D3DTA_TFACTOR,
 	};
-
-	D3DTEXTUREFILTERTYPE s_d3dSamplerFilter[] =
-	{
-		D3DTEXF_NONE,
-		D3DTEXF_POINT,
-		D3DTEXF_LINEAR,
-		D3DTEXF_ANISOTROPIC,
-	};
 }
 Context::Context(APIInstance* pAPI, IDirect3DDevice9 * device, RenderAPI::RenderTarget* defRT, RenderAPI::DepthStencil* defDS, RenderStatistic& renderStatic)
 	: m_pAPI(pAPI)

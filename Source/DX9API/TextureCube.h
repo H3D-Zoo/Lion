@@ -17,6 +17,8 @@ public:
 	virtual RenderAPI::TextureFormat GetFormat() const;
 
 	virtual unsigned int GetLength() const;
+	
+	virtual void SetMipmapGenerateFilter(RenderAPI::SamplerFilter filter);
 
 	virtual void GenerateMipmaps();
 

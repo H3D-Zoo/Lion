@@ -40,7 +40,7 @@ Texture2D::~Texture2D()
 	m_pAPIInstance->Release();
 	m_pTexture = NULL;
 	m_pAPIInstance = NULL;
-	
+
 }
 
 RenderAPI::TextureFormat Texture2D::GetFormat() const
@@ -267,9 +267,14 @@ void Texture2D::UnlockRect(unsigned int layer)
 	}
 }
 
+void Texture2D::SetMipmapGenerateFilter(RenderAPI::SamplerFilter filter)
+{
+	m_pTexture->SetAutoGenFilterType(s_d3dSamplerFilter[filter]);
+}
+
 void Texture2D::GenerateMipmaps()
 {
-	if (m_autoGenMipmaps)
+	if (!m_autoGenMipmaps)
 	{
 		m_pTexture->GenerateMipSubLevels();
 	}

@@ -94,12 +94,20 @@ void TextureCube::UnlockRect(RenderAPI::CubemapFace face, unsigned int layer)
 	m_pTexture->UnlockRect(s_d3dCubeFaces[face], layer);
 }
 
-void TextureCube::GenerateMipmaps()
+void TextureCube::SetMipmapGenerateFilter(RenderAPI::SamplerFilter filter)
 {
-	m_pTexture->GenerateMipSubLevels();
+	m_pTexture->SetAutoGenFilterType(s_d3dSamplerFilter[filter]);
 }
 
-bool TextureCube::AutoGenMipmaps() const 
+void TextureCube::GenerateMipmaps()
+{
+	if (!m_autoGenMipmaps)
+	{
+		m_pTexture->GenerateMipSubLevels();
+	}
+}
+
+bool TextureCube::AutoGenMipmaps() const
 {
 	return m_autoGenMipmaps;
 }

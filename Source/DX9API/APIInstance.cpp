@@ -130,7 +130,10 @@ bool APIInstance::IsSupportD3D9EX() const
 	return m_d3d9ExPtr != NULL;
 }
 
-bool APIInstance::IsSupportOcclusionQuery() const { return m_supportOcclusionQuery; }
+bool APIInstance::IsSupportOcclusionQuery() const
+{
+	return m_supportOcclusionQuery;
+}
 
 bool APIInstance::CheckFormatValidate(D3DFORMAT & renderTarget, D3DFORMAT depthStencil) const
 {
@@ -277,7 +280,7 @@ D3DPRESENT_PARAMETERS APIInstance::FillCreationParam(APIInstance& self, HWND hWi
 	return d3dpp;
 }
 
-bool APIInstance::IsSupportManaged()
+bool APIInstance::IsSupportManaged() const
 {
 	return !IsSupportD3D9EX();
 }
@@ -407,15 +410,15 @@ RenderAPI::CreationResult APIInstance::CreateDeviceAndContext(const RenderAPI::S
 
 			result.Success = true;
 			hDeviceWindow = (HWND)desc.hWindow;
-			
+
 			devicePtr->AddRef();
 
 			result.DevicePtr = new ::Device(this, devicePtr, newDesc, isFullscreen, useVerticalSync);
-			
+
 			RenderAPI::SwapChain* swapChain = result.DevicePtr->GetDefaultSwapChain();
 			RenderAPI::RenderTarget* rt = swapChain->GetRenderTarget();
 			RenderAPI::DepthStencil* ds = swapChain->GetDepthStencil();
-			result.ContextPtr = new ::Context(this, devicePtr, rt, ds,m_renderStatistic);
+			result.ContextPtr = new ::Context(this, devicePtr, rt, ds, m_renderStatistic);
 			rt->Release();
 			ds->Release();
 			swapChain->Release();
@@ -527,7 +530,7 @@ void APIInstance::PerfBegin(unsigned int color, const char* name)
 		size_t nameLength = strlen(name);
 		size_t outCount = kMaxPerfNameLength;
 		wchar_t nameWStr[kMaxPerfNameLength];
-		mbstowcs_s(&outCount, nameWStr, name, nameLength);		 
+		mbstowcs_s(&outCount, nameWStr, name, nameLength);
 		D3DPerfBeginEvent(color, nameWStr);
 	}
 }
@@ -573,7 +576,7 @@ std::string GetLocalFileName(const std::string& fullName)
 
 	if (slash == std::string::npos && rslash == std::string::npos)
 		return fullName;
-	
+
 	slash = __min(slash, rslash);
 	return fullName.substr(slash + 1);
 }

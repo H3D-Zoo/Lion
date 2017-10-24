@@ -198,6 +198,8 @@ namespace RenderAPI
 		FILTER_Point = 1,
 		FILTER_Linear = 2,
 		FILTER_Anisotropic  = 3,
+		FILTER_PyramidQuad = 4,
+		FILTER_GassianQuad = 5,
 	};
 
 	enum TextureAddress
@@ -787,6 +789,8 @@ namespace RenderAPI
 		virtual bool IsCubemap() const = 0;
 
 		virtual bool NeedRecreateWhenDeviceLost() const = 0;
+
+		virtual void SetMipmapGenerateFilter(SamplerFilter filter) = 0;
 
 		virtual unsigned int GetLength()const = 0;
 	};

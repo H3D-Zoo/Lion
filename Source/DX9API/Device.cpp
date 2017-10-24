@@ -199,7 +199,7 @@ RenderAPI::VertexBuffer* Device::CreateVertexBuffer(RenderAPI::ResourceUsage usa
 			usage = RenderAPI::RESUSAGE_Dynamic;
 			dynamic = true;
 		}
-		else if(usage == RenderAPI::RESUSAGE_StaticManaged)
+		else if (usage == RenderAPI::RESUSAGE_StaticManaged)
 		{
 			usage = RenderAPI::RESUSAGE_Static;
 		}
@@ -208,7 +208,7 @@ RenderAPI::VertexBuffer* Device::CreateVertexBuffer(RenderAPI::ResourceUsage usa
 			usage = RenderAPI::RESUSAGE_StaticWO;
 		}
 	}
-	
+
 	IDirect3DVertexBuffer9* pVertexBuffer = NULL;
 	unsigned int d3dUsage = s_d3dBufferUsage[usage];
 	unsigned int bufferSize = vertexCount * vertexSize;
@@ -232,7 +232,7 @@ RenderAPI::IndexBuffer* Device::CreateIndexBuffer(RenderAPI::ResourceUsage usage
 		return NULL;
 	}
 
-	
+
 	bool managed;
 	bool dynamic;
 
@@ -267,9 +267,9 @@ RenderAPI::IndexBuffer* Device::CreateIndexBuffer(RenderAPI::ResourceUsage usage
 		{
 			usage = RenderAPI::RESUSAGE_StaticWO;
 		}
-		
+
 	}
-	
+
 	IDirect3DIndexBuffer9* pIndexBuffer = NULL;
 	unsigned int d3dUsage = s_d3dBufferUsage[usage];
 	unsigned int bufferSize = indexCount * s_IndexLengths[format];
@@ -340,26 +340,9 @@ RenderAPI::VertexDeclaration* Device::CreateVertexDeclaration(const RenderAPI::V
 	}
 }
 
-RenderAPI::Texture2D * Device::CreateTexture2D(RenderAPI::ResourceUsage usage, RenderAPI::TextureFormat format, unsigned int width, unsigned int height, unsigned int layer, bool autoGenMipmaps)
+void FormatUsage(RenderAPI::ResourceUsage& usage, bool& dynamic, bool& managed)
 {
-	if (width == 0 || height == 0)
-	{
-		m_pAPI->LogError("CreateTexture", "Width and Height cannot be 0.");
-		return NULL;
-	}
-
-	if (autoGenMipmaps && layer == 1)
-	{
-		layer = 0;
-	}
-	else if (layer == 0 && !autoGenMipmaps)
-	{
-		layer = 1;
-	}
-
-	bool managed;
-	bool dynamic;
-	if (m_notSupportDynamicTexture)
+	if (dynamic)
 	{
 		if (usage == RenderAPI::RESUSAGE_DynamicManaged)
 		{
@@ -376,8 +359,7 @@ RenderAPI::Texture2D * Device::CreateTexture2D(RenderAPI::ResourceUsage usage, R
 		dynamic = usage == RenderAPI::RESUSAGE_DynamicManaged || usage == RenderAPI::RESUSAGE_Dynamic;
 	}
 
-
-	if (m_pAPI->IsSupportManaged())
+	if (managed)
 	{
 		if (usage == RenderAPI::RESUSAGE_StaticWOManaged)
 		{
@@ -403,6 +385,24 @@ RenderAPI::Texture2D * Device::CreateTexture2D(RenderAPI::ResourceUsage usage, R
 		}
 		managed = false;
 	}
+}
+
+RenderAPI::Texture2D * Device::CreateTexture2D(RenderAPI::ResourceUsage usage, RenderAPI::TextureFormat format, unsigned int width, unsigned int height, unsigned int layer, bool autoGenMipmaps)
+{
+	if (width == 0 || height == 0)
+	{
+		m_pAPI->LogError("CreateTexture", "Width and Height cannot be 0.");
+		return NULL;
+	}
+
+	if (layer == 1)
+	{
+		autoGenMipmaps = false;
+	}
+
+	bool managed = m_pAPI->IsSupportManaged();
+	bool dynamic = m_notSupportDynamicTexture;
+	FormatUsage(usage, dynamic, managed);
 
 	IDirect3DTexture9* pTexture = NULL;
 	unsigned int d3dUsage = autoGenMipmaps ? D3DUSAGE_AUTOGENMIPMAP : 0;
@@ -419,6 +419,8 @@ RenderAPI::Texture2D * Device::CreateTexture2D(RenderAPI::ResourceUsage usage, R
 	return texture;
 }
 
+
+
 RenderAPI::TextureCube * Device::CreateTextureCube(RenderAPI::ResourceUsage usage, RenderAPI::TextureFormat format, unsigned int edgeLength, unsigned int layer, bool autoGenMipmaps)
 {
 	if (edgeLength == 0)
@@ -427,62 +429,14 @@ RenderAPI::TextureCube * Device::CreateTextureCube(RenderAPI::ResourceUsage usag
 		return NULL;
 	}
 
-	if (autoGenMipmaps && layer == 1)
+	if (layer == 1)
 	{
-		layer = 0;
-	}
-	else if (layer == 0 && !autoGenMipmaps)
-	{
-		layer = 1;
+		autoGenMipmaps = false;
 	}
 
-	bool managed;
-	bool dynamic;
-
-	if (m_notSupportDynamicTexture)
-	{
-		if (usage == RenderAPI::RESUSAGE_DynamicManaged)
-		{
-			usage = RenderAPI::RESUSAGE_StaticManaged;
-		}
-		else if (usage == RenderAPI::RESUSAGE_Dynamic)
-		{
-			usage = RenderAPI::RESUSAGE_Static;
-		}
-		dynamic = false;
-	}
-	else
-	{
-		dynamic = usage == RenderAPI::RESUSAGE_DynamicManaged || usage == RenderAPI::RESUSAGE_Dynamic;
-	}
-
-
-	if (m_pAPI->IsSupportManaged())
-	{
-		if (usage == RenderAPI::RESUSAGE_StaticWOManaged)
-		{
-			usage = RenderAPI::RESUSAGE_StaticManaged;
-			managed = true;
-		}
-		else
-		{
-			managed = usage == RenderAPI::RESUSAGE_DynamicManaged || usage == RenderAPI::RESUSAGE_StaticManaged;
-		}
-	}
-	else
-	{
-		if (usage == RenderAPI::RESUSAGE_DynamicManaged)
-		{
-			usage = RenderAPI::RESUSAGE_Dynamic;
-		}
-		else if (usage == RenderAPI::RESUSAGE_StaticManaged ||
-			usage == RenderAPI::RESUSAGE_StaticWOManaged ||
-			usage == RenderAPI::RESUSAGE_StaticWO)
-		{
-			usage = RenderAPI::RESUSAGE_Static;
-		}
-		managed = false;
-	}
+	bool managed = m_pAPI->IsSupportManaged();
+	bool dynamic = m_notSupportDynamicTexture;
+	FormatUsage(usage, dynamic, managed);
 
 	IDirect3DCubeTexture9* pTexture = NULL;
 	unsigned int d3dUsage = autoGenMipmaps ? D3DUSAGE_AUTOGENMIPMAP : 0;
@@ -567,10 +521,10 @@ RenderAPI::TextBox * Device::CreateTextBox(int screen_x, int screen_y, int width
 {
 
 	ID3DXFont* pFont = NULL;
-	
+
 	HRESULT hr = D3DXCreateFontA(m_pDevice, -12, 0, FW_BOLD, 1, FALSE, DEFAULT_CHARSET,
 		OUT_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH | FF_DONTCARE, "System", &pFont);
-	
+
 	if (hr != S_OK)
 	{
 		return NULL;
@@ -581,7 +535,7 @@ RenderAPI::TextBox * Device::CreateTextBox(int screen_x, int screen_y, int width
 		return tB;
 	}
 
-	
+
 }
 
 ::DepthStencil* Device::CreateDepthStencilImplement(RenderAPI::DepthStencilFormat format, unsigned int width, unsigned int height)

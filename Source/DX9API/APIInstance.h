@@ -28,11 +28,11 @@ public:
 
 	bool IsSupportOcclusionQuery() const;
 
+	bool IsSupportManaged() const;
+
 	bool CheckFormatValidate(D3DFORMAT & renderTarget, D3DFORMAT depthStencil) const;
 
 	IDirect3DDevice9* CreateDevice(HWND hWindow, unsigned int width, unsigned int height, bool isFullscreen, bool vsync, D3DFORMAT rtFormat, D3DFORMAT dsFormat, D3DMULTISAMPLE_TYPE mulsample);
-
-	bool IsSupportManaged();
 
 	// 如果在设备停止的时候，D3D对象也要被重新创建
 	// 但是我们暂时没能力获取硬件停止的状态

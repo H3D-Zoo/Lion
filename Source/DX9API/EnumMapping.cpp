@@ -65,6 +65,16 @@ D3DXIMAGE_FILEFORMAT s_d3dxFileFormat[kImageFormatCount] =
 	D3DXIFF_JPG
 };
 
+D3DTEXTUREFILTERTYPE s_d3dSamplerFilter[kSamplerFilterCount] =
+{
+	D3DTEXF_NONE,
+	D3DTEXF_POINT,
+	D3DTEXF_LINEAR,
+	D3DTEXF_ANISOTROPIC,
+	D3DTEXF_PYRAMIDALQUAD,
+	D3DTEXF_GAUSSIANQUAD,
+};
+
 unsigned int s_IndexLengths[kIndexLengthCount] =
 {
 	sizeof(unsigned short),
@@ -92,7 +102,7 @@ RenderAPI::DeviceState DeviceStateMapping(unsigned int rst)
 	{
 		return RenderAPI::DEVICE_Lost;
 	}
-	else if (rst == D3DERR_DEVICENOTRESET )
+	else if (rst == D3DERR_DEVICENOTRESET)
 	{
 		return RenderAPI::DEVICE_NeedReset;
 	}

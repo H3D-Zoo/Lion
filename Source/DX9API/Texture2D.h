@@ -56,6 +56,8 @@ public:
 
 	virtual void UnlockRect(unsigned int layer);
 
+	virtual void SetMipmapGenerateFilter(RenderAPI::SamplerFilter filter);
+
 	virtual void GenerateMipmaps();
 	
 	RenderAPI::TextureSurface* GetSurface(unsigned int index);
