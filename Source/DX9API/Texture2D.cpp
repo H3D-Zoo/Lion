@@ -5,15 +5,13 @@
 #include "EnumMapping.h"
 
 Texture2D::Texture2D(APIInstance* pAPIInstance, IDirect3DTexture9* texture, RenderAPI::TextureFormat format, RenderAPI::ResourceUsage usage, bool isManaged,
-	unsigned int width, unsigned int height,
-	bool autoGenMipmaps, bool isRenderTexture)
+	unsigned int width, unsigned int height, bool autoGenMipmaps)
 	: m_pAPIInstance(pAPIInstance)
 	, m_texFormat(format)
 	, m_usage(usage)
 	, m_autoGenMipmaps(autoGenMipmaps)
 	, m_isManaged(isManaged)
 	, m_isDynamic(usage == RenderAPI::RESUSAGE_Dynamic || usage == RenderAPI::RESUSAGE_DynamicManaged)
-	, m_isRenderTexture(isRenderTexture)
 	, m_pTexture(texture)
 	, m_texWidth(width)
 	, m_texHeight(height)
@@ -34,7 +32,6 @@ Texture2D::~Texture2D()
 			pSurface->Release();
 		}
 	}
-	ReleaseCopiedSystemTexture();
 	m_surfaces.clear();
 	m_pTexture->Release();
 	m_pAPIInstance->Release();
@@ -65,7 +62,6 @@ unsigned int Texture2D::GetLength() const
 
 void Texture2D::Release()
 {
-	ReleaseCopiedSystemTexture();
 	if (0 == --m_refCount)
 	{
 		delete this;
@@ -74,7 +70,6 @@ void Texture2D::Release()
 
 void Texture2D::Resize(unsigned int width, unsigned int height)
 {
-	ReleaseCopiedSystemTexture();
 	m_texWidth = width;
 	m_texHeight = height;
 }
@@ -89,182 +84,36 @@ IDirect3DTexture9 * Texture2D::GetD3DTexture()
 	return m_pTexture;
 }
 
-IDirect3DTexture9* Texture2D::GetCopiedSystemTexture()
-{
-	IDirect3DDevice9* pDevice = NULL;
-	m_pTexture->GetDevice(&pDevice);
-	if (pDevice == NULL)
-	{
-		return NULL;
-	}
-
-	IDirect3DTexture9*& pTextureForUpdate = *TextureForUpdate(0);
-	if (pTextureForUpdate == NULL)
-	{
-		pDevice->CreateTexture(m_texWidth, m_texHeight, 0, D3DUSAGE_DYNAMIC, s_TextureFormats[m_texFormat], D3DPOOL_SYSTEMMEM, &pTextureForUpdate, NULL);
-	}
-
-	if (pTextureForUpdate != NULL)
-	{
-		IDirect3DSurface9* pSrcSurface = NULL, *pDstSurface = NULL;
-		m_pTexture->GetSurfaceLevel(0, &pSrcSurface);
-		pTextureForUpdate->GetSurfaceLevel(0, &pDstSurface);
-
-		if (pSrcSurface != NULL && pDstSurface != NULL)
-		{
-			pDevice->GetRenderTargetData(pSrcSurface, pDstSurface);
-			pSrcSurface->Release();
-			pDstSurface->Release();
-		}
-		else
-		{
-			if (pSrcSurface != NULL) pSrcSurface->Release();
-			if (pDstSurface != NULL) pDstSurface->Release();
-		}
-	}
-	return pTextureForUpdate;
-}
-
-void Texture2D::ReleaseCopiedSystemTexture()
-{
-	IDirect3DTexture9*& pTextureForUpdate = *TextureForUpdate(0);
-	if (pTextureForUpdate != NULL)
-	{
-		pTextureForUpdate->Release();
-		pTextureForUpdate = NULL;
-	}
-}
-
-IDirect3DTexture9 ** Texture2D::TextureForUpdate(unsigned int index)
-{
-	if (m_pTempTextureForUpdate.size() <= index)
-		m_pTempTextureForUpdate.resize(index + 1);
-	return &(m_pTempTextureForUpdate[index]);
-}
-
 RenderAPI::MappedResource Texture2D::LockRect(unsigned int layer, RenderAPI::LockOption lockOption)
 {
-	RenderAPI::MappedResource ret;
-	if (m_isRenderTexture)
+	//D3DLOCK_DISCARD, is only valid when the resource is created with USAGE_DYNAMIC.
+	if (lockOption == RenderAPI::LOCK_NoOverWrite ||
+		(!m_isDynamic && lockOption == RenderAPI::LOCK_Discard))
 	{
-		IDirect3DTexture9* pCopiedTexture = GetCopiedSystemTexture();
-		if (pCopiedTexture != NULL)
-		{
-			D3DLOCKED_RECT lockedRect;
-			HRESULT hr = pCopiedTexture->LockRect(layer, &lockedRect, NULL, s_lockOptions[lockOption]);
-			if (hr == S_OK)
-			{
-				ret.DataPtr = lockedRect.pBits;
-				ret.LinePitch = lockedRect.Pitch;
-				ret.Success = false;
-			}
-			else
-			{
-				m_pAPIInstance->LogError("Texture2D::Lock", " Render Texture cannot be locked because.");
-			}
-		}
+		lockOption = RenderAPI::LOCK_Normal;
 	}
-	else if (m_isDynamic || m_isManaged)
+
+	RenderAPI::MappedResource ret;
+	D3DLOCKED_RECT lockedRect;
+	HRESULT hr = m_pTexture->LockRect(layer, &lockedRect, NULL, s_lockOptions[lockOption]);
+	if (S_OK == hr)
 	{
-		//Textures created with D3DPOOL_DEFAULT are not lockable. Textures created in video memory are lockable when created with USAGE_DYNAMIC.
-		D3DLOCKED_RECT lockedRect;
-		HRESULT hr = m_pTexture->LockRect(layer, &lockedRect, NULL, s_lockOptions[lockOption]);
-		if (S_OK == hr)
-		{
-			ret.Success = true;
-			ret.DataPtr = lockedRect.pBits;
-			ret.LinePitch = lockedRect.Pitch;
-		}
-		else
-		{
-			m_pAPIInstance->LogError("Texture2D::Lock", " Lock failed.", hr);
-			ret.Success = false;
-		}
+		ret.Success = true;
+		ret.DataPtr = lockedRect.pBits;
+		ret.LinePitch = lockedRect.Pitch;
 	}
 	else
 	{
+		m_pAPIInstance->LogError("Texture2D::Lock", " Lock failed.", hr);
 		ret.Success = false;
-		IDirect3DDevice9* pDevice = NULL;
-		HRESULT hr = m_pTexture->GetDevice(&pDevice);
-		if (hr == S_OK)
-		{
-			IDirect3DTexture9*& pTextureForUpdate = *TextureForUpdate(layer);
-			if (pTextureForUpdate == NULL)
-			{
-				hr = pDevice->CreateTexture(m_texWidth, m_texHeight, 0, D3DUSAGE_DYNAMIC, s_TextureFormats[m_texFormat], D3DPOOL_SYSTEMMEM, &pTextureForUpdate, NULL);
-			}
-			if (hr == S_OK)
-			{
-				D3DLOCKED_RECT lockedRect;
-				if (S_OK == pTextureForUpdate->LockRect(layer, &lockedRect, NULL, D3DLOCK_DISCARD))
-				{
-					ret.Success = true;
-					ret.DataPtr = lockedRect.pBits;
-					ret.LinePitch = lockedRect.Pitch;
-				}
-				else
-				{
-					m_pAPIInstance->LogError("Texture2D::Lock", "helper texture lock failed.", hr);
-					ret.Success = false;
-				}
-			}
-			else
-			{
-				m_pAPIInstance->LogError("Texture2D::Lock", "helper texture creation failed.", hr);
-				ret.Success = false;
-			}
-		}
 	}
+
 	return ret;
 }
 
 void Texture2D::UnlockRect(unsigned int layer)
 {
-	if (m_isRenderTexture)
-	{
-		IDirect3DTexture9*& pTextureForUpdate = *TextureForUpdate(layer);
-		if (pTextureForUpdate != NULL)
-		{
-			pTextureForUpdate->UnlockRect(layer);
-			pTextureForUpdate->Release();
-			pTextureForUpdate = NULL;
-		}
-	}
-	else if (m_isDynamic || m_isManaged)
-	{
-		m_pTexture->UnlockRect(layer);
-	}
-	else
-	{
-		IDirect3DTexture9*& pTextureForUpdate = *TextureForUpdate(layer);
-
-		if (pTextureForUpdate != NULL)
-		{
-			HRESULT hr = pTextureForUpdate->UnlockRect(layer);
-			if (S_OK == hr)
-			{
-				IDirect3DDevice9* pDevice = NULL;
-				hr = m_pTexture->GetDevice(&pDevice);
-				if (hr == S_OK)
-				{
-					IDirect3DSurface9 *pSurfaceSrc, *pSurfaceDst;
-					pTextureForUpdate->GetSurfaceLevel(0, &pSurfaceSrc);
-					m_pTexture->GetSurfaceLevel(0, &pSurfaceDst);
-					hr = pDevice->UpdateSurface(pSurfaceSrc, NULL, pSurfaceDst, NULL);
-					if (hr != S_OK)
-					{
-						m_pAPIInstance->LogError("Texture2D::UnlockRect", "helper texture update failed.", hr);
-					}
-					pSurfaceSrc->Release();
-					pSurfaceDst->Release();
-				}
-
-			}
-
-			pTextureForUpdate->Release();
-			pTextureForUpdate = NULL;
-		}
-	}
+	m_pTexture->UnlockRect(layer);
 }
 
 void Texture2D::SetMipmapGenerateFilter(RenderAPI::SamplerFilter filter)
@@ -320,16 +169,6 @@ bool Texture2D::NeedRecreateWhenDeviceLost() const
 bool Texture2D::AutoGenMipmaps() const
 {
 	return m_autoGenMipmaps;
-}
-
-bool Texture2D::IsCubemap() const
-{
-	return false;
-}
-
-bool Texture2D::IsRenderTexture() const
-{
-	return m_isRenderTexture;
 }
 
 bool Texture2D::SaveToFile(const char * fileName, RenderAPI::ImageFormat format)

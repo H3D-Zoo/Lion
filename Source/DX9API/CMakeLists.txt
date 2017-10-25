@@ -58,6 +58,8 @@ set(RENDERAPI_IMPL_SOURCE_FILES
 	./IndexBuffer.cpp
 	./VertexDeclaration.cpp
 	./Texture2D.cpp
+	./RenderTexture2D.cpp
+	./NoLockableTexture2D.cpp
 	./TextureCube.cpp
 	./FXEffect.cpp
 	./StateManager.cpp

@@ -208,6 +208,8 @@ public:
 	
 	ID3DXEffectStateManager* GetStateManager();
 
+	inline IDirect3DDevice9* GetDevicePtr() { return m_pDevice; }
+
 private:
 	bool CopyTexture(IDirect3DTexture9* pSource, IDirect3DTexture9* pDest, unsigned int lines);
 

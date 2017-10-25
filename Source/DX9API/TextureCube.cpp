@@ -65,6 +65,12 @@ IDirect3DCubeTexture9 * TextureCube::GetD3DTexture()
 RenderAPI::MappedResource TextureCube::LockRect(RenderAPI::CubemapFace face, unsigned int layer, RenderAPI::LockOption lockOption)
 {
 	RenderAPI::MappedResource ret;
+	
+	if (lockOption == RenderAPI::LOCK_NoOverWrite)
+	{
+		lockOption = RenderAPI::LOCK_Normal;
+	}
+
 	if (m_isDynamic || m_isManaged)
 	{
 		D3DLOCKED_RECT lockedRect;

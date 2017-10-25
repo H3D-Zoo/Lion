@@ -632,17 +632,20 @@ bool Context::UpdateTexture(RenderAPI::Texture2D * src, RenderAPI::Texture2D * d
 	}
 
 	bool success = false;
-	::Texture2D* pSrcTexture = (::Texture2D*)src;
-	::Texture2D* pDstTexture = (::Texture2D*)dst;
+	
 
 	if (src->IsRenderTexture())
 	{
+		::RenderTexture2D* pSrcTexture = (::RenderTexture2D*)src;
+		::Texture2D* pDstTexture = (::Texture2D*)dst;
 		IDirect3DTexture9* pCopiedTexture = pSrcTexture->GetCopiedSystemTexture();
 		success = CopyTexture(pCopiedTexture, pDstTexture->GetD3DTexture(), dst->GetHeight());
 		pSrcTexture->ReleaseCopiedSystemTexture();
 	}
 	else
 	{
+		::Texture2D* pSrcTexture = (::Texture2D*)src;
+		::Texture2D* pDstTexture = (::Texture2D*)dst;
 		success = CopyTexture(pSrcTexture->GetD3DTexture(), pDstTexture->GetD3DTexture(), dst->GetHeight());
 	}
 

@@ -415,7 +415,19 @@ RenderAPI::Texture2D * Device::CreateTexture2D(RenderAPI::ResourceUsage usage, R
 		return NULL;
 	}
 
-	::Texture2D* texture = new ::Texture2D(m_pAPI, pTexture, format, usage, managed, width, height, autoGenMipmaps, false);
+	::Texture2D* texture = NULL;
+
+	//Textures created with D3DPOOL_DEFAULT are not lockable.
+	//Textures created in video memory are lockable when created with USAGE_DYNAMIC.
+	//D3DLOCK_DISCARD, is only valid when the resource is created with USAGE_DYNAMIC.
+	if (dynamic || managed)
+	{
+		texture = new ::Texture2D(m_pAPI, pTexture, format, usage, managed, width, height, autoGenMipmaps);
+	}
+	else
+	{
+		texture = new ::NoLockableTexture2D(m_pAPI, pTexture, format, usage, managed, width, height, autoGenMipmaps);
+	}
 	return texture;
 }
 
