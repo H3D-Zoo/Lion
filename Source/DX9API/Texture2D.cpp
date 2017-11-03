@@ -141,7 +141,7 @@ RenderAPI::TextureSurface* Texture2D::GetSurface(unsigned int index)
 		m_surfaces.resize(index + 1);
 	}
 
-	if (m_surfaces[index] == NULL)
+	if (m_surfaces[index] != NULL)
 	{
 		return m_surfaces[index];
 	}
@@ -259,6 +259,7 @@ RenderSurface2D::RenderSurface2D(APIInstance* pAPIInstance, IDirect3DSurface9* p
 	, m_texFormat(format)
 	, m_texWidth(width)
 	, m_texHeight(height)
+	, m_pTempTextureForCopy(NULL)
 {
 }
 
