@@ -623,7 +623,7 @@ void Context::DrawIndexedWithDynamicVertex(RenderAPI::Primitive primitive, unsig
 bool Context::UpdateTexture(RenderAPI::Texture2D * src, RenderAPI::Texture2D * dst)
 {
 	if (src == NULL || dst == NULL ||
-		src->IsCubemap() || dst->IsCubemap() || dst->IsRenderTexture() ||
+		dst->IsRenderTexture() ||
 		src->GetWidth() != dst->GetWidth() ||
 		src->GetHeight() != dst->GetHeight() ||
 		src->GetFormat() != dst->GetFormat())
@@ -1018,16 +1018,16 @@ bool BackBufferManager::IsDefaultDS()
 	return m_pDefaultDS == m_pCurrentDS;
 }
 
-void BackBufferManager::ResetDefaultDepthStencil(RenderAPI::DepthStencil * defRT)
-{
-	m_pCurrentRTs[0] = ((::RenderTarget*)defRT)->GetD3DSurface();
-	m_pDefaultRT = m_pCurrentRTs[0];
-}
-
-void BackBufferManager::ResetDefaultRenderTarget(RenderAPI::RenderTarget * defDS)
+void BackBufferManager::ResetDefaultDepthStencil(RenderAPI::DepthStencil * defDS)
 {
 	m_pCurrentDS = ((::DepthStencil*)defDS)->GetD3DSurface();
 	m_pDefaultDS = m_pCurrentDS;
+}
+
+void BackBufferManager::ResetDefaultRenderTarget(RenderAPI::RenderTarget * defRT)
+{
+	m_pCurrentRTs[0] = ((::RenderTarget*)defRT)->GetD3DSurface();
+	m_pDefaultRT = m_pCurrentRTs[0];
 }
 
 void BackBufferManager::SetMaxTextureStage(unsigned int maxStage)
