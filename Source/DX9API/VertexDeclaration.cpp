@@ -26,7 +26,15 @@ IDirect3DVertexDeclaration9 * VertexDeclaration::GetD3DVertexDeclarationPtr()
 	return m_pDeclaration;
 }
 
+unsigned int VertexDeclaration::AddReference()
+{
+	return ++m_refCount;
+}
+
 void VertexDeclaration::Release()
 {
-	delete this;
+	if (0 == --m_refCount)
+	{
+		delete this;
+	}
 }

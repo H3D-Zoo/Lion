@@ -25,6 +25,8 @@ public:
 
 	virtual void Unlock();
 
+	virtual unsigned int AddReference();
+
 	virtual void Release();
 
 	virtual bool NeedRecreateWhenDeviceLost() const;
@@ -34,6 +36,7 @@ public:
 	bool IsDynamic() { return m_isDynamic; }
 
 private:
+	RefCount m_refCount;
 	APIInstance* m_pAPIInstance;
 	RenderAPI::ResourceUsage m_usage;
 	RenderAPI::IndexFormat m_indexFormat;

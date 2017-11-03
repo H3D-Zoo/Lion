@@ -54,7 +54,10 @@ unsigned int TextureCube::GetEdgeLength() const
 
 void TextureCube::Release()
 {
-	delete this;
+	if (0 == --m_refCount)
+	{
+		delete this;
+	}
 }
 
 IDirect3DCubeTexture9 * TextureCube::GetD3DTexture()
@@ -98,6 +101,11 @@ RenderAPI::MappedResource TextureCube::LockRect(RenderAPI::CubemapFace face, uns
 void TextureCube::UnlockRect(RenderAPI::CubemapFace face, unsigned int layer)
 {
 	m_pTexture->UnlockRect(s_d3dCubeFaces[face], layer);
+}
+
+unsigned int TextureCube::AddReference()
+{
+	return ++m_refCount;
 }
 
 void TextureCube::SetMipmapGenerateFilter(RenderAPI::SamplerFilter filter)

@@ -42,10 +42,13 @@ public:
 
 	virtual RenderAPI::TextBox* CreateTextBox(int screenX, int screenY, int width, int height);
 
+	virtual unsigned int AddReference();
+
 	virtual void Release();
 
 private:
-	APIInstance* m_pAPI;
+	RefCount m_refCount;
+	APIInstance* m_pAPIInstance;
 	::DepthStencil* CreateDepthStencilImplement(RenderAPI::DepthStencilFormat format, unsigned int width, unsigned int height);
 	::SwapChain* m_pDefaultSwapChain;
 	IDirect3DDevice9* m_pDevice;

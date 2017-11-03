@@ -9,7 +9,7 @@
 class RenderTarget : public RenderAPI::RenderTarget
 {
 public:
-	RenderTarget(IDirect3DSurface9* rtSurface, RenderAPI::RenderTargetFormat format, unsigned int width, unsigned int height);
+	RenderTarget(APIInstance* pAPI, IDirect3DSurface9* rtSurface, RenderAPI::RenderTargetFormat format, unsigned int width, unsigned int height);
 
 	RenderTarget(APIInstance* pAPI, IDirect3DTexture9* rtTexture, RenderAPI::TextureFormat format, unsigned int width, unsigned int height);
 
@@ -23,9 +23,9 @@ public:
 
 	virtual RenderAPI::Texture2D* GetTexturePtr();
 
-	virtual void Release();
+	virtual unsigned int AddReference();
 
-	void AddRef();
+	virtual void Release();
 
 	void Resize(unsigned int width, unsigned int height);
 
@@ -41,5 +41,5 @@ private:
 	unsigned int m_width;
 	unsigned int m_height;
 	IDirect3DSurface9* m_rtSurface;
-	::Texture2D* m_rtTexture;
+	RenderAPI::Texture2D* m_rtTexture;
 };

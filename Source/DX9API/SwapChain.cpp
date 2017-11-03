@@ -1,12 +1,12 @@
 #include "SwapChain.h"
 #include "EnumMapping.h"
 
-SwapChain::SwapChain(IDirect3DSwapChain9* swapChain, ::DepthStencil* dsSurface, const RenderAPI::SwapChainDesc & swapChainDesc)
+SwapChain::SwapChain(APIInstance* pAPI, IDirect3DSwapChain9* swapChain, ::DepthStencil* dsSurface, const RenderAPI::SwapChainDesc & swapChainDesc)
 	: m_pRenderTarget(NULL)
 	, m_pDepthStencil(dsSurface)
 	, m_pSwapChain(swapChain)
 {
-	InitRenderTarget(swapChain, swapChainDesc.backbufferFormat, swapChainDesc.backbufferWidth, swapChainDesc.backbufferHeight);
+	InitRenderTarget(pAPI, swapChain, swapChainDesc.backbufferFormat, swapChainDesc.backbufferWidth, swapChainDesc.backbufferHeight);
 }
 
 SwapChain::~SwapChain()
@@ -21,13 +21,13 @@ SwapChain::~SwapChain()
 
 RenderAPI::RenderTarget* SwapChain::GetRenderTarget()
 {
-	m_pRenderTarget->AddRef();
+	m_pRenderTarget->AddReference();
 	return m_pRenderTarget;
 }
 
 RenderAPI::DepthStencil* SwapChain::GetDepthStencil()
 {
-	m_pDepthStencil->AddRef();
+	m_pDepthStencil->AddReference();
 	return m_pDepthStencil;
 }
 
@@ -63,17 +63,17 @@ RenderAPI::DeviceState SwapChain::Present()
 	return DeviceStateMapping(hr);
 }
 
+unsigned int SwapChain::AddReference()
+{
+	return ++m_refCount;
+}
+
 void SwapChain::Release()
 {
 	if (0 == --m_refCount)
 	{
 		delete this;
 	}
-}
-
-void SwapChain::AddRef()
-{
-	++m_refCount;
 }
 
 void SwapChain::ReleaseSurfaceWhenLost()
@@ -90,9 +90,9 @@ void SwapChain::ResetBackBuffers(unsigned int width, unsigned int height, Render
 	m_pDepthStencil->Reset(width, height, dsFormat, pDSSurafce);
 }
 
-void SwapChain::InitRenderTarget(IDirect3DSwapChain9 * swapChain, RenderAPI::RenderTargetFormat format, unsigned int width, unsigned int height)
+void SwapChain::InitRenderTarget(APIInstance* pAPI, IDirect3DSwapChain9 * swapChain, RenderAPI::RenderTargetFormat format, unsigned int width, unsigned int height)
 {
 	IDirect3DSurface9* pBackBuffer = NULL;
 	m_pSwapChain->GetBackBuffer(0, D3DBACKBUFFER_TYPE_MONO, &pBackBuffer);
-	m_pRenderTarget = new ::RenderTarget(pBackBuffer, format, width, height);
+	m_pRenderTarget = new ::RenderTarget(pAPI, pBackBuffer, format, width, height);
 }

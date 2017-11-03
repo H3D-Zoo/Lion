@@ -84,9 +84,17 @@ bool VertexBuffer::NeedRecreateWhenDeviceLost() const
 	return !m_isManaged;
 }
 
+unsigned int VertexBuffer::AddReference()
+{
+	return ++m_refCount;
+}
+
 void VertexBuffer::Release()
 {
-	delete this;
+	if (0 == --m_refCount)
+	{
+		delete this;
+	}
 }
 
 IDirect3DVertexBuffer9 * VertexBuffer::GetBufferPtr()

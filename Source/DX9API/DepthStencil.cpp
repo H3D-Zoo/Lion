@@ -30,17 +30,17 @@ unsigned int DepthStencil::GetHeight() const
 	return m_height;
 }
 
+unsigned DepthStencil::AddReference()
+{
+	return ++m_refCount;
+}
+
 void DepthStencil::Release()
 {
 	if (0 == --m_refCount)
 	{
 		delete this;
 	}
-}
-
-void DepthStencil::AddRef()
-{
-	++m_refCount;
 }
 
 void DepthStencil::ReleaseWhenDeviceLost()

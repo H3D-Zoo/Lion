@@ -92,10 +92,12 @@ public:
 
 	virtual void OnResetDevice();
 
+	virtual unsigned int AddReference();
+
 	virtual void Release();
 
 private:
-
+	RefCount m_refCount;
 	ID3DXEffect* m_pEffect;
 	std::vector<D3DXHANDLE> m_hParamIDs;
 	std::vector<D3DXHANDLE> m_hTechniqueIDs;

@@ -631,87 +631,44 @@ bool Context::UpdateTexture(RenderAPI::Texture2D * src, RenderAPI::Texture2D * d
 		return false;
 	}
 
-	bool success = false;
-	
-
-	if (src->IsRenderTexture())
+	//首先尝试用UpdateTexture来弄弄
+	AutoR<::TextureSurface> pSurfaceSrc = (::TextureSurface*)src->GetSurface(0);
+	AutoR<::TextureSurface> pSurfaceDst = (::TextureSurface*)dst->GetSurface(0);
+	if (pSurfaceSrc.IsNotNullPtr() && pSurfaceDst.IsNotNullPtr())
 	{
-		::RenderTexture2D* pSrcTexture = (::RenderTexture2D*)src;
-		::Texture2D* pDstTexture = (::Texture2D*)dst;
-		IDirect3DTexture9* pCopiedTexture = pSrcTexture->GetCopiedSystemTexture();
-		success = CopyTexture(pCopiedTexture, pDstTexture->GetD3DTexture(), dst->GetHeight());
-		pSrcTexture->ReleaseCopiedSystemTexture();
-	}
-	else
-	{
-		::Texture2D* pSrcTexture = (::Texture2D*)src;
-		::Texture2D* pDstTexture = (::Texture2D*)dst;
-		success = CopyTexture(pSrcTexture->GetD3DTexture(), pDstTexture->GetD3DTexture(), dst->GetHeight());
-	}
-
-	if (success)
-	{
-		dst->GenerateMipmaps();
-		return true;
-	}
-	else
-	{
-		return false;
-	}
-}
-
-
-bool Context::CopyTexture(IDirect3DTexture9 * pSource, IDirect3DTexture9 * pDest, unsigned int lines)
-{
-	IDirect3DSurface9* pSrcSurface, *pDstSurface;
-	pSource->GetSurfaceLevel(0, &pSrcSurface);
-	pDest->GetSurfaceLevel(0, &pDstSurface);
-	if (pDstSurface != NULL && pDstSurface != NULL)
-	{
-		bool success = false;
-		//首先尝试用UpdateTexture来弄弄
-		//不行就使用数据拷贝
-		HRESULT hr = m_pDevice->UpdateSurface(pSrcSurface, NULL, pDstSurface, NULL);
-		pSrcSurface->Release();
-		pDstSurface->Release();
-
-		if (S_OK != hr)
+		if (S_OK == m_pDevice->UpdateSurface(
+			pSurfaceSrc->GetD3DTextureSurfacePtr(), NULL,
+			pSurfaceDst->GetD3DTextureSurfacePtr(), NULL))
 		{
-			success = true;
+			dst->GenerateMipmaps();
+			return true;
 		}
-		else
-		{
+	}
 
-			D3DLOCKED_RECT srcLockedRect;
-			D3DLOCKED_RECT dstLockedRect;
-			HRESULT hrSrcLocked = pSource->LockRect(0, &srcLockedRect, NULL, D3DLOCK_READONLY);
-			if (hrSrcLocked == S_OK)
+	//不行就使用数据拷贝
+	bool successed = false;
+	RenderAPI::MappedResource srcLocked = src->LockRect(0, RenderAPI::LOCK_ReadOnly);
+	if (srcLocked.Success)
+	{
+		RenderAPI::MappedResource dstLocked = dst->LockRect(0, RenderAPI::LOCK_Discard);
+		if (dstLocked.Success)
+		{
+			unsigned int height = src->GetHeight();
+			char* pSrcDataPtr = reinterpret_cast<char*>(srcLocked.DataPtr);
+			char* pDstDataPtr = reinterpret_cast<char*>(dstLocked.DataPtr);
+			for (unsigned int row = 0; row < height; ++row)
 			{
-				HRESULT hrDstLocked = pDest->LockRect(0, &dstLockedRect, NULL, 0);
-				if (hrDstLocked == S_OK)
-				{
-					char* pSrcDataPtr = reinterpret_cast<char*>(srcLockedRect.pBits);
-					char* pDstDataPtr = reinterpret_cast<char*>(dstLockedRect.pBits);
-					for (unsigned int row = 0; row < lines; ++row)
-					{
-						memcpy(pDstDataPtr, pSrcDataPtr, dstLockedRect.Pitch);
-						pSrcDataPtr += srcLockedRect.Pitch;
-						pDstDataPtr += dstLockedRect.Pitch;
-					}
-					pDest->UnlockRect(0);
-					success = true;
-				}
-				pSource->UnlockRect(0);
+				memcpy(pDstDataPtr, pSrcDataPtr, dstLocked.LinePitch);
+				pSrcDataPtr += srcLocked.LinePitch;
+				pDstDataPtr += dstLocked.LinePitch;
 			}
+			dst->UnlockRect(0);
+			dst->GenerateMipmaps();
 		}
-		return success;
+		src->UnlockRect(0);
 	}
-	else
-	{
-		if (pSrcSurface != NULL)pSrcSurface->Release();
-		if (pDstSurface != NULL)pDstSurface->Release();
-		return false;
-	}
+
+	return successed;
 }
 
 void Context::InitDeviceCaps(const D3DCAPS9& d3dcaps)
@@ -775,9 +732,10 @@ bool Context::StretchTexture(RenderAPI::Texture2D * src, RenderAPI::Texture2D * 
 	AutoR<::TextureSurface> pSurfaceSrc = (::TextureSurface*)src->GetSurface(0);
 	AutoR<::TextureSurface> pSurfaceDst = (::TextureSurface*)dst->GetSurface(0);
 
-	pSurfaceSrc = (::TextureSurface*)src->GetSurface(0);
-	bool rst = S_OK == m_pDevice->StretchRect(pSurfaceSrc->GetD3DTextureSurfacePtr(), NULL, pSurfaceDst->GetD3DTextureSurfacePtr(), NULL, s_d3dSamplerFilter[filter]);
-
+	bool rst = S_OK == m_pDevice->StretchRect(
+		pSurfaceSrc->GetD3DTextureSurfacePtr(), NULL, 
+		pSurfaceDst->GetD3DTextureSurfacePtr(), NULL, 
+		s_d3dSamplerFilter[filter]);
 
 	return rst;
 }
@@ -891,9 +849,17 @@ void Context::ClearRenderStatisticsData()
 	m_renderStatistic.Reset();
 }
 
+unsigned int Context::AddReference()
+{
+	return ++m_refCount;
+}
+
 void Context::Release()
 {
-	delete this;
+	if (0 == --m_refCount)
+	{
+		delete this;
+	}
 }
 
 ID3DXEffectStateManager* Context::GetStateManager()
@@ -1042,4 +1008,3 @@ bool operator != (const RenderAPI::VertexElement& left, const RenderAPI::VertexE
 		left.AlignOffset != right.AlignOffset ||
 		left.Format != right.Format);
 }
-

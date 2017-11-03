@@ -64,19 +64,19 @@ namespace
 	};
 }
 
-Device::Device(APIInstance* pAPIContext, IDirect3DDevice9* device, const RenderAPI::SwapChainDesc & desc, bool isFullscreen, bool useVerticalSync)
-	: m_pAPI(pAPIContext)
+Device::Device(APIInstance* pAPI, IDirect3DDevice9* device, const RenderAPI::SwapChainDesc & desc, bool isFullscreen, bool useVerticalSync)
+	: m_pAPIInstance(pAPI)
 	, m_pDefaultSwapChain(NULL)
 	, m_pDevice(device)
 {
-	m_pAPI->AddRef();
-	m_pAPI->pDevice = this;
+	m_pAPIInstance->AddRef();
+	m_pAPIInstance->pDevice = this;
 	IDirect3DSwapChain9* pSwapChain = NULL;
 	m_pDevice->GetSwapChain(0, &pSwapChain);
 	IDirect3DSurface9* pDSSurafce = NULL;
 	m_pDevice->GetDepthStencilSurface(&pDSSurafce);
 	::DepthStencil* pDepthStencil = new DepthStencil(pDSSurafce, desc.zbufferFormat, desc.backbufferWidth, desc.backbufferHeight);
-	m_pDefaultSwapChain = new ::SwapChain(pSwapChain, pDepthStencil, desc);
+	m_pDefaultSwapChain = new ::SwapChain(pAPI, pSwapChain, pDepthStencil, desc);
 
 	D3DCAPS9 d3dcaps;
 	m_pDevice->GetDeviceCaps(&d3dcaps);
@@ -87,10 +87,10 @@ Device::~Device()
 {
 	m_pDefaultSwapChain->Release();
 	m_pDevice->Release();
-	m_pAPI->Release();
+	m_pAPIInstance->Release();
 	m_pDefaultSwapChain = NULL;
 	m_pDevice = NULL;
-	m_pAPI = NULL;
+	m_pAPIInstance = NULL;
 }
 
 void Device::ReleaseDefaultSwapChainWhenLost()
@@ -107,7 +107,7 @@ void Device::ResetDefaultBackBuffer(unsigned int width, unsigned int height, Ren
 
 RenderAPI::SwapChain * Device::GetDefaultSwapChain()
 {
-	m_pDefaultSwapChain->AddRef();
+	m_pDefaultSwapChain->AddReference();
 	return m_pDefaultSwapChain;
 }
 
@@ -157,7 +157,7 @@ RenderAPI::SwapChain * Device::CreateAdditionalSwapChain(const RenderAPI::SwapCh
 		}
 		else
 		{
-			return new ::SwapChain(swapChain, ds, newDesc);
+			return new ::SwapChain(m_pAPIInstance, swapChain, ds, newDesc);
 		}
 	}
 	else
@@ -170,13 +170,13 @@ RenderAPI::VertexBuffer* Device::CreateVertexBuffer(RenderAPI::ResourceUsage usa
 {
 	if (vertexCount == 0 || vertexSize == 0)
 	{
-		m_pAPI->LogError("CreateVertexBuffer", "Vertex Count and Vertex Size cannot be 0.");
+		m_pAPIInstance->LogError("CreateVertexBuffer", "Vertex Count and Vertex Size cannot be 0.");
 		return NULL;
 	}
 
 	bool managed;
 	bool dynamic;
-	if (m_pAPI->IsSupportManaged())
+	if (m_pAPIInstance->IsSupportManaged())
 	{
 		if (usage == RenderAPI::RESUSAGE_StaticWOManaged)
 		{
@@ -216,11 +216,11 @@ RenderAPI::VertexBuffer* Device::CreateVertexBuffer(RenderAPI::ResourceUsage usa
 	HRESULT hr = m_pDevice->CreateVertexBuffer(bufferSize, d3dUsage, 0, d3dPool, &pVertexBuffer, NULL);
 	if (hr != S_OK)
 	{
-		m_pAPI->LogError("CreateVertexBuffer", "CreateVertexBuffer failed", hr);
+		m_pAPIInstance->LogError("CreateVertexBuffer", "CreateVertexBuffer failed", hr);
 		return NULL;
 	}
 
-	return new VertexBuffer(m_pAPI, pVertexBuffer, usage, managed, vertexCount, vertexSize);
+	return new VertexBuffer(m_pAPIInstance, pVertexBuffer, usage, managed, vertexCount, vertexSize);
 
 }
 
@@ -228,7 +228,7 @@ RenderAPI::IndexBuffer* Device::CreateIndexBuffer(RenderAPI::ResourceUsage usage
 {
 	if (indexCount == 0)
 	{
-		m_pAPI->LogError("CreateIndexBuffer", "Index Count cannot be 0.");
+		m_pAPIInstance->LogError("CreateIndexBuffer", "Index Count cannot be 0.");
 		return NULL;
 	}
 
@@ -236,7 +236,7 @@ RenderAPI::IndexBuffer* Device::CreateIndexBuffer(RenderAPI::ResourceUsage usage
 	bool managed;
 	bool dynamic;
 
-	if (m_pAPI->IsSupportManaged())
+	if (m_pAPIInstance->IsSupportManaged())
 	{
 		if (usage == RenderAPI::RESUSAGE_StaticWOManaged)
 		{
@@ -278,18 +278,18 @@ RenderAPI::IndexBuffer* Device::CreateIndexBuffer(RenderAPI::ResourceUsage usage
 
 	if (hr != S_OK)
 	{
-		m_pAPI->LogError("CreateIndexBuffer", "CreateIndexBuffer failed", hr);
+		m_pAPIInstance->LogError("CreateIndexBuffer", "CreateIndexBuffer failed", hr);
 		return NULL;
 	}
 
-	return new IndexBuffer(m_pAPI, pIndexBuffer, usage, format, managed, indexCount);
+	return new IndexBuffer(m_pAPIInstance, pIndexBuffer, usage, format, managed, indexCount);
 }
 
 RenderAPI::VertexDeclaration* Device::CreateVertexDeclaration(const RenderAPI::VertexElement * elements, unsigned int elementCount)
 {
 	if (elementCount == 0 || elements == NULL)
 	{
-		m_pAPI->LogError("CreateVertexDeclaration", "Element Count cannot be 0.");
+		m_pAPIInstance->LogError("CreateVertexDeclaration", "Element Count cannot be 0.");
 		return NULL;
 	}
 
@@ -335,7 +335,7 @@ RenderAPI::VertexDeclaration* Device::CreateVertexDeclaration(const RenderAPI::V
 	}
 	else
 	{
-		m_pAPI->LogError("CreateVertexDeclaration", "CreateVertexDeclaration failed.", hr);
+		m_pAPIInstance->LogError("CreateVertexDeclaration", "CreateVertexDeclaration failed.", hr);
 		return NULL;
 	}
 }
@@ -391,7 +391,7 @@ RenderAPI::Texture2D * Device::CreateTexture2D(RenderAPI::ResourceUsage usage, R
 {
 	if (width == 0 || height == 0)
 	{
-		m_pAPI->LogError("CreateTexture", "Width and Height cannot be 0.");
+		m_pAPIInstance->LogError("CreateTexture", "Width and Height cannot be 0.");
 		return NULL;
 	}
 
@@ -400,7 +400,7 @@ RenderAPI::Texture2D * Device::CreateTexture2D(RenderAPI::ResourceUsage usage, R
 		autoGenMipmaps = false;
 	}
 
-	bool managed = m_pAPI->IsSupportManaged();
+	bool managed = m_pAPIInstance->IsSupportManaged();
 	bool dynamic = m_notSupportDynamicTexture;
 	FormatUsage(usage, dynamic, managed);
 
@@ -411,7 +411,7 @@ RenderAPI::Texture2D * Device::CreateTexture2D(RenderAPI::ResourceUsage usage, R
 	HRESULT hr = m_pDevice->CreateTexture(width, height, layer, d3dUsage, s_TextureFormats[format], d3dPool, &pTexture, NULL);
 	if (hr != S_OK)
 	{
-		m_pAPI->LogError("CreateTexture2D", "CreateTexture failed.", hr);
+		m_pAPIInstance->LogError("CreateTexture2D", "CreateTexture failed.", hr);
 		return NULL;
 	}
 
@@ -422,11 +422,11 @@ RenderAPI::Texture2D * Device::CreateTexture2D(RenderAPI::ResourceUsage usage, R
 	//D3DLOCK_DISCARD, is only valid when the resource is created with USAGE_DYNAMIC.
 	if (dynamic || managed)
 	{
-		texture = new ::Texture2D(m_pAPI, pTexture, format, usage, managed, width, height, autoGenMipmaps);
+		texture = new ::Texture2D(m_pAPIInstance, pTexture, format, usage, managed, width, height, autoGenMipmaps);
 	}
 	else
 	{
-		texture = new ::NoLockableTexture2D(m_pAPI, pTexture, format, usage, managed, width, height, autoGenMipmaps);
+		texture = new ::NoLockableTexture2D(m_pAPIInstance, pTexture, format, usage, managed, width, height, autoGenMipmaps);
 	}
 	return texture;
 }
@@ -437,7 +437,7 @@ RenderAPI::TextureCube * Device::CreateTextureCube(RenderAPI::ResourceUsage usag
 {
 	if (edgeLength == 0)
 	{
-		m_pAPI->LogError("CreateTextureCube", "edgeLength cannot be 0.");
+		m_pAPIInstance->LogError("CreateTextureCube", "edgeLength cannot be 0.");
 		return NULL;
 	}
 
@@ -446,7 +446,7 @@ RenderAPI::TextureCube * Device::CreateTextureCube(RenderAPI::ResourceUsage usag
 		autoGenMipmaps = false;
 	}
 
-	bool managed = m_pAPI->IsSupportManaged();
+	bool managed = m_pAPIInstance->IsSupportManaged();
 	bool dynamic = m_notSupportDynamicTexture;
 	FormatUsage(usage, dynamic, managed);
 
@@ -458,11 +458,11 @@ RenderAPI::TextureCube * Device::CreateTextureCube(RenderAPI::ResourceUsage usag
 
 	if (hr != S_OK)
 	{
-		m_pAPI->LogError("CreateTextureCube", "CreateCubeTexture failed.", hr);
+		m_pAPIInstance->LogError("CreateTextureCube", "CreateCubeTexture failed.", hr);
 		return NULL;
 	}
 
-	::TextureCube* texture = new ::TextureCube(m_pAPI, pTexture, format, usage, managed, edgeLength, autoGenMipmaps);
+	::TextureCube* texture = new ::TextureCube(m_pAPIInstance, pTexture, format, usage, managed, edgeLength, autoGenMipmaps);
 	return texture;
 }
 
@@ -481,15 +481,15 @@ RenderAPI::FXEffect * Device::CreateFXEffectFromFile(const char * effectFilePath
 		//pEffect->SetStateManager(pDeviceD3D->GetStateManager());
 		//读fx文件
 		//LogInfo(ENGINE_INIT, OutPut_File, "LoadFxFromDisk:读fxo文件:%s", fxofilename.c_str());
-		pEffect->SetStateManager(m_pAPI->pContext->GetStateManager());
-		return new FXEffect(pEffect, m_pAPI->GetRenderStatistic());
+		pEffect->SetStateManager(m_pAPIInstance->pContext->GetStateManager());
+		return new FXEffect(pEffect, m_pAPIInstance->GetRenderStatistic());
 	}
 	else
 	{
 		if (pErrorBuffer.IsNotNullPtr())
 		{
 			std::string errorStr = (char*)pErrorBuffer->GetBufferPointer();
-			m_pAPI->LogError("Device::CreateFXEffectFromFile", errorStr.c_str(), hr);
+			m_pAPIInstance->LogError("Device::CreateFXEffectFromFile", errorStr.c_str(), hr);
 		}
 		return NULL;
 	}
@@ -504,11 +504,11 @@ RenderAPI::RenderTarget* Device::CreateRenderTarget(RenderAPI::TextureFormat for
 
 	if (hr != S_OK)
 	{
-		m_pAPI->LogError("CreateRenderTarget", "CreateTexture failed.", hr);
+		m_pAPIInstance->LogError("CreateRenderTarget", "CreateTexture failed.", hr);
 		return NULL;
 	}
 
-	return new RenderTarget(m_pAPI, pTexture, format, width, height);
+	return new RenderTarget(m_pAPIInstance, pTexture, format, width, height);
 }
 
 RenderAPI::DepthStencil * Device::CreateDepthStencil(RenderAPI::DepthStencilFormat format, unsigned int width, unsigned int height)
@@ -518,7 +518,7 @@ RenderAPI::DepthStencil * Device::CreateDepthStencil(RenderAPI::DepthStencilForm
 
 RenderAPI::OcclusionQuery* Device::CreateOcclusionQuery()
 {
-	if (m_pAPI->IsSupportOcclusionQuery())
+	if (m_pAPIInstance->IsSupportOcclusionQuery())
 	{
 		IDirect3DQuery9* pOcclusionQuery = NULL;
 		if (S_OK == m_pDevice->CreateQuery(D3DQUERYTYPE_OCCLUSION, &pOcclusionQuery))
@@ -550,13 +550,18 @@ RenderAPI::TextBox * Device::CreateTextBox(int screen_x, int screen_y, int width
 
 }
 
+unsigned int Device::AddReference()
+{
+	return ++m_refCount;
+}
+
 ::DepthStencil* Device::CreateDepthStencilImplement(RenderAPI::DepthStencilFormat format, unsigned int width, unsigned int height)
 {
 	IDirect3DSurface9* pDSSurface = NULL;
 	HRESULT hr = m_pDevice->CreateDepthStencilSurface(width, height, s_DSFormats[format], D3DMULTISAMPLE_NONE, 0, TRUE, &pDSSurface, NULL);
 	if (hr != S_OK)
 	{
-		m_pAPI->LogError("CreateDepthStencilImplement", "CreateDepthStencilSurface failed.", hr);
+		m_pAPIInstance->LogError("CreateDepthStencilImplement", "CreateDepthStencilSurface failed.", hr);
 		return NULL;
 	}
 
@@ -565,7 +570,10 @@ RenderAPI::TextBox * Device::CreateTextBox(int screen_x, int screen_y, int width
 
 void Device::Release()
 {
-	delete this;
+	if (0 == --m_refCount)
+	{
+		delete this;
+	}
 }
 
 

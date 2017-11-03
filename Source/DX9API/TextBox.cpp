@@ -55,11 +55,6 @@ void TextBox::LazyUpdateRect(RECT & out, LPD3DXFONT font, const RECT & in, UINT 
 	}
 }
 
-void TextBox::Release()
-{
-	delete this;
-}
-
 void TextBox::SetPosSize(int x, int y, int width, int height)
 {
 	m_rect.left = x;
@@ -130,4 +125,17 @@ void TextBox::OnLostDevice()
 void TextBox::OnResetDevice()
 {
 	m_pFont->OnResetDevice();
+}
+
+unsigned int TextBox::AddReference()
+{
+	return ++m_refCount;
+}
+
+void TextBox::Release()
+{
+	if (0 == --m_refCount)
+	{
+		delete this;
+	}
 }

@@ -15,11 +15,6 @@ FXEffect::~FXEffect()
 	m_pEffect = NULL;
 }
 
-void FXEffect::Release()
-{
-	delete this;
-}
-
 unsigned int FXEffect::Begin(bool saveState)
 {
 	UINT passCount = 0;
@@ -557,6 +552,18 @@ void FXEffect::OnResetDevice()
 	m_pEffect->OnResetDevice();
 }
 
+unsigned int FXEffect::AddReference()
+{
+	return ++m_refCount;
+}
+
+void FXEffect::Release()
+{
+	if (0 == --m_refCount)
+	{
+		delete this;
+	}
+}
 
 namespace
 {

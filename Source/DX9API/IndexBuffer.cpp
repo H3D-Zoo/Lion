@@ -40,11 +40,6 @@ unsigned int IndexBuffer::GetLength() const
 	return m_bufferLength;
 }
 
-void IndexBuffer::Release()
-{
-	delete this;
-}
-
 bool IndexBuffer::NeedRecreateWhenDeviceLost() const
 {
 	return !m_isManaged;
@@ -91,4 +86,17 @@ void* IndexBuffer::LockAll(RenderAPI::LockOption lockOption)
 void IndexBuffer::Unlock()
 {
 	m_pIndexBuffer->Unlock();
+}
+
+unsigned int IndexBuffer::AddReference()
+{
+	return ++m_refCount;
+}
+
+void IndexBuffer::Release()
+{
+	if (0 == --m_refCount)
+	{
+		delete this;
+	}
 }

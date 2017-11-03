@@ -702,6 +702,8 @@ namespace RenderAPI
 	class RObject
 	{
 	public:
+		virtual unsigned int AddReference() = 0;
+
 		virtual void Release() = 0;
 
 	protected:

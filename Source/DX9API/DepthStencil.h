@@ -17,9 +17,9 @@ public:
 
 	virtual unsigned int GetHeight() const;
 
-	virtual void Release();
+	virtual unsigned int AddReference();
 
-	void AddRef();
+	virtual void Release();
 
 	void ReleaseWhenDeviceLost();
 

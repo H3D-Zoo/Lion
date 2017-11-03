@@ -3,6 +3,7 @@
 #include <vector>
 #include "APIInstance.h"
 #include "DX9Include.h"
+#include "RefCount.hpp"
 
 class RenderTarget;
 class DepthStencil;
@@ -34,6 +35,8 @@ public:
 
 	virtual void UnlockRect(RenderAPI::CubemapFace face, unsigned int layer);
 
+	virtual unsigned int AddReference();
+
 	virtual void Release();
 
 	IDirect3DCubeTexture9* GetD3DTexture();
@@ -41,6 +44,7 @@ public:
 	unsigned int ClearStamp;
 
 private:
+	RefCount m_refCount;
 	APIInstance* m_pAPIInstance;
 	RenderAPI::ResourceUsage m_usage;
 	RenderAPI::TextureFormat m_texFormat;

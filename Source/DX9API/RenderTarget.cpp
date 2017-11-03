@@ -1,13 +1,14 @@
 #include "RenderTarget.h"
 
-RenderTarget::RenderTarget(IDirect3DSurface9* rtSurface, RenderAPI::RenderTargetFormat format, unsigned int width, unsigned int height)
+RenderTarget::RenderTarget(APIInstance* pAPI, IDirect3DSurface9* rtSurface, RenderAPI::RenderTargetFormat format, unsigned int width, unsigned int height)
 	: m_format(format)
 	, m_width(width)
 	, m_height(height)
 	, m_rtSurface(rtSurface)
 	, m_rtTexture(NULL)
 {
-
+	RenderAPI::TextureFormat texFormat = (format == RenderAPI::RT_ARGB8) ? RenderAPI::TEX_ARGB : RenderAPI::TEX_XRGB;
+	m_rtTexture = new RenderSurface2D(pAPI, rtSurface, texFormat, width, height);
 }
 
 RenderTarget::RenderTarget(APIInstance* pAPI, IDirect3DTexture9* rtTexture, RenderAPI::TextureFormat format, unsigned int width, unsigned int height)
@@ -26,11 +27,8 @@ RenderTarget::~RenderTarget()
 	m_rtSurface->Release();
 	m_rtSurface = NULL;
 
-	if (m_rtTexture != NULL)
-	{
-		m_rtTexture->Release();
-		m_rtTexture = NULL;
-	}
+	m_rtTexture->Release();
+	m_rtTexture = NULL;
 }
 
 RenderAPI::RenderTargetFormat RenderTarget::GetFormat() const
@@ -52,7 +50,7 @@ RenderAPI::Texture2D* RenderTarget::GetTexturePtr()
 {
 	if (m_rtTexture != NULL)
 	{
-		m_rtTexture->AddRef();
+		m_rtTexture->AddReference();
 	}
 	return m_rtTexture;
 }
@@ -65,9 +63,9 @@ void RenderTarget::Release()
 	}
 }
 
-void RenderTarget::AddRef()
+unsigned int RenderTarget::AddReference()
 {
-	++m_refCount;
+	return ++m_refCount;
 }
 
 void RenderTarget::Resize(unsigned int width, unsigned int height)

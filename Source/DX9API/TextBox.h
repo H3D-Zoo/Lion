@@ -2,6 +2,7 @@
 #include "../../RenderAPI/RenderAPI.h"
 #include "DX9Include.h"
 #include <string>
+#include "RefCount.hpp"
 
 class TextBox : public RenderAPI::TextBox
 {
@@ -9,9 +10,6 @@ public:
 	TextBox(ID3DXFont* pFont, int screen_x, int screen_y, int width, int height);
 
 	~TextBox();
-
-	virtual void Release();
-
 	virtual void SetPosSize(int x, int y, int width, int height);
 
 	virtual void SetText(const char* str, bool bWordWarp);
@@ -27,9 +25,14 @@ public:
 	virtual void OnLostDevice();
 
 	virtual void OnResetDevice();
+
+	virtual unsigned int AddReference();
+
+	virtual void Release();
+
 private:
 	void LazyUpdateRect(RECT& out, LPD3DXFONT font, const RECT& in, UINT dtFormat) const;
-
+	RefCount m_refCount;
 	std::string m_text;
 	D3DXCOLOR m_color;
 	RECT m_rect;

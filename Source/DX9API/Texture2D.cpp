@@ -3,6 +3,7 @@
 #include "RenderTarget.h"
 #include "DepthStencil.h"
 #include "EnumMapping.h"
+#include "Context.h"
 
 Texture2D::Texture2D(APIInstance* pAPIInstance, IDirect3DTexture9* texture, RenderAPI::TextureFormat format, RenderAPI::ResourceUsage usage, bool isManaged,
 	unsigned int width, unsigned int height, bool autoGenMipmaps)
@@ -32,10 +33,14 @@ Texture2D::~Texture2D()
 			pSurface->Release();
 		}
 	}
-	m_surfaces.clear();
-	m_pTexture->Release();
+	
+	if (m_pTexture != NULL)
+	{
+		m_pTexture->Release();
+		m_pTexture = NULL;
+	}
+
 	m_pAPIInstance->Release();
-	m_pTexture = NULL;
 	m_pAPIInstance = NULL;
 
 }
@@ -74,9 +79,9 @@ void Texture2D::Resize(unsigned int width, unsigned int height)
 	m_texHeight = height;
 }
 
-void Texture2D::AddRef()
+unsigned int Texture2D::AddReference()
 {
-	++m_refCount;
+	return ++m_refCount;
 }
 
 IDirect3DTexture9 * Texture2D::GetD3DTexture()
@@ -151,7 +156,7 @@ RenderAPI::TextureSurface* Texture2D::GetSurface(unsigned int index)
 
 	if (m_surfaces[index])
 	{
-		m_surfaces[index]->AddRef();
+		m_surfaces[index]->AddReference();
 	}
 	return m_surfaces[index];
 }
@@ -184,7 +189,10 @@ TextureSurface::TextureSurface(Texture2D* pTexture, IDirect3DSurface9 * pSurface
 	, m_pSurface(pSurface)
 	, m_hDC(NULL)
 {
-
+	if (m_pParentTexture != NULL)
+	{
+		m_pParentTexture->AddReference();
+	}
 }
 
 TextureSurface::~TextureSurface()
@@ -221,20 +229,129 @@ bool TextureSurface::SaveToFile(const char * fileName, RenderAPI::ImageFormat fo
 
 void TextureSurface::Release()
 {
-	m_pParentTexture->Release();
+	if (m_pParentTexture != NULL)
+	{
+		m_pParentTexture->Release();
+	}
 	if (0 == --m_refCount)
 	{
 		delete this;
 	}
 }
 
-void TextureSurface::AddRef()
+unsigned int TextureSurface::AddReference()
 {
-	m_pParentTexture->AddRef();
-	++m_refCount;
+	if (m_pParentTexture != NULL)
+	{
+		m_pParentTexture->AddReference();
+	}
+	return ++m_refCount;
 }
 
 IDirect3DSurface9 * TextureSurface::GetD3DTextureSurfacePtr()
 {
 	return m_pSurface;
+}
+
+RenderSurface2D::RenderSurface2D(APIInstance* pAPIInstance, IDirect3DSurface9* pSurface, RenderAPI::TextureFormat format, unsigned int width, unsigned int height)
+	: TextureSurface(NULL, pSurface)
+	, m_pAPIInstance(pAPIInstance)
+	, m_texFormat(format)
+	, m_texWidth(width)
+	, m_texHeight(height)
+{
+}
+
+RenderSurface2D::~RenderSurface2D()
+{
+	ReleaseCopiedSystemTexture();
+}
+
+
+RenderAPI::MappedResource RenderSurface2D::LockRect(unsigned int layer, RenderAPI::LockOption lockOption) 
+{ 
+	RenderAPI::MappedResource ret;
+
+	if (lockOption == RenderAPI::LOCK_NoOverWrite)
+	{
+		lockOption = RenderAPI::LOCK_Normal;
+	}
+
+	IDirect3DTexture9* pCopiedTexture = GetCopiedSystemTexture();
+	if (pCopiedTexture != NULL)
+	{
+		D3DLOCKED_RECT lockedRect;
+		HRESULT hr = pCopiedTexture->LockRect(layer, &lockedRect, NULL, s_lockOptions[lockOption]);
+		if (hr == S_OK)
+		{
+			ret.DataPtr = lockedRect.pBits;
+			ret.LinePitch = lockedRect.Pitch;
+			ret.Success = true;
+		}
+		else
+		{
+			m_pAPIInstance->LogError("Rendersurface2D::Lock", " Render Texture cannot be locked because.");
+		}
+	}
+	return ret;
+}
+
+void RenderSurface2D::UnlockRect(unsigned int layer) 
+{
+	if (m_pTempTextureForCopy != NULL)
+	{
+		m_pTempTextureForCopy->UnlockRect(layer);
+		m_pTempTextureForCopy->Release();
+		m_pTempTextureForCopy = NULL;
+	}
+}
+
+RenderAPI::TextureSurface * RenderSurface2D::GetSurface(unsigned int layer)
+{
+	if (layer == 0)
+	{
+		AddReference();
+		return this;
+	}
+	else
+	{
+		return NULL;
+	}
+}
+
+
+IDirect3DTexture9* RenderSurface2D::GetCopiedSystemTexture()
+{
+	IDirect3DDevice9* pDevice = m_pAPIInstance->pContext->GetDevicePtr();
+
+	if (m_pTempTextureForCopy == NULL)
+	{
+		HRESULT creation = pDevice->CreateTexture(m_texWidth, m_texHeight, 0, D3DUSAGE_DYNAMIC, s_TextureFormats[m_texFormat], D3DPOOL_SYSTEMMEM, &m_pTempTextureForCopy, NULL);
+		if (FAILED(creation))
+		{
+			return NULL;
+		}
+	}
+
+	if (m_pTempTextureForCopy != NULL)
+	{
+		IDirect3DSurface9 *pDstSurface = NULL;
+		m_pTempTextureForCopy->GetSurfaceLevel(0, &pDstSurface);
+
+		if (pDstSurface != NULL)
+		{
+			pDevice->GetRenderTargetData(GetD3DTextureSurfacePtr(), pDstSurface);
+			pDstSurface->Release();
+		}
+	}
+	return m_pTempTextureForCopy;
+}
+
+void RenderSurface2D::ReleaseCopiedSystemTexture()
+{
+	if (m_pTempTextureForCopy != NULL)
+	{
+		m_pTempTextureForCopy->Release();
+		m_pTempTextureForCopy = NULL;
+	}
 }

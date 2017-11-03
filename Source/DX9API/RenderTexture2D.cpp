@@ -35,7 +35,7 @@ RenderAPI::MappedResource RenderTexture2D::LockRect(unsigned int layer, RenderAP
 		}
 		else
 		{
-			m_pAPIInstance->LogError("Texture2D::Lock", " Render Texture cannot be locked because.");
+			m_pAPIInstance->LogError("RenderTexture2D::Lock", " Render Texture cannot be locked because.");
 		}
 	}
 	return ret;

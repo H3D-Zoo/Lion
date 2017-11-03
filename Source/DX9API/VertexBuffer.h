@@ -27,6 +27,8 @@ public:
 	
 	virtual bool NeedRecreateWhenDeviceLost() const;
 
+	virtual unsigned int AddReference();
+
 	virtual void Release();
 
 	IDirect3DVertexBuffer9* GetBufferPtr();
@@ -34,6 +36,7 @@ public:
 	bool IsDynamic() {return m_isDynamic;}
 
 private:
+	RefCount m_refCount;
 	APIInstance* m_pAPIInstance;
 	RenderAPI::ResourceUsage m_usage;
 	const bool m_isManaged;

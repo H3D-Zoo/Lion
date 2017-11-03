@@ -9,7 +9,7 @@
 class SwapChain : public RenderAPI::SwapChain
 {
 public:
-	SwapChain::SwapChain(IDirect3DSwapChain9* swapChain, ::DepthStencil* dsSurface, const RenderAPI::SwapChainDesc & swapChainDesc);
+	SwapChain::SwapChain(APIInstance* pAPI, IDirect3DSwapChain9* swapChain, ::DepthStencil* dsSurface, const RenderAPI::SwapChainDesc & swapChainDesc);
 
 	~SwapChain();
 
@@ -25,16 +25,16 @@ public:
 
 	virtual RenderAPI::DeviceState Present();
 
-	virtual void Release();
+	virtual unsigned int AddReference();
 
-	void AddRef();
+	virtual void Release();
 
 	void ReleaseSurfaceWhenLost();
 
 	void ResetBackBuffers(unsigned int width, unsigned int height, RenderAPI::RenderTargetFormat rtFormat, RenderAPI::DepthStencilFormat dsFormat, IDirect3DSurface9* pDSSurafce);
 
 private:
-	void InitRenderTarget(IDirect3DSwapChain9* swapChain, RenderAPI::RenderTargetFormat format, unsigned int width, unsigned int height);
+	void InitRenderTarget(APIInstance* pAPI, IDirect3DSwapChain9* swapChain, RenderAPI::RenderTargetFormat format, unsigned int width, unsigned int height);
 
 	RefCount m_refCount;
 	bool m_isFullscreen;

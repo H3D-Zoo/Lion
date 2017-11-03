@@ -157,6 +157,8 @@ public:
 
 	virtual RenderAPI::ContextLegacy* GetContextLegacy();
 
+	virtual unsigned int AddReference();
+
 	virtual void Release();
 
 	// Context Legacy
@@ -211,10 +213,10 @@ public:
 	inline IDirect3DDevice9* GetDevicePtr() { return m_pDevice; }
 
 private:
-	bool CopyTexture(IDirect3DTexture9* pSource, IDirect3DTexture9* pDest, unsigned int lines);
 
 	void InitDeviceCaps(const D3DCAPS9& d3dcaps);
 	
+	RefCount m_refCount;
 	APIInstance* m_pAPI;
 	FXStateManager m_renderStateManager;
 	IDirect3DDevice9* m_pDevice;

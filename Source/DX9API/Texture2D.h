@@ -22,9 +22,9 @@ public:
 
 	virtual bool SaveToFile(const char* fileName, RenderAPI::ImageFormat format);
 
-	virtual void Release();
+	virtual unsigned int AddReference();
 
-	void AddRef();
+	virtual void Release();
 
 	IDirect3DSurface9* GetD3DTextureSurfacePtr();
 
@@ -59,7 +59,7 @@ public:
 
 	virtual void GenerateMipmaps();
 	
-	RenderAPI::TextureSurface* GetSurface(unsigned int index);
+	virtual RenderAPI::TextureSurface* GetSurface(unsigned int index);
 
 	virtual unsigned int GetLayerCount() const;
 
@@ -77,7 +77,7 @@ public:
 
 	virtual void Resize(unsigned int width, unsigned int height);
 
-	void AddRef();
+	virtual unsigned int AddReference();
 
 	IDirect3DTexture9* GetD3DTexture();
 
@@ -122,11 +122,11 @@ public:
 
 	virtual void Resize(unsigned int width, unsigned int height);
 
+private:
 	IDirect3DTexture9* GetCopiedSystemTexture();
 
 	void ReleaseCopiedSystemTexture();
 
-private:
 	IDirect3DTexture9* m_pTempTextureForCopy;
 };
 
@@ -155,4 +155,72 @@ private:
 	IDirect3DTexture9* m_pTempTextureForUpdate;
 	
 	unsigned int m_lockLayerBits;
+};
+
+//为了保证上层接口的方便易用性，我们专门提供了一个为RenderTarget使用的Texture
+//这个Texture除了获取Surface0，其他的操作都会失败。
+//上层不会饱受 if-else的困扰
+class RenderSurface2D : public RenderAPI::Texture2D, public ::TextureSurface
+{
+public:
+	RenderSurface2D(APIInstance* pAPIInstance, IDirect3DSurface9* pSurface, RenderAPI::TextureFormat format, unsigned int width, unsigned int height);
+
+	~RenderSurface2D();
+
+	//Texture
+	virtual RenderAPI::TextureFormat GetFormat() const { return m_texFormat; }
+
+	virtual void GenerateMipmaps() { }
+
+	virtual bool AutoGenMipmaps() const { return false; }
+
+	virtual bool IsCubemap() const { return false; }
+
+	virtual bool NeedRecreateWhenDeviceLost() const { return false; }
+
+	virtual void SetMipmapGenerateFilter(RenderAPI::SamplerFilter filter) { }
+	
+	virtual unsigned int GetLength()const { return 0; }
+
+	//Texture2D
+	virtual unsigned int GetWidth() const { return m_texWidth; }
+
+	virtual unsigned int GetHeight() const{ return m_texHeight; }
+
+	virtual RenderAPI::MappedResource LockRect(unsigned int layer, RenderAPI::LockOption lockOption);
+
+	virtual void UnlockRect(unsigned int layer);
+
+	virtual unsigned int GetLayerCount() const { return 1; }
+
+	virtual RenderAPI::TextureSurface* GetSurface(unsigned int layer);
+
+	virtual bool IsRenderTexture() const { return true; }
+
+	virtual bool RenderAPI::Texture2D::SaveToFile(const char* fileName, RenderAPI::ImageFormat format)
+	{
+		return TextureSurface::SaveToFile(fileName, format);
+	}
+
+	virtual unsigned int RenderAPI::Texture2D::AddReference()
+	{
+		return TextureSurface::AddReference();
+	}
+
+	virtual void RenderAPI::Texture2D::Release()
+	{
+		TextureSurface::Release();
+	}
+
+private:
+	IDirect3DTexture9* GetCopiedSystemTexture();
+
+	void ReleaseCopiedSystemTexture();
+
+	APIInstance* m_pAPIInstance;
+	IDirect3DTexture9* m_pTempTextureForCopy;
+
+	const RenderAPI::TextureFormat m_texFormat;
+	unsigned int m_texWidth;
+	unsigned int m_texHeight;
 };

@@ -26,7 +26,15 @@ bool OcclusionQuery::Get(void * dataPtr, unsigned int length)
 	return S_OK == m_pOcclusionQuery->GetData(dataPtr, length, D3DGETDATA_FLUSH);
 }
 
+unsigned int OcclusionQuery::AddReference()
+{
+	return ++m_refCount;
+}
+
 void OcclusionQuery::Release()
 {
-	delete this;
+	if (0 == --m_refCount)
+	{
+		delete this;
+	}
 }
