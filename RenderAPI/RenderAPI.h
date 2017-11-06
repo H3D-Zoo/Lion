@@ -1010,6 +1010,8 @@ namespace RenderAPI
 
 		virtual Texture2D* CreateTexture2D(ResourceUsage usage, TextureFormat format, unsigned int width, unsigned int height, unsigned int layer, bool autoGenMipmaps) = 0;
 
+		virtual RenderAPI::Texture2D* CreateScaledTexture2D(RenderAPI::ResourceUsage usage, unsigned int width, unsigned int height, char* fileBuffer, unsigned int fileLengh) = 0;
+
 		virtual TextureCube* CreateTextureCube(ResourceUsage usage, TextureFormat format, unsigned int edgeLength, unsigned int layer, bool autoGenMipmaps) = 0;
 
 		virtual FXEffect* CreateFXEffectFromFile(const char* effectFilePath, const char * includeDir) = 0;

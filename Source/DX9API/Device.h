@@ -30,6 +30,8 @@ public:
 
 	virtual RenderAPI::Texture2D* CreateTexture2D(RenderAPI::ResourceUsage usage, RenderAPI::TextureFormat format, unsigned int width, unsigned int height, unsigned int layer, bool autoGenMipmaps);
 
+	virtual RenderAPI::Texture2D* CreateScaledTexture2D(RenderAPI::ResourceUsage usage, unsigned int width, unsigned int height, char* fileBuffer, unsigned int fileLengh);
+
 	virtual RenderAPI::TextureCube* CreateTextureCube(RenderAPI::ResourceUsage usage, RenderAPI::TextureFormat format, unsigned int edgeLength, unsigned int layer, bool autoGenMipmaps);
 
 	virtual RenderAPI::FXEffect* CreateFXEffectFromFile(const char* effectFilePath, const char * includeDir);

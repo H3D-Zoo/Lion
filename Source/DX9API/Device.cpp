@@ -62,6 +62,26 @@ namespace
 		D3DDECLUSAGE_BLENDWEIGHT,
 		D3DDECLUSAGE_BLENDINDICES
 	};
+
+	RenderAPI::TextureFormat GetRenderAPIFormat(D3DFORMAT fmt)
+	{
+		switch (fmt)
+		{
+		default:					return RenderAPI::TEX_Unknown;
+		case D3DFMT_A8R8G8B8:		return RenderAPI::TEX_ARGB;
+		case D3DFMT_X8R8G8B8:		return RenderAPI::TEX_XRGB;
+		case D3DFMT_DXT1:			return RenderAPI::TEX_DXT1;
+		case D3DFMT_DXT3:			return RenderAPI::TEX_DXT3;
+		case D3DFMT_DXT5:			return RenderAPI::TEX_DXT5;
+		case D3DFMT_D24S8:			return RenderAPI::TEX_D24S8;
+		case D3DFMT_D24X8:			return RenderAPI::TEX_D24X8;
+		case D3DFMT_D32:			return RenderAPI::TEX_D32;
+		case D3DFMT_D16:			return RenderAPI::TEX_D16;
+		case D3DFMT_R32F:			return RenderAPI::TEX_R32F;
+		case D3DFMT_G32R32F:		return RenderAPI::TEX_RG32F;
+		case D3DFMT_A32B32G32R32F:	return RenderAPI::TEX_ARGB32F;
+		};
+	}
 }
 
 Device::Device(APIInstance* pAPI, IDirect3DDevice9* device, const RenderAPI::SwapChainDesc & desc, bool isFullscreen, bool useVerticalSync)
@@ -429,6 +449,61 @@ RenderAPI::Texture2D * Device::CreateTexture2D(RenderAPI::ResourceUsage usage, R
 		texture = new ::NoLockableTexture2D(m_pAPIInstance, pTexture, format, usage, managed, width, height, autoGenMipmaps);
 	}
 	return texture;
+}
+
+RenderAPI::Texture2D * Device::CreateScaledTexture2D(RenderAPI::ResourceUsage usage, unsigned int width, unsigned int height, char* fileBuffer, unsigned int fileLengh)
+{
+	if (width == 0 || height == 0)
+	{
+		m_pAPIInstance->LogError("CreateTexture", "Width and Height cannot be 0.");
+		return NULL;
+	}
+
+	bool managed = m_pAPIInstance->IsSupportManaged();
+	bool dynamic = m_notSupportDynamicTexture;
+	FormatUsage(usage, dynamic, managed);
+
+	unsigned int d3dUsage = dynamic ? D3DUSAGE_DYNAMIC : 0;
+	D3DPOOL d3dPool = managed ? D3DPOOL_MANAGED : D3DPOOL_DEFAULT;
+
+	D3DXIMAGE_INFO info;
+	info.Width = width;
+	info.Height = height;
+	info.Depth = 1;
+	info.MipLevels = 1;
+
+	IDirect3DTexture9* pTexture = NULL;
+	HRESULT hr = D3DXCreateTextureFromFileInMemoryEx(m_pDevice,
+		fileBuffer, fileLengh,
+		width, height, 1,
+		d3dUsage, D3DFMT_FROM_FILE, d3dPool,
+		D3DX_DEFAULT, D3DX_DEFAULT,
+		0x00000000,		//no color key
+		&info,			//Pointer to a D3DXIMAGE_INFO structure 
+		NULL,			//Pointer to a PALETTEENTRY structure
+		&pTexture);
+
+	if (hr == S_OK)
+	{
+		::Texture2D* texture = NULL;
+
+		//Textures created with D3DPOOL_DEFAULT are not lockable.
+		//Textures created in video memory are lockable when created with USAGE_DYNAMIC.
+		//D3DLOCK_DISCARD, is only valid when the resource is created with USAGE_DYNAMIC.
+		if (dynamic || managed)
+		{
+			texture = new ::Texture2D(m_pAPIInstance, pTexture, GetRenderAPIFormat(info.Format), usage, managed, info.Width, info.Height, false);
+		}
+		else
+		{
+			texture = new ::NoLockableTexture2D(m_pAPIInstance, pTexture, GetRenderAPIFormat(info.Format), usage, managed, info.Width, info.Height, false);
+		}
+		return texture;
+	}
+	else
+	{
+		return NULL;
+	}
 }
 
 
