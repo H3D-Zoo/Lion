@@ -138,14 +138,16 @@ RenderAPI::TextureSurface* Texture2D::GetSurface(unsigned int index)
 {
 	if (m_surfaces.size() <= index)
 	{
-		m_surfaces.resize(index + 1);
+		size_t oldSize = m_surfaces.size();
+		size_t newSize = index + 1;
+		m_surfaces.resize(newSize);
+		for (size_t i = oldSize; i < newSize; i++)
+		{
+			m_surfaces[i] = NULL;
+		}
 	}
 
-	if (m_surfaces[index] != NULL)
-	{
-		return m_surfaces[index];
-	}
-	else
+	if (m_surfaces[index] == NULL)
 	{
 		IDirect3DSurface9* pSurface = NULL;
 		if (S_OK == m_pTexture->GetSurfaceLevel(index, &pSurface))
