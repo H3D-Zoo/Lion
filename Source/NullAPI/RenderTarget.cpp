@@ -1,35 +1,34 @@
 #include "RenderTarget.h"
-#include <stdlib.h>
-#include "Texture2D.h"
 
-namespace
-{
-	RenderAPI::TextureFormat s_rtTexFormats[] =
-	{
-		RenderAPI::TEX_XRGB,
-		RenderAPI::TEX_ARGB,
-	};
-}
-
-RenderTarget::RenderTarget(RenderAPI::RenderTargetFormat format, unsigned int width, unsigned int height, bool isTexture)
+RenderTarget::RenderTarget(APIInstance* pAPI, IDirect3DSurface9* rtSurface, RenderAPI::RenderTargetFormat format, unsigned int width, unsigned int height)
 	: m_format(format)
 	, m_width(width)
 	, m_height(height)
-	, m_texture(NULL)
+	, m_rtSurface(rtSurface)
+	, m_rtTexture(NULL)
 {
-	if (isTexture)
-	{
-		m_texture = new ::Texture2D(s_rtTexFormats[format], RenderAPI::RESUSAGE_Default, width, height);
-	}
+	RenderAPI::TextureFormat texFormat = (format == RenderAPI::RT_ARGB8) ? RenderAPI::TEX_ARGB : RenderAPI::TEX_XRGB;
+	m_rtTexture = new RenderSurface2D(pAPI, rtSurface, texFormat, width, height);
+}
+
+RenderTarget::RenderTarget(APIInstance* pAPI, IDirect3DTexture9* rtTexture, RenderAPI::TextureFormat format, unsigned int width, unsigned int height)
+	: m_format(RenderAPI::RT_RenderTexture)
+	, m_width(width)
+	, m_height(height)
+	, m_rtSurface(NULL)
+	, m_rtTexture(NULL)
+{
+	rtTexture->GetSurfaceLevel(0, &m_rtSurface);
+	m_rtTexture = new RenderTexture2D(pAPI, rtTexture, format, RenderAPI::RESUSAGE_StaticWO, width, height);
 }
 
 RenderTarget::~RenderTarget()
 {
-	if (m_texture != NULL)
-	{
-		m_texture->Release();
-		m_texture = NULL;
-	}
+	m_rtSurface->Release();
+	m_rtSurface = NULL;
+
+	m_rtTexture->Release();
+	m_rtTexture = NULL;
 }
 
 RenderAPI::RenderTargetFormat RenderTarget::GetFormat() const
@@ -47,31 +46,48 @@ unsigned int RenderTarget::GetHeight() const
 	return m_height;
 }
 
-bool RenderTarget::IsTexture2D() const
+RenderAPI::Texture2D* RenderTarget::GetTexturePtr()
 {
-	return m_texture != NULL;
-}
-
-RenderAPI::Texture2D * RenderTarget::GetTexturePtr()
-{
-	return m_texture;
+	if (m_rtTexture != NULL)
+	{
+		m_rtTexture->AddReference();
+	}
+	return m_rtTexture;
 }
 
 void RenderTarget::Release()
 {
-	if (--m_refCount)
+	if (0 == --m_refCount)
 	{
 		delete this;
 	}
 }
 
-void RenderTarget::AddRef()
+unsigned int RenderTarget::AddReference()
 {
-	++m_refCount;
+	return ++m_refCount;
 }
 
 void RenderTarget::Resize(unsigned int width, unsigned int height)
 {
 	m_width = width;
 	m_height = height;
+}
+
+void RenderTarget::ReleaseWhenDeviceLost()
+{
+	m_rtSurface->Release();
+	m_rtSurface = NULL;
+}
+
+void RenderTarget::Reset(unsigned int width, unsigned int height, RenderAPI::RenderTargetFormat rtFormat, IDirect3DSurface9 * pSurface)
+{
+	Resize(width, height);
+	m_format = rtFormat;
+	m_rtSurface = pSurface;
+}
+
+IDirect3DSurface9 * RenderTarget::GetD3DSurface() const 
+{
+	return m_rtSurface;
 }

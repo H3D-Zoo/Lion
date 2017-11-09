@@ -1,39 +1,51 @@
 #include "SwapChain.h"
+#include "EnumMapping.h"
 
-SwapChain::SwapChain(const RenderAPI::SwapChainDesc & swapChainDesc)
-	: m_renderTarget(swapChainDesc.backbufferFormat, swapChainDesc.backbufferWidth, swapChainDesc.backbufferHeight, false)
-	, m_depthStencil(swapChainDesc.zbufferFormat, swapChainDesc.backbufferWidth, swapChainDesc.backbufferHeight, false)
+SwapChain::SwapChain(APIInstance* pAPI, IDirect3DSwapChain9* swapChain, ::DepthStencil* dsSurface, const RenderAPI::SwapChainDesc & swapChainDesc)
+	: m_pRenderTarget(NULL)
+	, m_pDepthStencil(dsSurface)
+	, m_pSwapChain(swapChain)
 {
+	InitRenderTarget(pAPI, swapChain, swapChainDesc.backbufferFormat, swapChainDesc.backbufferWidth, swapChainDesc.backbufferHeight);
+}
 
+SwapChain::~SwapChain()
+{
+	m_pDepthStencil->Release();
+	m_pRenderTarget->Release();
+	m_pSwapChain->Release();
+	m_pDepthStencil = NULL;
+	m_pRenderTarget = NULL;
+	m_pSwapChain = NULL;
 }
 
 RenderAPI::RenderTarget* SwapChain::GetRenderTarget()
 {
-	m_renderTarget.AddRef();
-	return &m_renderTarget;
+	m_pRenderTarget->AddReference();
+	return m_pRenderTarget;
 }
 
-RenderAPI::DepthStencil * SwapChain::GetDepthStencil()
+RenderAPI::DepthStencil* SwapChain::GetDepthStencil()
 {
-	m_depthStencil.AddRef();
-	return &m_depthStencil;
+	m_pDepthStencil->AddReference();
+	return m_pDepthStencil;
 }
 
 unsigned int SwapChain::GetWidth() const
 {
-	return m_renderTarget.GetWidth();
+	return m_pRenderTarget->GetWidth();
 }
 
 unsigned int SwapChain::GetHeight() const
 {
-	return m_renderTarget.GetHeight();
+	return m_pRenderTarget->GetHeight();
 }
 
 bool SwapChain::OnResize(unsigned int width, unsigned int height)
 {
 	if (width > 0 && height > 0)
 	{
-		m_renderTarget.Resize(width, height);
+		m_pRenderTarget->Resize(width, height);
 		return true;
 	}
 	else
@@ -44,18 +56,43 @@ bool SwapChain::OnResize(unsigned int width, unsigned int height)
 
 RenderAPI::DeviceState SwapChain::Present()
 {
-	return RenderAPI::DEVICE_OK;
+	// possible return values should be D3D_OK or D3DERR_DEVICEREMOVED
+	// if D3DERR_DEVICEREMOVED is returned, we should recreate D3DDevice.
+	// but it seems be occured in device9ex situation.
+	HRESULT hr = m_pSwapChain->Present(NULL, NULL, NULL, NULL, NULL);
+	return DeviceStateMapping(hr);
+}
+
+unsigned int SwapChain::AddReference()
+{
+	return ++m_refCount;
 }
 
 void SwapChain::Release()
 {
-	if (--m_refCount == 0)
+	if (0 == --m_refCount)
 	{
 		delete this;
 	}
 }
 
-void SwapChain::AddRef()
+void SwapChain::ReleaseSurfaceWhenLost()
 {
-	++m_refCount;
+	m_pRenderTarget->ReleaseWhenDeviceLost();
+	m_pDepthStencil->ReleaseWhenDeviceLost();
+}
+
+void SwapChain::ResetBackBuffers(unsigned int width, unsigned int height, RenderAPI::RenderTargetFormat rtFormat, RenderAPI::DepthStencilFormat dsFormat, IDirect3DSurface9* pDSSurafce)
+{
+	IDirect3DSurface9* pBackBuffer = NULL;
+	m_pSwapChain->GetBackBuffer(0, D3DBACKBUFFER_TYPE_MONO, &pBackBuffer);
+	m_pRenderTarget->Reset(width, height, rtFormat, pBackBuffer);
+	m_pDepthStencil->Reset(width, height, dsFormat, pDSSurafce);
+}
+
+void SwapChain::InitRenderTarget(APIInstance* pAPI, IDirect3DSwapChain9 * swapChain, RenderAPI::RenderTargetFormat format, unsigned int width, unsigned int height)
+{
+	IDirect3DSurface9* pBackBuffer = NULL;
+	m_pSwapChain->GetBackBuffer(0, D3DBACKBUFFER_TYPE_MONO, &pBackBuffer);
+	m_pRenderTarget = new ::RenderTarget(pAPI, pBackBuffer, format, width, height);
 }

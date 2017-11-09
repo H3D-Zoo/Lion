@@ -1,12 +1,15 @@
 #pragma once
 #include "../../RenderAPI/RenderAPI.h"
-
 #include <vector>
+#include "APIInstance.h"
+#include "DX9Include.h"
 
 class VertexBuffer : public RenderAPI::VertexBuffer
 {
 public:
-	VertexBuffer(RenderAPI::ResourceUsage usage, unsigned int vertexCount, unsigned int vertexSize);
+	VertexBuffer(APIInstance* pAPIInstance, IDirect3DVertexBuffer9* vertexBuffer, RenderAPI::ResourceUsage usage, bool isManaged, unsigned int vertexCount, unsigned int vertexSize);
+
+	~VertexBuffer();
 
 	virtual RenderAPI::ResourceUsage GetUsage() const;
 
@@ -18,17 +21,29 @@ public:
 
 	virtual void* Lock(unsigned int offset, unsigned int lockLength, RenderAPI::LockOption lockOption);
 
-	virtual void* DiscardLock();
+	virtual void* LockAll(RenderAPI::LockOption lockOption);
 
 	virtual void Unlock();
+	
+	virtual bool NeedRecreateWhenDeviceLost() const;
 
-	virtual bool NeedRecreateWhenDeviceLost();
+	virtual unsigned int AddReference();
 
 	virtual void Release();
 
+	IDirect3DVertexBuffer9* GetBufferPtr();
+
+	bool IsDynamic() {return m_isDynamic;}
+
 private:
+	RefCount m_refCount;
+	APIInstance* m_pAPIInstance;
 	RenderAPI::ResourceUsage m_usage;
+	const bool m_isManaged;
+	const bool m_isDynamic;
+	const bool m_writeOnly;
 	unsigned int m_vertexCount;
 	unsigned int m_vertexStride;
 	unsigned int m_bufferLength;
+	IDirect3DVertexBuffer9* m_pVertexBuffer;
 };

@@ -1,8 +1,14 @@
 #include "VertexDeclaration.h"
 
-VertexDeclaration::VertexDeclaration(const RenderAPI::VertexElement* elements, unsigned int elementCount)
-	: m_vertexElements(elements, elements + elementCount)
+VertexDeclaration::VertexDeclaration(IDirect3DVertexDeclaration9* pDeclaration, const std::vector<RenderAPI::VertexElement>& elements)
+	: m_vertexElements(elements)
+	, m_pDeclaration(pDeclaration)
 {
+}
+
+VertexDeclaration::~VertexDeclaration()
+{
+	m_pDeclaration->Release();
 }
 
 const RenderAPI::VertexElement * VertexDeclaration::GetElements() const
@@ -15,7 +21,20 @@ unsigned int VertexDeclaration::GetElementCount() const
 	return m_vertexElements.size();;
 }
 
+IDirect3DVertexDeclaration9 * VertexDeclaration::GetD3DVertexDeclarationPtr()
+{
+	return m_pDeclaration;
+}
+
+unsigned int VertexDeclaration::AddReference()
+{
+	return ++m_refCount;
+}
+
 void VertexDeclaration::Release()
 {
-	delete this;
+	if (0 == --m_refCount)
+	{
+		delete this;
+	}
 }

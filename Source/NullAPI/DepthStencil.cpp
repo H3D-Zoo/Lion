@@ -1,36 +1,18 @@
 #include "DepthStencil.h"
-#include <stdlib.h>
-#include "Texture2D.h"
 
-namespace
-{
-	RenderAPI::TextureFormat s_dsTexFormats[] =
-	{
-		RenderAPI::TEX_D24S8,
-		RenderAPI::TEX_D24X8,
-		RenderAPI::TEX_D16,
-	};
-}
-
-DepthStencil::DepthStencil(RenderAPI::DepthStencilFormat format, unsigned int width, unsigned int height, bool isTexture)
+DepthStencil::DepthStencil(IDirect3DSurface9* dsSurface, RenderAPI::DepthStencilFormat format, unsigned int width, unsigned int height)
 	: m_format(format)
 	, m_width(width)
 	, m_height(height)
-	, m_texture(NULL)
+	, m_dsSurface(dsSurface)
 {
-	if (isTexture)
-	{
-		m_texture = new ::Texture2D(s_dsTexFormats[format], RenderAPI::RESUSAGE_Default, width, height);
-	}
+
 }
 
 DepthStencil::~DepthStencil()
 {
-	if (m_texture != NULL)
-	{
-		m_texture->Release();
-		m_texture = NULL;
-	}
+	m_dsSurface->Release();
+	m_dsSurface = NULL;
 }
 
 RenderAPI::DepthStencilFormat DepthStencil::GetFormat() const
@@ -48,25 +30,35 @@ unsigned int DepthStencil::GetHeight() const
 	return m_height;
 }
 
-bool DepthStencil::IsTexture2D() const
+unsigned DepthStencil::AddReference()
 {
-	return m_texture != NULL;
-}
-
-RenderAPI::Texture2D * DepthStencil::GetTexturePtr()
-{
-	return m_texture;
+	return ++m_refCount;
 }
 
 void DepthStencil::Release()
 {
-	if (--m_refCount)
+	if (0 == --m_refCount)
 	{
 		delete this;
 	}
 }
 
-void DepthStencil::AddRef()
+void DepthStencil::ReleaseWhenDeviceLost()
 {
-	++m_refCount;
+	m_dsSurface->Release();
+	m_dsSurface = NULL;
+}
+
+void DepthStencil::Reset(unsigned int width, unsigned int height, RenderAPI::DepthStencilFormat dsFormat, IDirect3DSurface9 * pSurface)
+{
+	m_width = width;
+	m_height = height;
+	m_format = dsFormat;
+	// 这时候应该是被释放状态	
+	m_dsSurface = pSurface;
+}
+
+IDirect3DSurface9 * DepthStencil::GetD3DSurface() const
+{
+	return m_dsSurface;
 }
