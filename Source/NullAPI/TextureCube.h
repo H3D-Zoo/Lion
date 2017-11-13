@@ -1,8 +1,7 @@
 #pragma once
-#include "../../RenderAPI/RenderAPI.h"
 #include <vector>
+#include "../../RenderAPI/RenderAPI.h"
 #include "APIInstance.h"
-#include "DX9Include.h"
 #include "RefCount.hpp"
 
 class RenderTarget;
@@ -11,10 +10,8 @@ class DepthStencil;
 class TextureCube : public RenderAPI::TextureCube
 {
 public:
-	TextureCube(APIInstance* pAPIInstance, IDirect3DCubeTexture9* texture, RenderAPI::TextureFormat format, RenderAPI::ResourceUsage usage, bool isManaged, unsigned int edgeLength, bool autoGenMipmaps);
-
-	~TextureCube();
-
+	TextureCube(RenderAPI::TextureFormat format, RenderAPI::ResourceUsage usage, unsigned int edgeLength, bool autoGenMipmaps);
+	
 	virtual RenderAPI::TextureFormat GetFormat() const;
 
 	virtual unsigned int GetLength() const;
@@ -39,18 +36,16 @@ public:
 
 	virtual void Release();
 
-	IDirect3DCubeTexture9* GetD3DTexture();
-
 	unsigned int ClearStamp;
 
 private:
 	RefCount m_refCount;
-	APIInstance* m_pAPIInstance;
-	RenderAPI::ResourceUsage m_usage;
-	RenderAPI::TextureFormat m_texFormat;
+	const RenderAPI::ResourceUsage m_usage;
+	const RenderAPI::TextureFormat m_texFormat;
 	const bool m_autoGenMipmaps;
 	const bool m_isManaged;
 	const bool m_isDynamic;
-	IDirect3DCubeTexture9* m_pTexture;
-	unsigned int m_texEdgeLength;
+	const unsigned int m_texEdgeLength;
+
+	std::vector<char> m_faceBuffer;
 };

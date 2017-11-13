@@ -4,7 +4,6 @@ set(THIS_TARGET nullrenderer)
 set(DIR_COMMON ../Common)
 
 include_directories(
-	../DXSDK/Include/
 	${DIR_COMMON}/
 )
 
@@ -24,9 +23,7 @@ set(RENDERAPI_INCLUDE_FILES
 )
 
 set(RENDERAPI_IMPL_INCLUDE_FILES
-	./DX9Include.h
 	./AutoPtr.hpp
-	./EnumMapping.h
 	./APIInstance.h
 	./Device.h
 	./Context.h
@@ -46,7 +43,6 @@ set(RENDERAPI_IMPL_INCLUDE_FILES
 )
 
 set(RENDERAPI_IMPL_SOURCE_FILES
-	./EnumMapping.cpp
 	./APIInstance.cpp
 	./Device.cpp
 	./Context.cpp
@@ -58,11 +54,8 @@ set(RENDERAPI_IMPL_SOURCE_FILES
 	./IndexBuffer.cpp
 	./VertexDeclaration.cpp
 	./Texture2D.cpp
-	./RenderTexture2D.cpp
-	./NoLockableTexture2D.cpp
 	./TextureCube.cpp
 	./FXEffect.cpp
-	./StateManager.cpp
 	./OcclusionQuery.cpp
 	./TextBox.cpp
 	./RenderStatistic.cpp
@@ -80,9 +73,7 @@ list(APPEND ${THIS_TARGET}_SOURCE_FILES
 	${RENDERAPI_SOURCE_FILES_COMMON}
 )
 
-link_directories(../DXSDK/Lib/x86)
 add_library(${THIS_TARGET} SHARED ${${THIS_TARGET}_SOURCE_FILES})
-target_link_libraries(${THIS_TARGET} d3dx9.lib dxguid.lib)
 
 set_target_properties( ${THIS_TARGET} PROPERTIES OUTPUT_NAME_DEBUG "${THIS_TARGET}_d")
 set_target_properties( ${THIS_TARGET} PROPERTIES OUTPUT_NAME_RELEASE "${THIS_TARGET}")

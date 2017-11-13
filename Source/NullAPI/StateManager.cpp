@@ -1,5 +1,4 @@
 #include "StateManager.h"
-#include "EnumMapping.h"
 #include "Context.h"
 
 FXStateManager::FXStateManager(IDirect3DDevice9 * pDevice, RenderStatistic& pRenderStatisticsData) : StateManager(pDevice, pRenderStatisticsData)

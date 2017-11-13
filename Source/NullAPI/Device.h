@@ -3,20 +3,16 @@
 #include "../../RenderAPI/RenderAPI.h"
 #include "SwapChain.h"
 #include "DepthStencil.h"
-#include "DX9Include.h"
+
 #include "RenderStatistic.h"
 
 class APIInstance;
 class Device : public RenderAPI::Device
 {
 public:
-	Device(APIInstance* pAPIContext, IDirect3DDevice9* device, const RenderAPI::SwapChainDesc& desc, bool isFullscreen, bool useVerticalSync);
+	Device(APIInstance& api, const RenderAPI::SwapChainDesc& desc, bool isFullscreen, bool useVerticalSync);
 
 	~Device();
-
-	void ReleaseDefaultSwapChainWhenLost();
-
-	void ResetDefaultBackBuffer(unsigned int width, unsigned int height, RenderAPI::RenderTargetFormat rtFormat, RenderAPI::DepthStencilFormat dsFormat);
 
 	virtual RenderAPI::SwapChain* GetDefaultSwapChain();
 
@@ -50,9 +46,6 @@ public:
 
 private:
 	RefCount m_refCount;
-	APIInstance* m_pAPIInstance;
-	::DepthStencil* CreateDepthStencilImplement(RenderAPI::DepthStencilFormat format, unsigned int width, unsigned int height);
+	APIInstance& m_apiInstance;
 	::SwapChain* m_pDefaultSwapChain;
-	IDirect3DDevice9* m_pDevice;
-	bool m_notSupportDynamicTexture;
 };

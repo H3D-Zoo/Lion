@@ -1,7 +1,6 @@
 #include "Texture2D.h"
 #include "RenderTarget.h"
 #include "DepthStencil.h"
-#include "EnumMapping.h"
 #include "APIInstance.h"
 #include "Context.h"
 

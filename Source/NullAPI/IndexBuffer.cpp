@@ -1,23 +1,23 @@
 #include "IndexBuffer.h"
-#include "EnumMapping.h"
 
-IndexBuffer::IndexBuffer(APIInstance* pAPI, IDirect3DIndexBuffer9* indexBuffer, RenderAPI::ResourceUsage usage, RenderAPI::IndexFormat format, bool isManaged, unsigned int count)
-	: m_pAPIInstance(pAPI)
-	, m_usage(usage)
+const unsigned int kIndexLengthCount = 2;
+unsigned int s_IndexLengths[kIndexLengthCount] =
+{
+	sizeof(unsigned short),
+	sizeof(unsigned int),
+};
+
+IndexBuffer::IndexBuffer(RenderAPI::ResourceUsage usage, RenderAPI::IndexFormat format, unsigned int count)
+	: m_usage(usage)
 	, m_indexFormat(format)
-	, m_isManaged(isManaged)
+	, m_isManaged(usage == RenderAPI::RESUSAGE_DynamicManaged || usage == RenderAPI::RESUSAGE_StaticManaged || usage == RenderAPI::RESUSAGE_StaticWOManaged)
 	, m_isDynamic(usage == RenderAPI::RESUSAGE_Dynamic || usage == RenderAPI::RESUSAGE_DynamicManaged)
 	, m_writeOnly(!(usage == RenderAPI::RESUSAGE_StaticManaged || usage == RenderAPI::RESUSAGE_Static))
 	, m_indexCount(count)
-	, m_pIndexBuffer(indexBuffer)
+	, m_bufferLength(s_IndexLengths[format] * count)
 {
-	m_bufferLength = s_IndexLengths[format] * m_indexCount;
-}
 
-IndexBuffer::~IndexBuffer()
-{
-	m_pIndexBuffer->Release();
-	m_pIndexBuffer = NULL;
+	m_buffer.resize(m_bufferLength);
 }
 
 RenderAPI::ResourceUsage IndexBuffer::GetUsage() const
@@ -45,36 +45,25 @@ bool IndexBuffer::NeedRecreateWhenDeviceLost() const
 	return !m_isManaged;
 }
 
-IDirect3DIndexBuffer9 * IndexBuffer::GetD3DIndexBuffer()
-{
-	return m_pIndexBuffer;
-}
 void * IndexBuffer::Lock(unsigned int offset, unsigned int lockLength, RenderAPI::LockOption lockOption)
 {
 	if (m_writeOnly && lockOption == RenderAPI::LOCK_ReadOnly)
 	{
 		return NULL;
 	}
-	else if (lockOption == RenderAPI::LOCK_NoOverWrite || lockOption == RenderAPI::LOCK_Discard)
-	{
-		//The D3DLOCK_DISCARD and D3DLOCK_NOOVERWRITE flags are valid only 
-		//on buffers created with D3DUSAGE_DYNAMIC.
-		if (!m_isDynamic)
-		{
-			lockOption = RenderAPI::LOCK_Normal;
-		}
-	}
-
-	void* pDataPtr = NULL;
-	HRESULT hr = m_pIndexBuffer->Lock(offset, lockLength, &pDataPtr, s_lockOptions[lockOption]);
-	if (S_OK == hr)
-	{
-		return pDataPtr;
-	}
 	else
 	{
-		m_pAPIInstance->LogError("IndexBuffer::Lock", "IndexBuffer Cannot be locked.", hr);
-		return NULL;
+		if (lockOption == RenderAPI::LOCK_NoOverWrite || lockOption == RenderAPI::LOCK_Discard)
+		{
+			//The D3DLOCK_DISCARD and D3DLOCK_NOOVERWRITE flags are valid only 
+			//on buffers created with D3DUSAGE_DYNAMIC.
+			if (!m_isDynamic)
+			{
+				lockOption = RenderAPI::LOCK_Normal;
+			}
+		}
+
+		return &(m_buffer[0]);
 	}
 }
 
@@ -85,7 +74,7 @@ void* IndexBuffer::LockAll(RenderAPI::LockOption lockOption)
 
 void IndexBuffer::Unlock()
 {
-	m_pIndexBuffer->Unlock();
+
 }
 
 unsigned int IndexBuffer::AddReference()

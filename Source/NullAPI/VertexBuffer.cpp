@@ -1,24 +1,18 @@
 #include "VertexBuffer.h"
-#include "EnumMapping.h"
 
-VertexBuffer::VertexBuffer(APIInstance* pAPIInstance, IDirect3DVertexBuffer9* vertexBuffer, RenderAPI::ResourceUsage usage, bool isManaged, unsigned int vertexCount, unsigned int vertexSize)
-	: m_pAPIInstance(pAPIInstance)
+VertexBuffer::VertexBuffer(RenderAPI::ResourceUsage usage, unsigned int vertexCount, unsigned int vertexSize, IInternalLogger& logger)
+	: m_internalLogger(logger)
 	, m_usage(usage)
-	, m_isManaged(isManaged)
+	, m_isManaged(usage == RenderAPI::RESUSAGE_DynamicManaged || usage == RenderAPI::RESUSAGE_StaticManaged || usage == RenderAPI::RESUSAGE_StaticWOManaged)
 	, m_isDynamic(usage == RenderAPI::RESUSAGE_Dynamic || usage == RenderAPI::RESUSAGE_DynamicManaged)
 	, m_writeOnly(!(usage == RenderAPI::RESUSAGE_StaticManaged || usage == RenderAPI::RESUSAGE_Static))
 	, m_vertexCount(vertexCount)
 	, m_vertexStride(vertexSize)
 	, m_bufferLength(vertexCount * vertexSize)
-	, m_pVertexBuffer(vertexBuffer)
 {
+	m_buffer.resize(m_bufferLength);
 }
 
-VertexBuffer::~VertexBuffer()
-{
-	m_pVertexBuffer->Release();
-	m_pVertexBuffer = NULL;
-}
 
 RenderAPI::ResourceUsage VertexBuffer::GetUsage() const
 {
@@ -42,30 +36,15 @@ unsigned int VertexBuffer::GetLength() const
 
 void * VertexBuffer::Lock(unsigned int offset, unsigned int lockLength, RenderAPI::LockOption lockOption)
 {
+
 	if (m_writeOnly && lockOption == RenderAPI::LOCK_ReadOnly)
 	{
+		m_internalLogger.LogError("VertexBuffer::Lock", "Can not lock write-only buffer.");
 		return NULL;
-	}
-	else if (lockOption == RenderAPI::LOCK_NoOverWrite || lockOption == RenderAPI::LOCK_Discard)
-	{
-		//The D3DLOCK_DISCARD and D3DLOCK_NOOVERWRITE flags are valid only 
-		//on buffers created with D3DUSAGE_DYNAMIC.
-		if (!m_isDynamic)
-		{
-			lockOption = RenderAPI::LOCK_Normal;
-		}
-	}
-
-	void* pDataPtr = NULL;
-	HRESULT hr = m_pVertexBuffer->Lock(offset, lockLength, &pDataPtr, s_lockOptions[lockOption]);
-	if (S_OK == hr)
-	{
-		return pDataPtr;
 	}
 	else
 	{
-		m_pAPIInstance->LogError("VertexBuffer::Lock", "Lock failed.", hr);
-		return NULL;
+		return &(m_buffer[0]);
 	}
 }
 
@@ -76,7 +55,7 @@ void* VertexBuffer::LockAll(RenderAPI::LockOption lockOption)
 
 void VertexBuffer::Unlock()
 {
-	m_pVertexBuffer->Unlock();
+
 }
 
 bool VertexBuffer::NeedRecreateWhenDeviceLost() const
@@ -95,9 +74,4 @@ void VertexBuffer::Release()
 	{
 		delete this;
 	}
-}
-
-IDirect3DVertexBuffer9 * VertexBuffer::GetBufferPtr()
-{
-	return m_pVertexBuffer;
 }

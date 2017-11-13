@@ -1,7 +1,7 @@
 #pragma once
 #include <vector>
 #include "../../RenderAPI/RenderAPI.h"
-#include "DX9Include.h"
+
 #include "RefCount.hpp"
 
 #define RSDefine(name, rs) void Set##name(DWORD value) { SetRS(rs, value); }
@@ -14,15 +14,15 @@ class StateManager
 {
 public:
 
-	StateManager(IDirect3DDevice9* pDevice, RenderStatistic& renderStatistic);
+	StateManager(RenderStatistic& renderStatistic);
 
 	~StateManager();
 
-	HRESULT SetRS(D3DRENDERSTATETYPE type, DWORD value);
+	bool SetRS(D3DRENDERSTATETYPE type, DWORD value);
 
-	HRESULT SetTSS(unsigned int slot, D3DTEXTURESTAGESTATETYPE type, DWORD value);
+	bool SetTSS(unsigned int slot, D3DTEXTURESTAGESTATETYPE type, DWORD value);
 
-	HRESULT SetSS(unsigned int slot, D3DSAMPLERSTATETYPE type, DWORD value);
+	bool SetSS(unsigned int slot, D3DSAMPLERSTATETYPE type, DWORD value);
 
 	RSDefine(TextureFactor, D3DRS_TEXTUREFACTOR);
 
@@ -157,7 +157,6 @@ public:
 
 
 protected:
-	IDirect3DDevice9* m_pDevice;
 
 	enum
 	{
@@ -183,58 +182,4 @@ protected:
 	RenderAPI::CullMode m_cullMode;
 
 	RenderStatistic& m_renderStatistic;
-};
-
-class FXStateManager : public ID3DXEffectStateManager, public StateManager
-{
-protected:
-	RefCount m_refCount;
-	WCHAR m_wszFrameStats[256];
-
-public:
-	FXStateManager(IDirect3DDevice9* pDevice, RenderStatistic& renderStatistic);
-
-	virtual LPCWSTR EndFrameStats();
-	// methods inherited from ID3DXEffectStateManager
-	STDMETHOD(QueryInterface)(THIS_ REFIID iid, LPVOID *ppv);
-
-	STDMETHOD_(ULONG, AddRef)(THIS);
-
-	STDMETHOD_(ULONG, Release)(THIS);
-
-	STDMETHOD(SetRenderState)(THIS_ D3DRENDERSTATETYPE d3dRenderState, DWORD dwValue);
-
-	STDMETHOD(SetSamplerState)(THIS_ DWORD dwStage, D3DSAMPLERSTATETYPE d3dSamplerState, DWORD dwValue);
-
-	STDMETHOD(SetTextureStageState)(THIS_ DWORD dwStage, D3DTEXTURESTAGESTATETYPE d3dTextureStageState, DWORD dwValue);
-
-	STDMETHOD(SetTexture)(THIS_ DWORD dwStage, LPDIRECT3DBASETEXTURE9 pTexture);
-
-	STDMETHOD(SetVertexShader)(THIS_ LPDIRECT3DVERTEXSHADER9 pShader);
-
-	STDMETHOD(SetPixelShader)(THIS_ LPDIRECT3DPIXELSHADER9 pShader);
-
-	STDMETHOD(SetFVF)(THIS_ DWORD dwFVF);
-
-	STDMETHOD(SetTransform)(THIS_ D3DTRANSFORMSTATETYPE State, CONST D3DMATRIX *pMatrix);
-
-	STDMETHOD(SetMaterial)(THIS_ CONST D3DMATERIAL9 *pMaterial);
-
-	STDMETHOD(SetLight)(THIS_ DWORD Index, CONST D3DLIGHT9 *pLight);
-
-	STDMETHOD(LightEnable)(THIS_ DWORD Index, BOOL Enable);
-
-	STDMETHOD(SetNPatchMode)(THIS_ FLOAT NumSegments);
-
-	STDMETHOD(SetVertexShaderConstantF)(THIS_ unsigned int RegisterIndex, CONST FLOAT *pConstantData, unsigned int RegisterCount);
-
-	STDMETHOD(SetVertexShaderConstantI)(THIS_ unsigned int RegisterIndex, CONST INT *pConstantData, unsigned int RegisterCount);
-
-	STDMETHOD(SetVertexShaderConstantB)(THIS_ unsigned int RegisterIndex, CONST BOOL *pConstantData, unsigned int RegisterCount);
-
-	STDMETHOD(SetPixelShaderConstantF)(THIS_ unsigned int RegisterIndex, CONST FLOAT *pConstantData, unsigned int RegisterCount);
-
-	STDMETHOD(SetPixelShaderConstantI)(THIS_ unsigned int RegisterIndex, CONST INT *pConstantData, unsigned int RegisterCount);
-
-	STDMETHOD(SetPixelShaderConstantB)(THIS_ unsigned int RegisterIndex, CONST BOOL *pConstantData, unsigned int RegisterCount);
 };

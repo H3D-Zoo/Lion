@@ -10,9 +10,7 @@
 class FXEffect : public RenderAPI::FXEffect
 {
 public:
-	FXEffect(ID3DXEffect* pEffect, RenderStatistic& renderStatic);
-
-	~FXEffect();
+	FXEffect(RenderStatistic& renderStatic);
 
 	virtual unsigned int Begin(bool saveState);
 
@@ -98,10 +96,5 @@ public:
 
 private:
 	RefCount m_refCount;
-	ID3DXEffect* m_pEffect;
-	std::vector<D3DXHANDLE> m_hParamIDs;
-	std::vector<D3DXHANDLE> m_hTechniqueIDs;
-	std::map<std::string, unsigned int> m_hParamMapping;
-	std::map<std::string, unsigned int> m_hTechniqueMapping;
 	RenderStatistic& m_renderStatistic;
 };

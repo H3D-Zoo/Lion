@@ -1,5 +1,4 @@
 #include "Texture2D.h"
-#include "EnumMapping.h"
 
 RenderTexture2D::RenderTexture2D(APIInstance * pAPIInstance, IDirect3DTexture9 * texture, RenderAPI::TextureFormat format, RenderAPI::ResourceUsage usage
 	, unsigned int width, unsigned int height)

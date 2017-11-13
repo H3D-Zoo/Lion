@@ -1,32 +1,26 @@
 #include "RenderTarget.h"
 
-RenderTarget::RenderTarget(APIInstance* pAPI, IDirect3DSurface9* rtSurface, RenderAPI::RenderTargetFormat format, unsigned int width, unsigned int height)
+RenderTarget::RenderTarget(RenderAPI::RenderTargetFormat format, unsigned int width, unsigned int height)
 	: m_format(format)
 	, m_width(width)
 	, m_height(height)
-	, m_rtSurface(rtSurface)
 	, m_rtTexture(NULL)
 {
 	RenderAPI::TextureFormat texFormat = (format == RenderAPI::RT_ARGB8) ? RenderAPI::TEX_ARGB : RenderAPI::TEX_XRGB;
-	m_rtTexture = new RenderSurface2D(pAPI, rtSurface, texFormat, width, height);
+	m_rtTexture = new Texture2D(texFormat, RenderAPI::RESUSAGE_StaticWO, width, height, 1, false);
 }
 
-RenderTarget::RenderTarget(APIInstance* pAPI, IDirect3DTexture9* rtTexture, RenderAPI::TextureFormat format, unsigned int width, unsigned int height)
+RenderTarget::RenderTarget(RenderAPI::TextureFormat format, unsigned int width, unsigned int height)
 	: m_format(RenderAPI::RT_RenderTexture)
 	, m_width(width)
 	, m_height(height)
-	, m_rtSurface(NULL)
 	, m_rtTexture(NULL)
 {
-	rtTexture->GetSurfaceLevel(0, &m_rtSurface);
-	m_rtTexture = new RenderTexture2D(pAPI, rtTexture, format, RenderAPI::RESUSAGE_StaticWO, width, height);
+	m_rtTexture = new Texture2D(format, RenderAPI::RESUSAGE_StaticWO, width, height, 1, false);
 }
 
 RenderTarget::~RenderTarget()
 {
-	m_rtSurface->Release();
-	m_rtSurface = NULL;
-
 	m_rtTexture->Release();
 	m_rtTexture = NULL;
 }
@@ -76,18 +70,11 @@ void RenderTarget::Resize(unsigned int width, unsigned int height)
 
 void RenderTarget::ReleaseWhenDeviceLost()
 {
-	m_rtSurface->Release();
-	m_rtSurface = NULL;
+
 }
 
-void RenderTarget::Reset(unsigned int width, unsigned int height, RenderAPI::RenderTargetFormat rtFormat, IDirect3DSurface9 * pSurface)
+void RenderTarget::Reset(unsigned int width, unsigned int height, RenderAPI::RenderTargetFormat rtFormat)
 {
 	Resize(width, height);
 	m_format = rtFormat;
-	m_rtSurface = pSurface;
-}
-
-IDirect3DSurface9 * RenderTarget::GetD3DSurface() const 
-{
-	return m_rtSurface;
 }

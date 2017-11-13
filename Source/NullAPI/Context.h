@@ -1,25 +1,19 @@
 #pragma once
-
-#include "../../RenderAPI/RenderAPI.h"
 #include <vector>
 #include <map>
-#include "StateManager.h"
-#include "DX9Include.h"
+#include "../../RenderAPI/RenderAPI.h"
 #include "RenderStatistic.h"
+#include "RefCount.hpp"
 
 class APIInstance;
 class VertexBuffer;
 class IndexBuffer;
 
-
-
 class BackBufferManager
 {
 public:
-	BackBufferManager(IDirect3DDevice9* device, RenderAPI::RenderTarget* defRT, RenderAPI::DepthStencil* defDS, RenderStatistic& renderStatistic);
-
-	~BackBufferManager();
-
+	BackBufferManager(RenderAPI::RenderTarget* defRT, RenderAPI::DepthStencil* defDS, RenderStatistic& renderStatistic);
+	
 	void SetRenderTarget(unsigned int index, RenderAPI::RenderTarget* rt);
 
 	void SetDepthStencil(RenderAPI::DepthStencil* rt);
@@ -35,21 +29,20 @@ public:
 	void SetMaxTextureStage(unsigned int maxStage);
 
 private:
-	IDirect3DDevice9* m_pDevice;
-	std::vector<IDirect3DSurface9*> m_pCurrentRTs;
-	IDirect3DSurface9* m_pCurrentDS;
-	IDirect3DSurface9* m_pDefaultRT;
-	IDirect3DSurface9* m_pDefaultDS;
+	void EnlargeCurrentRTVector(unsigned int count);
+
 	RenderStatistic& m_renderStatistic;
+	std::vector<RenderAPI::RenderTarget*> m_pCurrentRTs;
+	RenderAPI::DepthStencil* m_pCurrentDS;
+	RenderAPI::RenderTarget* m_pDefaultRT;
+	RenderAPI::DepthStencil* m_pDefaultDS;
 	unsigned int m_maxTextureStage;
 };
 
 class Context :public RenderAPI::Context, public RenderAPI::ContextLegacy
 {
 public:
-	Context(APIInstance* pAPIContext, IDirect3DDevice9* device, RenderAPI::RenderTarget* defRT, RenderAPI::DepthStencil* defDS,  RenderStatistic& renderStatic);
-
-	~Context();
+	Context(RenderAPI::RenderTarget* defRT, RenderAPI::DepthStencil* defDS,  RenderStatistic& renderStatic);
 
 	virtual const RenderAPI::DeviceCaps& GetDeviceCaps() const;
 
@@ -207,30 +200,27 @@ public:
 	virtual void SaveNXDebugRenderState();
 
 	virtual void RestoreNXDebugRenderState(bool lightsOn);
-	
-	ID3DXEffectStateManager* GetStateManager();
-
-	inline IDirect3DDevice9* GetDevicePtr() { return m_pDevice; }
 
 private:
-
-	void InitDeviceCaps(const D3DCAPS9& d3dcaps);
-	
 	RefCount m_refCount;
-	APIInstance* m_pAPI;
-	FXStateManager m_renderStateManager;
-	IDirect3DDevice9* m_pDevice;
-	IDirect3DDevice9Ex* m_pDeviceEx;
 	BackBufferManager m_backBufferManager;
 	RenderAPI::DeviceCaps m_deviceCaps;
 	unsigned int m_indexBufferOffset;
 	unsigned int m_vertexBufferCount;
 	mutable RenderAPI::ScissorState m_scissorState;
-	std::vector<bool> m_useStreamFrequency;
 	DWORD m_nNXCacheFVF;
-	IDirect3DVertexShader9* m_pNXCacheVertexShader;
-	IDirect3DPixelShader9* m_pNXCachePixelShader;
-	IDirect3DBaseTexture9* m_pNXCacheTexture;
-
 	RenderStatistic& m_renderStatistic;
+
+	RenderAPI::Viewport m_currentViewport;
+
+	RenderAPI::BlendState m_currentBlendState;
+	RenderAPI::BlendState m_currentAlphaSeparateBlendState;
+	RenderAPI::AlphaTestingState m_currentAlphaTestingState;
+	RenderAPI::DepthTestingState m_currentDepthTestingState;
+	RenderAPI::StencilTestingState m_currentStencilTestingState;
+	RenderAPI::ScissorState m_currentScissorState;
+	RenderAPI::FillMode m_currentFillMode;
+	RenderAPI::CullMode m_currentCullMode;
+	bool m_currentClipPlaneState;
+	bool m_currentDepthWritingState;
 };
