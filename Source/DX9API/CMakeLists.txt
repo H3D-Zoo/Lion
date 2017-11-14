@@ -27,6 +27,7 @@ set(RENDERAPI_IMPL_INCLUDE_FILES
 	./DX9Include.h
 	./AutoPtr.hpp
 	./EnumMapping.h
+	./InternalLogger.h
 	./APIInstance.h
 	./Device.h
 	./Context.h

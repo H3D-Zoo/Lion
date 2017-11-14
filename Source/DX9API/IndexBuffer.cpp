@@ -1,17 +1,18 @@
 #include "IndexBuffer.h"
 #include "EnumMapping.h"
 
-IndexBuffer::IndexBuffer(APIInstance* pAPI, IDirect3DIndexBuffer9* indexBuffer, RenderAPI::ResourceUsage usage, RenderAPI::IndexFormat format, bool isManaged, unsigned int count)
-	: m_pAPIInstance(pAPI)
+IndexBuffer::IndexBuffer(IDirect3DIndexBuffer9* indexBuffer, RenderAPI::ResourceUsage usage, RenderAPI::IndexFormat format, bool isManaged, unsigned int count, IInternalLogger& logger)
+	: m_internalLogger(logger)
 	, m_usage(usage)
 	, m_indexFormat(format)
 	, m_isManaged(isManaged)
 	, m_isDynamic(usage == RenderAPI::RESUSAGE_Dynamic || usage == RenderAPI::RESUSAGE_DynamicManaged)
 	, m_writeOnly(!(usage == RenderAPI::RESUSAGE_StaticManaged || usage == RenderAPI::RESUSAGE_Static))
 	, m_indexCount(count)
+	, m_bufferLength(s_IndexLengths[format] * m_indexCount)
 	, m_pIndexBuffer(indexBuffer)
+	
 {
-	m_bufferLength = s_IndexLengths[format] * m_indexCount;
 }
 
 IndexBuffer::~IndexBuffer()
@@ -73,7 +74,7 @@ void * IndexBuffer::Lock(unsigned int offset, unsigned int lockLength, RenderAPI
 	}
 	else
 	{
-		m_pAPIInstance->LogError("IndexBuffer::Lock", "IndexBuffer Cannot be locked.", hr);
+		m_internalLogger.LogError("IndexBuffer::Lock", "IndexBuffer Cannot be locked.", hr);
 		return NULL;
 	}
 }

@@ -90,17 +90,17 @@ Device::Device(APIInstance* pAPI, IDirect3DDevice9* device, const RenderAPI::Swa
 	, m_pDevice(device)
 {
 	m_pAPIInstance->AddRef();
-	m_pAPIInstance->pDevice = this;
+
 	IDirect3DSwapChain9* pSwapChain = NULL;
 	m_pDevice->GetSwapChain(0, &pSwapChain);
 	IDirect3DSurface9* pDSSurafce = NULL;
 	m_pDevice->GetDepthStencilSurface(&pDSSurafce);
 	::DepthStencil* pDepthStencil = new DepthStencil(pDSSurafce, desc.zbufferFormat, desc.backbufferWidth, desc.backbufferHeight);
-	m_pDefaultSwapChain = new ::SwapChain(pAPI, pSwapChain, pDepthStencil, desc);
+	m_pDefaultSwapChain = new ::SwapChain(pSwapChain, pDepthStencil, desc, *m_pAPIInstance);
 
 	D3DCAPS9 d3dcaps;
 	m_pDevice->GetDeviceCaps(&d3dcaps);
-	m_notSupportDynamicTexture = (d3dcaps.Caps2&D3DCAPS2_DYNAMICTEXTURES) == 0;
+	m_supportDynamicTexture = (d3dcaps.Caps2 & D3DCAPS2_DYNAMICTEXTURES) != 0;
 }
 
 Device::~Device()
@@ -177,12 +177,55 @@ RenderAPI::SwapChain * Device::CreateAdditionalSwapChain(const RenderAPI::SwapCh
 		}
 		else
 		{
-			return new ::SwapChain(m_pAPIInstance, swapChain, ds, newDesc);
+			return new ::SwapChain(swapChain, ds, newDesc, *m_pAPIInstance);
 		}
 	}
 	else
 	{
 		return NULL;
+	}
+}
+
+void FormatBufferUsage(RenderAPI::ResourceUsage& usage, bool& dynamic, bool& managed)
+{
+	if (managed)
+	{
+		if (usage == RenderAPI::RESUSAGE_StaticWOManaged)
+		{
+			usage = RenderAPI::RESUSAGE_StaticManaged;
+			dynamic = false;
+		}
+		else
+		{
+			managed = usage == RenderAPI::RESUSAGE_DynamicManaged ||
+				usage == RenderAPI::RESUSAGE_StaticManaged;
+
+			dynamic = usage == RenderAPI::RESUSAGE_Dynamic ||
+				usage == RenderAPI::RESUSAGE_DynamicManaged;
+		}
+	}
+	else
+	{
+		if (usage == RenderAPI::RESUSAGE_DynamicManaged)
+		{
+			usage = RenderAPI::RESUSAGE_Dynamic;
+			dynamic = true;
+		}
+		else if (usage == RenderAPI::RESUSAGE_StaticManaged)
+		{
+			usage = RenderAPI::RESUSAGE_Static;
+			dynamic = false;
+		}
+		else if (usage == RenderAPI::RESUSAGE_StaticWOManaged)
+		{
+			usage = RenderAPI::RESUSAGE_StaticWO;
+			dynamic = false;
+		}
+		else
+		{
+			dynamic = usage == RenderAPI::RESUSAGE_Dynamic;
+		}
+
 	}
 }
 
@@ -194,40 +237,9 @@ RenderAPI::VertexBuffer* Device::CreateVertexBuffer(RenderAPI::ResourceUsage usa
 		return NULL;
 	}
 
-	bool managed;
-	bool dynamic;
-	if (m_pAPIInstance->IsSupportManaged())
-	{
-		if (usage == RenderAPI::RESUSAGE_StaticWOManaged)
-		{
-			usage = RenderAPI::RESUSAGE_StaticManaged;
-			managed = true;
-			dynamic = false;
-		}
-		else
-		{
-			managed = usage == RenderAPI::RESUSAGE_DynamicManaged || usage == RenderAPI::RESUSAGE_StaticManaged;
-			dynamic = usage == RenderAPI::RESUSAGE_Dynamic || usage == RenderAPI::RESUSAGE_DynamicManaged;
-		}
-	}
-	else
-	{
-		managed = false;
-		dynamic = false;
-		if (usage == RenderAPI::RESUSAGE_DynamicManaged)
-		{
-			usage = RenderAPI::RESUSAGE_Dynamic;
-			dynamic = true;
-		}
-		else if (usage == RenderAPI::RESUSAGE_StaticManaged)
-		{
-			usage = RenderAPI::RESUSAGE_Static;
-		}
-		else if (usage == RenderAPI::RESUSAGE_StaticWOManaged)
-		{
-			usage = RenderAPI::RESUSAGE_StaticWO;
-		}
-	}
+	bool managed = m_pAPIInstance->IsSupportManaged();
+	bool dynamic = false;
+	FormatBufferUsage(usage, dynamic, managed);
 
 	IDirect3DVertexBuffer9* pVertexBuffer = NULL;
 	unsigned int d3dUsage = s_d3dBufferUsage[usage];
@@ -240,9 +252,10 @@ RenderAPI::VertexBuffer* Device::CreateVertexBuffer(RenderAPI::ResourceUsage usa
 		return NULL;
 	}
 
-	return new VertexBuffer(m_pAPIInstance, pVertexBuffer, usage, managed, vertexCount, vertexSize);
+	return new VertexBuffer(pVertexBuffer, usage, managed, vertexCount, vertexSize, *m_pAPIInstance);
 
 }
+
 
 RenderAPI::IndexBuffer* Device::CreateIndexBuffer(RenderAPI::ResourceUsage usage, RenderAPI::IndexFormat format, unsigned int indexCount)
 {
@@ -253,42 +266,9 @@ RenderAPI::IndexBuffer* Device::CreateIndexBuffer(RenderAPI::ResourceUsage usage
 	}
 
 
-	bool managed;
-	bool dynamic;
-
-	if (m_pAPIInstance->IsSupportManaged())
-	{
-		if (usage == RenderAPI::RESUSAGE_StaticWOManaged)
-		{
-			usage = RenderAPI::RESUSAGE_StaticManaged;
-			managed = true;
-			dynamic = false;
-		}
-		else
-		{
-			managed = usage == RenderAPI::RESUSAGE_DynamicManaged || usage == RenderAPI::RESUSAGE_StaticManaged;
-			dynamic = usage == RenderAPI::RESUSAGE_Dynamic || usage == RenderAPI::RESUSAGE_DynamicManaged;
-		}
-	}
-	else
-	{
-		managed = false;
-		dynamic = false;
-		if (usage == RenderAPI::RESUSAGE_DynamicManaged)
-		{
-			usage = RenderAPI::RESUSAGE_Dynamic;
-			dynamic = true;
-		}
-		else if (usage == RenderAPI::RESUSAGE_StaticManaged)
-		{
-			usage = RenderAPI::RESUSAGE_Static;
-		}
-		else if (usage == RenderAPI::RESUSAGE_StaticWOManaged)
-		{
-			usage = RenderAPI::RESUSAGE_StaticWO;
-		}
-
-	}
+	bool managed = m_pAPIInstance->IsSupportManaged();
+	bool dynamic = false;
+	FormatBufferUsage(usage, dynamic, managed);
 
 	IDirect3DIndexBuffer9* pIndexBuffer = NULL;
 	unsigned int d3dUsage = s_d3dBufferUsage[usage];
@@ -302,7 +282,7 @@ RenderAPI::IndexBuffer* Device::CreateIndexBuffer(RenderAPI::ResourceUsage usage
 		return NULL;
 	}
 
-	return new IndexBuffer(m_pAPIInstance, pIndexBuffer, usage, format, managed, indexCount);
+	return new IndexBuffer(pIndexBuffer, usage, format, managed, indexCount, *m_pAPIInstance);
 }
 
 RenderAPI::VertexDeclaration* Device::CreateVertexDeclaration(const RenderAPI::VertexElement * elements, unsigned int elementCount)
@@ -360,9 +340,13 @@ RenderAPI::VertexDeclaration* Device::CreateVertexDeclaration(const RenderAPI::V
 	}
 }
 
-void FormatUsage(RenderAPI::ResourceUsage& usage, bool& dynamic, bool& managed)
+void FormatTextureUsage(RenderAPI::ResourceUsage& usage, bool& dynamic, bool& managed)
 {
 	if (dynamic)
+	{
+		dynamic = usage == RenderAPI::RESUSAGE_DynamicManaged || usage == RenderAPI::RESUSAGE_Dynamic;
+	}
+	else
 	{
 		if (usage == RenderAPI::RESUSAGE_DynamicManaged)
 		{
@@ -372,11 +356,6 @@ void FormatUsage(RenderAPI::ResourceUsage& usage, bool& dynamic, bool& managed)
 		{
 			usage = RenderAPI::RESUSAGE_Static;
 		}
-		dynamic = false;
-	}
-	else
-	{
-		dynamic = usage == RenderAPI::RESUSAGE_DynamicManaged || usage == RenderAPI::RESUSAGE_Dynamic;
 	}
 
 	if (managed)
@@ -384,7 +363,6 @@ void FormatUsage(RenderAPI::ResourceUsage& usage, bool& dynamic, bool& managed)
 		if (usage == RenderAPI::RESUSAGE_StaticWOManaged)
 		{
 			usage = RenderAPI::RESUSAGE_StaticManaged;
-			managed = true;
 		}
 		else
 		{
@@ -403,7 +381,6 @@ void FormatUsage(RenderAPI::ResourceUsage& usage, bool& dynamic, bool& managed)
 		{
 			usage = RenderAPI::RESUSAGE_Static;
 		}
-		managed = false;
 	}
 }
 
@@ -421,8 +398,8 @@ RenderAPI::Texture2D * Device::CreateTexture2D(RenderAPI::ResourceUsage usage, R
 	}
 
 	bool managed = m_pAPIInstance->IsSupportManaged();
-	bool dynamic = m_notSupportDynamicTexture;
-	FormatUsage(usage, dynamic, managed);
+	bool dynamic = m_supportDynamicTexture;
+	FormatTextureUsage(usage, dynamic, managed);
 
 	IDirect3DTexture9* pTexture = NULL;
 	unsigned int d3dUsage = autoGenMipmaps ? D3DUSAGE_AUTOGENMIPMAP : 0;
@@ -442,11 +419,11 @@ RenderAPI::Texture2D * Device::CreateTexture2D(RenderAPI::ResourceUsage usage, R
 	//D3DLOCK_DISCARD, is only valid when the resource is created with USAGE_DYNAMIC.
 	if (dynamic || managed)
 	{
-		texture = new ::Texture2D(m_pAPIInstance, pTexture, format, usage, managed, width, height, autoGenMipmaps);
+		texture = new ::Texture2D(pTexture, format, usage, managed, width, height, autoGenMipmaps, *m_pAPIInstance);
 	}
 	else
 	{
-		texture = new ::NoLockableTexture2D(m_pAPIInstance, pTexture, format, usage, managed, width, height, autoGenMipmaps);
+		texture = new ::NoLockableTexture2D(pTexture, format, usage, managed, width, height, autoGenMipmaps, *m_pAPIInstance);
 	}
 	return texture;
 }
@@ -460,8 +437,8 @@ RenderAPI::Texture2D * Device::CreateScaledTexture2D(RenderAPI::ResourceUsage us
 	}
 
 	bool managed = m_pAPIInstance->IsSupportManaged();
-	bool dynamic = m_notSupportDynamicTexture;
-	FormatUsage(usage, dynamic, managed);
+	bool dynamic = m_supportDynamicTexture;
+	FormatTextureUsage(usage, dynamic, managed);
 
 	unsigned int d3dUsage = dynamic ? D3DUSAGE_DYNAMIC : 0;
 	D3DPOOL d3dPool = managed ? D3DPOOL_MANAGED : D3DPOOL_DEFAULT;
@@ -492,11 +469,11 @@ RenderAPI::Texture2D * Device::CreateScaledTexture2D(RenderAPI::ResourceUsage us
 		//D3DLOCK_DISCARD, is only valid when the resource is created with USAGE_DYNAMIC.
 		if (dynamic || managed)
 		{
-			texture = new ::Texture2D(m_pAPIInstance, pTexture, GetRenderAPIFormat(info.Format), usage, managed, info.Width, info.Height, false);
+			texture = new ::Texture2D(pTexture, GetRenderAPIFormat(info.Format), usage, managed, info.Width, info.Height, false, *m_pAPIInstance);
 		}
 		else
 		{
-			texture = new ::NoLockableTexture2D(m_pAPIInstance, pTexture, GetRenderAPIFormat(info.Format), usage, managed, info.Width, info.Height, false);
+			texture = new ::NoLockableTexture2D(pTexture, GetRenderAPIFormat(info.Format), usage, managed, info.Width, info.Height, false, *m_pAPIInstance);
 		}
 		return texture;
 	}
@@ -522,8 +499,8 @@ RenderAPI::TextureCube * Device::CreateTextureCube(RenderAPI::ResourceUsage usag
 	}
 
 	bool managed = m_pAPIInstance->IsSupportManaged();
-	bool dynamic = m_notSupportDynamicTexture;
-	FormatUsage(usage, dynamic, managed);
+	bool dynamic = m_supportDynamicTexture;
+	FormatTextureUsage(usage, dynamic, managed);
 
 	IDirect3DCubeTexture9* pTexture = NULL;
 	unsigned int d3dUsage = autoGenMipmaps ? D3DUSAGE_AUTOGENMIPMAP : 0;
@@ -537,7 +514,7 @@ RenderAPI::TextureCube * Device::CreateTextureCube(RenderAPI::ResourceUsage usag
 		return NULL;
 	}
 
-	::TextureCube* texture = new ::TextureCube(m_pAPIInstance, pTexture, format, usage, managed, edgeLength, autoGenMipmaps);
+	::TextureCube* texture = new ::TextureCube(pTexture, format, usage, managed, edgeLength, autoGenMipmaps, *m_pAPIInstance);
 	return texture;
 }
 
@@ -583,7 +560,7 @@ RenderAPI::RenderTarget* Device::CreateRenderTarget(RenderAPI::TextureFormat for
 		return NULL;
 	}
 
-	return new RenderTarget(m_pAPIInstance, pTexture, format, width, height);
+	return new RenderTarget(pTexture, format, width, height, *m_pAPIInstance);
 }
 
 RenderAPI::DepthStencil * Device::CreateDepthStencil(RenderAPI::DepthStencilFormat format, unsigned int width, unsigned int height)

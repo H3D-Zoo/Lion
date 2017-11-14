@@ -1,6 +1,7 @@
 #include "RenderTarget.h"
+#include "Context.h"
 
-RenderTarget::RenderTarget(APIInstance* pAPI, IDirect3DSurface9* rtSurface, RenderAPI::RenderTargetFormat format, unsigned int width, unsigned int height)
+RenderTarget::RenderTarget(IDirect3DSurface9* rtSurface, RenderAPI::RenderTargetFormat format, unsigned int width, unsigned int height, IInternalLogger& logger)
 	: m_format(format)
 	, m_width(width)
 	, m_height(height)
@@ -8,10 +9,10 @@ RenderTarget::RenderTarget(APIInstance* pAPI, IDirect3DSurface9* rtSurface, Rend
 	, m_rtTexture(NULL)
 {
 	RenderAPI::TextureFormat texFormat = (format == RenderAPI::RT_ARGB8) ? RenderAPI::TEX_ARGB : RenderAPI::TEX_XRGB;
-	m_rtTexture = new RenderSurface2D(pAPI, rtSurface, texFormat, width, height);
+	m_rtTexture = new RenderSurface2D(rtSurface, texFormat, width, height, logger);
 }
 
-RenderTarget::RenderTarget(APIInstance* pAPI, IDirect3DTexture9* rtTexture, RenderAPI::TextureFormat format, unsigned int width, unsigned int height)
+RenderTarget::RenderTarget(IDirect3DTexture9* rtTexture, RenderAPI::TextureFormat format, unsigned int width, unsigned int height, IInternalLogger& logger)
 	: m_format(RenderAPI::RT_RenderTexture)
 	, m_width(width)
 	, m_height(height)
@@ -19,7 +20,7 @@ RenderTarget::RenderTarget(APIInstance* pAPI, IDirect3DTexture9* rtTexture, Rend
 	, m_rtTexture(NULL)
 {
 	rtTexture->GetSurfaceLevel(0, &m_rtSurface);
-	m_rtTexture = new RenderTexture2D(pAPI, rtTexture, format, RenderAPI::RESUSAGE_StaticWO, width, height);
+	m_rtTexture = new RenderTexture2D(rtTexture, format, RenderAPI::RESUSAGE_StaticWO, width, height, logger);
 }
 
 RenderTarget::~RenderTarget()

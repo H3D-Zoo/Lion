@@ -5,8 +5,9 @@
 
 FXEffect::FXEffect(ID3DXEffect * pEffect, RenderStatistic& renderStatic)
 	: m_pEffect(pEffect)
-	,m_renderStatistic(renderStatic)
+	, m_renderStatistic(renderStatic)
 {
+
 }
 
 FXEffect::~FXEffect()

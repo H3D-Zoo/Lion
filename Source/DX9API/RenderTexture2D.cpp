@@ -1,9 +1,9 @@
 #include "Texture2D.h"
 #include "EnumMapping.h"
 
-RenderTexture2D::RenderTexture2D(APIInstance * pAPIInstance, IDirect3DTexture9 * texture, RenderAPI::TextureFormat format, RenderAPI::ResourceUsage usage
-	, unsigned int width, unsigned int height)
-	: Texture2D(pAPIInstance, texture, format, usage, false, width, height, false)
+RenderTexture2D::RenderTexture2D(IDirect3DTexture9 * texture, RenderAPI::TextureFormat format, RenderAPI::ResourceUsage usage
+	, unsigned int width, unsigned int height, IInternalLogger& logger)
+	: Texture2D( texture, format, usage, false, width, height, false, logger)
 	, m_pTempTextureForCopy(NULL)
 {
 }
@@ -35,7 +35,7 @@ RenderAPI::MappedResource RenderTexture2D::LockRect(unsigned int layer, RenderAP
 		}
 		else
 		{
-			m_pAPIInstance->LogError("RenderTexture2D::Lock", " Render Texture cannot be locked because.");
+			m_internalLogger.LogError("RenderTexture2D::Lock", " Render Texture cannot be locked because.");
 		}
 	}
 	return ret;

@@ -1,13 +1,13 @@
 #pragma once
-#include "../../RenderAPI/RenderAPI.h"
 #include <vector>
-#include "APIInstance.h"
-#include "DX9Include.h"
+#include "../../RenderAPI/RenderAPI.h"
+#include "RefCount.hpp"
+#include "InternalLogger.h"
 
 class VertexBuffer : public RenderAPI::VertexBuffer
 {
 public:
-	VertexBuffer(APIInstance* pAPIInstance, IDirect3DVertexBuffer9* vertexBuffer, RenderAPI::ResourceUsage usage, bool isManaged, unsigned int vertexCount, unsigned int vertexSize);
+	VertexBuffer(IDirect3DVertexBuffer9*, RenderAPI::ResourceUsage, bool isManaged, unsigned int vertexCount, unsigned int vertexSize, IInternalLogger&);
 
 	~VertexBuffer();
 
@@ -33,17 +33,17 @@ public:
 
 	IDirect3DVertexBuffer9* GetBufferPtr();
 
-	bool IsDynamic() {return m_isDynamic;}
+	bool IsDynamic() { return m_isDynamic; }
 
 private:
 	RefCount m_refCount;
-	APIInstance* m_pAPIInstance;
-	RenderAPI::ResourceUsage m_usage;
+	IInternalLogger& m_internalLogger;
+	const RenderAPI::ResourceUsage m_usage;
 	const bool m_isManaged;
 	const bool m_isDynamic;
 	const bool m_writeOnly;
-	unsigned int m_vertexCount;
-	unsigned int m_vertexStride;
-	unsigned int m_bufferLength;
+	const unsigned int m_vertexCount;
+	const unsigned int m_vertexStride;
+	const unsigned int m_bufferLength;
 	IDirect3DVertexBuffer9* m_pVertexBuffer;
 };

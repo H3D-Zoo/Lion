@@ -59,7 +59,6 @@ public:
 		}
 	}
 
-	operator Pointer* &() { return pointer; }
 	operator Pointer* () const { return pointer; }
 	Pointer* operator->() { return pointer; }
 	const Pointer* operator->() const { return pointer; }

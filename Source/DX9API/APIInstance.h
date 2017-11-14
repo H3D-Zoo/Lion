@@ -1,13 +1,10 @@
 #pragma once
 
-#include <Windows.h>
-#include <d3d9.h>
-#include <d3dx9.h>
-#include <ddraw.h>
-#include <d3dx9effect.h>
 #include <string>
+#include "DX9Include.h"
 #include "BaseAPIInstance.h"
 #include "RefCount.hpp"
+#include "InternalLogger.h"
 #include "RenderStatistic.h"
 
 typedef int (WINAPI *LPD3DPERF_BeginEvent)(D3DCOLOR col, LPCWSTR wszName);
@@ -16,7 +13,9 @@ typedef void (WINAPI *LPD3DPERF_SetMarker)(D3DCOLOR col, LPCWSTR wszName);
 
 class Device;
 class Context;
-class APIInstance : public BaseAPIInstance
+
+
+class APIInstance : public BaseAPIInstance, public IInternalLogger
 {
 public:
 	static D3DPRESENT_PARAMETERS FillCreationParam(APIInstance& self, HWND hWindow, unsigned int width, unsigned int height, bool isFullscreen, bool vsync, D3DFORMAT rtFormat, D3DFORMAT dsFormat, D3DMULTISAMPLE_TYPE mulsample);
@@ -69,11 +68,13 @@ public:
 
 	void AddRef();
 
-	void LogError(const char* action, const char* detail);
+	//InternalLogger
+	virtual void LogError(const char* action, const char* detail);
 
-	void LogError(const char* action, const char* detail, HRESULT errorCode);
+	virtual void LogError(const char* action, const char* detail, HRESULT errorCode);
 
 	RenderStatistic& GetRenderStatistic() { return m_renderStatistic; }
+
 private:
 	void Deinit();
 

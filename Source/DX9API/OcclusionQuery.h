@@ -5,7 +5,7 @@
 class OcclusionQuery : public RenderAPI::OcclusionQuery
 {
 public:
-	OcclusionQuery(IDirect3DQuery9* pOcclusionQuery);
+	OcclusionQuery(IDirect3DQuery9*);
 
 	~OcclusionQuery();
 

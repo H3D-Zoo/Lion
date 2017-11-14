@@ -1,5 +1,5 @@
-#include "TextureCube.h"
 #include <stdlib.h>
+#include "TextureCube.h"
 #include "RenderTarget.h"
 #include "DepthStencil.h"
 #include "EnumMapping.h"
@@ -17,8 +17,8 @@ namespace
 	};
 }
 
-TextureCube::TextureCube(APIInstance* pAPIInstance, IDirect3DCubeTexture9* texture, RenderAPI::TextureFormat format, RenderAPI::ResourceUsage usage, bool isManaged, unsigned int edgeLength, bool autoGenMipmaps)
-	: m_pAPIInstance(pAPIInstance)
+TextureCube::TextureCube(IDirect3DCubeTexture9* texture, RenderAPI::TextureFormat format, RenderAPI::ResourceUsage usage, bool isManaged, unsigned int edgeLength, bool autoGenMipmaps, IInternalLogger& logger)
+	: m_internalLogger(logger)
 	, m_texFormat(format)
 	, m_usage(usage)
 	, m_autoGenMipmaps(autoGenMipmaps)
@@ -87,13 +87,13 @@ RenderAPI::MappedResource TextureCube::LockRect(RenderAPI::CubemapFace face, uns
 		else
 		{
 			ret.Success = false;
-			m_pAPIInstance->LogError("TextureCube::LockRect", "Lock failed.", hr);
+			m_internalLogger.LogError("TextureCube::LockRect", "Lock failed.", hr);
 		}
 	}
 	else
 	{
 		ret.Success = false;
-		m_pAPIInstance->LogError("TextureCube::LockRect", "Only Dynamic or Managed Texture can be loked.");
+		m_internalLogger.LogError("TextureCube::LockRect", "Only Dynamic or Managed Texture can be loked.");
 	}
 	return ret;
 }

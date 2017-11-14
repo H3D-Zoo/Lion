@@ -1,7 +1,8 @@
 #include "TextBox.h"
+
 TextBox::TextBox(ID3DXFont* pFont, int screen_x, int screen_y, int width, int height)
 	: m_pFont(pFont)
-	, m_displayText(NULL)
+	, needUpdateTextureRect(false)
 	, m_wordWarp(true)
 	, m_isShow(true)
 {
@@ -17,11 +18,11 @@ TextBox::~TextBox()
 	m_pFont = NULL;
 }
 
-void TextBox::LazyUpdateRect(RECT & out, LPD3DXFONT font, const RECT & in, UINT dtFormat) const
+RECT TextBox::LazyUpdateRect( LPD3DXFONT font, const RECT & in, UINT dtFormat)
 {
-	if (m_displayText != m_text.c_str())
+	RECT out;
+	if (needUpdateTextureRect)
 	{
-		m_displayText = m_text.c_str();
 		out.left = in.left;
 		out.top = in.top;
 
@@ -50,9 +51,12 @@ void TextBox::LazyUpdateRect(RECT & out, LPD3DXFONT font, const RECT & in, UINT 
 
 			if (m_wordWarp)
 				dtFormat |= DT_WORDBREAK;
-			font->DrawText(NULL, m_displayText, -1, &out, dtFormat | DT_CALCRECT, D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f));
+			font->DrawText(NULL, m_text.c_str(), -1, &out, dtFormat | DT_CALCRECT, D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f));
+
+			needUpdateTextureRect = false;
 		}
 	}
+	return out;
 }
 
 void TextBox::SetPosSize(int x, int y, int width, int height)
@@ -63,27 +67,27 @@ void TextBox::SetPosSize(int x, int y, int width, int height)
 	m_rect.bottom = y + height;
 
 	// always dirty
-	m_displayText = NULL;
+	needUpdateTextureRect = true;
 }
 
 void TextBox::SetText(const char * str, bool bWordWarp)
 {
-	bool dirty = true;
 	if (!str)
-		m_text.clear();
-	else if (strcmp(m_text.c_str(), str) != 0)
-		m_text = str;
-	else
-		dirty = false;
-
-	if (m_wordWarp != bWordWarp)
 	{
-		m_wordWarp = bWordWarp;
-		dirty = true;
+		m_text.clear();
+		needUpdateTextureRect = true;
+	}
+	else if (strcmp(m_text.c_str(), str) != 0)
+	{
+		m_text = str;
+		needUpdateTextureRect = true;
+	}
+	else
+	{
+		needUpdateTextureRect = m_wordWarp != bWordWarp;
 	}
 
-	if (dirty)
-		m_displayText = NULL;
+	m_wordWarp = bWordWarp;
 }
 
 void TextBox::Clear()
@@ -112,8 +116,8 @@ void TextBox::Render()
 		if (m_wordWarp)
 			dtFormat |= DT_WORDBREAK;
 
-		LazyUpdateRect(m_rect, m_pFont, m_rect, dtFormat);
-		m_pFont->DrawText(NULL, m_displayText, -1, &m_rect, dtFormat | DT_NOCLIP, m_color);
+		m_rect = LazyUpdateRect(m_pFont, m_rect, dtFormat);
+		m_pFont->DrawText(NULL, m_text.c_str(), -1, &m_rect, dtFormat | DT_NOCLIP, m_color);
 	}
 }
 
