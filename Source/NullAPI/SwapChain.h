@@ -1,15 +1,17 @@
 #pragma once
 
 #include "../../RenderAPI/RenderAPI.h"
-#include "RefCount.hpp"
 #include "RenderTarget.h"
 #include "DepthStencil.h"
+
 
 
 class SwapChain : public RenderAPI::SwapChain
 {
 public:
-	SwapChain(const RenderAPI::SwapChainDesc & swapChainDesc);
+	SwapChain::SwapChain(::DepthStencil* dsSurface, const RenderAPI::SwapChainDesc & swapChainDesc);
+
+	~SwapChain();
 
 	virtual RenderAPI::RenderTarget* GetRenderTarget();
 
@@ -23,12 +25,15 @@ public:
 
 	virtual RenderAPI::DeviceState Present();
 
+	virtual unsigned int AddReference();
+
 	virtual void Release();
 
-	void AddRef();
-
 private:
+	void InitRenderTarget(RenderAPI::RenderTargetFormat format, unsigned int width, unsigned int height);
+
 	RefCount m_refCount;
-	::RenderTarget m_renderTarget;
-	::DepthStencil m_depthStencil;
+	bool m_isFullscreen;
+	::RenderTarget* m_pRenderTarget;
+	::DepthStencil* m_pDepthStencil;
 };

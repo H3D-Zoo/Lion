@@ -1,13 +1,12 @@
 #include "Texture2D.h"
 #include "RenderTarget.h"
 #include "DepthStencil.h"
-#include "EnumMapping.h"
 #include "APIInstance.h"
 #include "Context.h"
 
-NoLockableTexture2D::NoLockableTexture2D(IDirect3DTexture9 * texture, RenderAPI::TextureFormat format, RenderAPI::ResourceUsage usage,
-	bool isManaged, unsigned int width, unsigned int height, bool autoGenMipmaps, IInternalLogger& logger)
-	: Texture2D(texture, format, usage, isManaged, width, height, autoGenMipmaps, logger)
+NoLockableTexture2D::NoLockableTexture2D(APIInstance * pAPIInstance, IDirect3DTexture9 * texture, RenderAPI::TextureFormat format, RenderAPI::ResourceUsage usage,
+	bool isManaged, unsigned int width, unsigned int height, bool autoGenMipmaps)
+	: Texture2D(pAPIInstance, texture, format, usage, isManaged, width, height, autoGenMipmaps)
 	, m_pTempTextureForUpdate(NULL)
 	, m_lockLayerBits(0)
 {
@@ -61,13 +60,13 @@ RenderAPI::MappedResource NoLockableTexture2D::LockRect(unsigned int layer, Rend
 			}
 			else
 			{
-				m_internalLogger.LogError("Texture2D::Lock", "helper texture lock failed.", hr);
+				m_pAPIInstance->LogError("Texture2D::Lock", "helper texture lock failed.", hr);
 				ret.Success = false;
 			}
 		}
 		else
 		{
-			m_internalLogger.LogError("Texture2D::Lock", "helper texture creation failed.", hr);
+			m_pAPIInstance->LogError("Texture2D::Lock", "helper texture creation failed.", hr);
 			ret.Success = false;
 		}
 	}
@@ -85,14 +84,13 @@ void NoLockableTexture2D::UnlockRect(unsigned int layer)
 			if (S_OK == hr)
 			{
 				IDirect3DSurface9 *pSurfaceSrc, *pSurfaceDst;
-				IDirect3DDevice9* pDevice;
-				m_pTexture->GetDevice(&pDevice);
+				IDirect3DDevice9* pDevice = m_pAPIInstance->pContext->GetDevicePtr();
 				m_pTempTextureForUpdate->GetSurfaceLevel(layer, &pSurfaceSrc);
 				m_pTexture->GetSurfaceLevel(layer, &pSurfaceDst);
 				hr = pDevice->UpdateSurface(pSurfaceSrc, NULL, pSurfaceDst, NULL);
 				if (hr != S_OK)
 				{
-					m_internalLogger.LogError("Texture2D::UnlockRect", "helper texture update failed.", hr);
+					m_pAPIInstance->LogError("Texture2D::UnlockRect", "helper texture update failed.", hr);
 				}
 				pSurfaceSrc->Release();
 				pSurfaceDst->Release();

@@ -1,4 +1,6 @@
 #include "Context.h"
+#include "APIInstance.h"
+
 namespace
 {
 	DWORD s_d3dFogTableMode[] =
@@ -61,7 +63,7 @@ void Context::SetCustomFVF(unsigned int fvf)
 {
 	m_pDevice->SetFVF(fvf);
 
-	m_renderStatistic.OnSetCustomFVF();
+	m_pAPI->GetRenderStatistic().OnSetCustomFVF();
 }
 
 void Context::SetWorldMatrix(const float * matrix)
@@ -287,10 +289,10 @@ void Context::SaveNXDebugRenderState()
 
 	m_pDevice->SetFVF(D3DFVF_DIFFUSE | D3DFVF_XYZ);
 
-	m_renderStatistic.OnSetCustomFVF();
-	m_renderStatistic.OnSetVertexShader();
-	m_renderStatistic.OnSetPixelShader();
-	m_renderStatistic.OnSetTexture(NULL);
+	m_pAPI->GetRenderStatistic().OnSetCustomFVF();
+	m_pAPI->GetRenderStatistic().OnSetVertexShader();
+	m_pAPI->GetRenderStatistic().OnSetPixelShader();
+	m_pAPI->GetRenderStatistic().OnSetTexture(NULL);
 }
 
 void Context::RestoreNXDebugRenderState(bool lightsOn)
@@ -320,8 +322,8 @@ void Context::RestoreNXDebugRenderState(bool lightsOn)
 		m_pNXCacheTexture = NULL;
 	}
 
-	m_renderStatistic.OnSetVertexShader();
-	m_renderStatistic.OnSetPixelShader();
-	m_renderStatistic.OnSetCustomFVF();
-	m_renderStatistic.OnSetTexture(NULL);
+	m_pAPI->GetRenderStatistic().OnSetVertexShader();
+	m_pAPI->GetRenderStatistic().OnSetPixelShader();
+	m_pAPI->GetRenderStatistic().OnSetCustomFVF();
+	m_pAPI->GetRenderStatistic().OnSetTexture(NULL);
 }

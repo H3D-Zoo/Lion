@@ -1,13 +1,13 @@
 #pragma once
-#include "../../RenderAPI/RenderAPI.h"
 #include <vector>
+#include "../../RenderAPI/RenderAPI.h"
 #include "APIInstance.h"
 #include "DX9Include.h"
 
 class IndexBuffer : public RenderAPI::IndexBuffer
 {
 public:
-	IndexBuffer(APIInstance* pAPI, IDirect3DIndexBuffer9* indexBuffer, RenderAPI::ResourceUsage usage, RenderAPI::IndexFormat format, bool isManaged, unsigned int count);
+	IndexBuffer(IDirect3DIndexBuffer9*, RenderAPI::ResourceUsage, RenderAPI::IndexFormat, bool isManaged, unsigned int count, IInternalLogger&);
 
 	~IndexBuffer();
 
@@ -37,13 +37,13 @@ public:
 
 private:
 	RefCount m_refCount;
-	APIInstance* m_pAPIInstance;
-	RenderAPI::ResourceUsage m_usage;
-	RenderAPI::IndexFormat m_indexFormat;
+	IInternalLogger& m_internalLogger;
+	const RenderAPI::ResourceUsage m_usage;
+	const RenderAPI::IndexFormat m_indexFormat;
 	const bool m_isManaged;
 	const bool m_isDynamic;
 	const bool m_writeOnly;
-	unsigned int m_indexCount;
-	unsigned int m_bufferLength;
+	const unsigned int m_indexCount;
+	const unsigned int m_bufferLength;
 	IDirect3DIndexBuffer9* m_pIndexBuffer;
 };

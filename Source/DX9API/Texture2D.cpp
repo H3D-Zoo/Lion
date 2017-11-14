@@ -1,13 +1,12 @@
-#include "Texture2D.h"
 #include <stdlib.h>
+#include "Texture2D.h"
 #include "RenderTarget.h"
 #include "DepthStencil.h"
 #include "EnumMapping.h"
-#include "Context.h"
 
-Texture2D::Texture2D(APIInstance* pAPIInstance, IDirect3DTexture9* texture, RenderAPI::TextureFormat format, RenderAPI::ResourceUsage usage, bool isManaged,
-	unsigned int width, unsigned int height, bool autoGenMipmaps)
-	: m_pAPIInstance(pAPIInstance)
+Texture2D::Texture2D(IDirect3DTexture9* texture, RenderAPI::TextureFormat format, RenderAPI::ResourceUsage usage, bool isManaged,
+	unsigned int width, unsigned int height, bool autoGenMipmaps, IInternalLogger& logger)
+	: m_internalLogger(logger)
 	, m_texFormat(format)
 	, m_usage(usage)
 	, m_autoGenMipmaps(autoGenMipmaps)
@@ -18,7 +17,7 @@ Texture2D::Texture2D(APIInstance* pAPIInstance, IDirect3DTexture9* texture, Rend
 	, m_texHeight(height)
 	, ClearStamp(0)
 {
-	m_pAPIInstance->AddRef();
+
 }
 
 Texture2D::~Texture2D()
@@ -39,9 +38,6 @@ Texture2D::~Texture2D()
 		m_pTexture->Release();
 		m_pTexture = NULL;
 	}
-
-	m_pAPIInstance->Release();
-	m_pAPIInstance = NULL;
 
 }
 
@@ -109,7 +105,7 @@ RenderAPI::MappedResource Texture2D::LockRect(unsigned int layer, RenderAPI::Loc
 	}
 	else
 	{
-		m_pAPIInstance->LogError("Texture2D::Lock", " Lock failed.", hr);
+		m_internalLogger.LogError("Texture2D::Lock", " Lock failed.", hr);
 		ret.Success = false;
 	}
 
@@ -191,10 +187,7 @@ TextureSurface::TextureSurface(Texture2D* pTexture, IDirect3DSurface9 * pSurface
 	, m_pSurface(pSurface)
 	, m_hDC(NULL)
 {
-	if (m_pParentTexture != NULL)
-	{
-		m_pParentTexture->AddReference();
-	}
+
 }
 
 TextureSurface::~TextureSurface()
@@ -231,13 +224,16 @@ bool TextureSurface::SaveToFile(const char * fileName, RenderAPI::ImageFormat fo
 
 void TextureSurface::Release()
 {
-	if (m_pParentTexture != NULL)
-	{
-		m_pParentTexture->Release();
-	}
 	if (0 == --m_refCount)
 	{
 		delete this;
+	}
+	else
+	{
+		if (m_pParentTexture != NULL)
+		{
+			m_pParentTexture->Release();
+		}
 	}
 }
 
@@ -255,9 +251,9 @@ IDirect3DSurface9 * TextureSurface::GetD3DTextureSurfacePtr()
 	return m_pSurface;
 }
 
-RenderSurface2D::RenderSurface2D(APIInstance* pAPIInstance, IDirect3DSurface9* pSurface, RenderAPI::TextureFormat format, unsigned int width, unsigned int height)
+RenderSurface2D::RenderSurface2D(IDirect3DSurface9* pSurface, RenderAPI::TextureFormat format, unsigned int width, unsigned int height, IInternalLogger& logger)
 	: TextureSurface(NULL, pSurface)
-	, m_pAPIInstance(pAPIInstance)
+	, m_internalLogger(logger)
 	, m_texFormat(format)
 	, m_texWidth(width)
 	, m_texHeight(height)
@@ -293,7 +289,7 @@ RenderAPI::MappedResource RenderSurface2D::LockRect(unsigned int layer, RenderAP
 		}
 		else
 		{
-			m_pAPIInstance->LogError("Rendersurface2D::Lock", " Render Texture cannot be locked because.");
+			m_internalLogger.LogError("Rendersurface2D::Lock", " Render Texture cannot be locked because.");
 		}
 	}
 	return ret;
@@ -325,7 +321,9 @@ RenderAPI::TextureSurface * RenderSurface2D::GetSurface(unsigned int layer)
 
 IDirect3DTexture9* RenderSurface2D::GetCopiedSystemTexture()
 {
-	IDirect3DDevice9* pDevice = m_pAPIInstance->pContext->GetDevicePtr();
+	IDirect3DSurface9 *pSurface = GetD3DTextureSurfacePtr();
+	IDirect3DDevice9* pDevice;
+	pSurface->GetDevice(&pDevice);
 
 	if (m_pTempTextureForCopy == NULL)
 	{

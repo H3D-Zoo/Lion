@@ -1,9 +1,9 @@
-#include <vector>
 #include "RenderStatistic.h" 
 #include "VertexBuffer.h"
 #include "IndexBuffer.h"
 #include "Texture2D.h"
 #include "TextureCube.h"
+#include <vector>
 
 
 unsigned int GetTextureLength(unsigned int w, unsigned int h, RenderAPI::TextureFormat format, bool bGenMipmap)

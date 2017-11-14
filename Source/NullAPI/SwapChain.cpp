@@ -1,39 +1,48 @@
 #include "SwapChain.h"
 
-SwapChain::SwapChain(const RenderAPI::SwapChainDesc & swapChainDesc)
-	: m_renderTarget(swapChainDesc.backbufferFormat, swapChainDesc.backbufferWidth, swapChainDesc.backbufferHeight, false)
-	, m_depthStencil(swapChainDesc.zbufferFormat, swapChainDesc.backbufferWidth, swapChainDesc.backbufferHeight, false)
+SwapChain::SwapChain(::DepthStencil* dsSurface, const RenderAPI::SwapChainDesc & swapChainDesc)
+	: m_pRenderTarget(NULL)
+	, m_pDepthStencil(dsSurface)
 {
+	InitRenderTarget(swapChainDesc.backbufferFormat, swapChainDesc.backbufferWidth, swapChainDesc.backbufferHeight);
+}
 
+SwapChain::~SwapChain()
+{
+	m_pDepthStencil->Release();
+	m_pRenderTarget->Release();
+
+	m_pDepthStencil = NULL;
+	m_pRenderTarget = NULL;
 }
 
 RenderAPI::RenderTarget* SwapChain::GetRenderTarget()
 {
-	m_renderTarget.AddRef();
-	return &m_renderTarget;
+	m_pRenderTarget->AddReference();
+	return m_pRenderTarget;
 }
 
-RenderAPI::DepthStencil * SwapChain::GetDepthStencil()
+RenderAPI::DepthStencil* SwapChain::GetDepthStencil()
 {
-	m_depthStencil.AddRef();
-	return &m_depthStencil;
+	m_pDepthStencil->AddReference();
+	return m_pDepthStencil;
 }
 
 unsigned int SwapChain::GetWidth() const
 {
-	return m_renderTarget.GetWidth();
+	return m_pRenderTarget->GetWidth();
 }
 
 unsigned int SwapChain::GetHeight() const
 {
-	return m_renderTarget.GetHeight();
+	return m_pRenderTarget->GetHeight();
 }
 
 bool SwapChain::OnResize(unsigned int width, unsigned int height)
 {
 	if (width > 0 && height > 0)
 	{
-		m_renderTarget.Resize(width, height);
+		m_pRenderTarget->Resize(width, height);
 		return true;
 	}
 	else
@@ -47,15 +56,21 @@ RenderAPI::DeviceState SwapChain::Present()
 	return RenderAPI::DEVICE_OK;
 }
 
+unsigned int SwapChain::AddReference()
+{
+	return ++m_refCount;
+}
+
 void SwapChain::Release()
 {
-	if (--m_refCount == 0)
+	if (0 == --m_refCount)
 	{
 		delete this;
 	}
 }
 
-void SwapChain::AddRef()
+
+void SwapChain::InitRenderTarget(RenderAPI::RenderTargetFormat format, unsigned int width, unsigned int height)
 {
-	++m_refCount;
+	m_pRenderTarget = new ::RenderTarget(format, width, height);
 }

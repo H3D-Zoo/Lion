@@ -18,7 +18,7 @@ const RenderAPI::VertexElement * VertexDeclaration::GetElements() const
 
 unsigned int VertexDeclaration::GetElementCount() const
 {
-	return m_vertexElements.size();;
+	return static_cast<unsigned int>(m_vertexElements.size());
 }
 
 IDirect3DVertexDeclaration9 * VertexDeclaration::GetD3DVertexDeclarationPtr()

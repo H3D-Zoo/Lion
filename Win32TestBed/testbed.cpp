@@ -7,9 +7,9 @@
 #include "box.hpp"
 
 #ifdef _DEBUG
-#define DLLName "DX9API_d.dll"
+#define DLLName "d3d9renderer_d.dll"
 #else
-#define DLLName "DX9API.dll"
+#define DLLName "d3d9renderer.dll"
 #endif
 
 bool APITestBed::Init(HWND hWindow, HWND hWindowEditor, unsigned int backBufferWidth, unsigned int backBufferHeight)

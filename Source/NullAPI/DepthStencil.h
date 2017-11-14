@@ -1,15 +1,13 @@
 #pragma once
 #include "../../RenderAPI/RenderAPI.h"
 #include "RefCount.hpp"
+#include "Texture2D.h"
 
-class Texture2D;
 
 class DepthStencil : public RenderAPI::DepthStencil
 {
 public:
-	DepthStencil(RenderAPI::DepthStencilFormat format, unsigned int width, unsigned int height, bool isTexture);
-
-	~DepthStencil();
+	DepthStencil(RenderAPI::DepthStencilFormat format, unsigned int width, unsigned int height);
 
 	virtual RenderAPI::DepthStencilFormat GetFormat() const;
 
@@ -17,18 +15,13 @@ public:
 
 	virtual unsigned int GetHeight() const;
 
-	virtual bool IsTexture2D() const;
-
-	virtual RenderAPI::Texture2D* GetTexturePtr();
+	virtual unsigned int AddReference();
 
 	virtual void Release();
 
-	void AddRef();
-
 private:
 	RefCount m_refCount;
-	RenderAPI::DepthStencilFormat m_format;
-	::Texture2D* m_texture;
-	unsigned int m_width;
-	unsigned int m_height;
+	const RenderAPI::DepthStencilFormat m_format;
+	const unsigned int m_width;
+	const unsigned int m_height;
 };

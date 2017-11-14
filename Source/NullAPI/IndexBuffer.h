@@ -1,13 +1,14 @@
 #pragma once
 #include "../../RenderAPI/RenderAPI.h"
-
 #include <vector>
+#include "APIInstance.h"
+
 
 class IndexBuffer : public RenderAPI::IndexBuffer
 {
 public:
 	IndexBuffer(RenderAPI::ResourceUsage usage, RenderAPI::IndexFormat format, unsigned int count);
-
+	
 	virtual RenderAPI::ResourceUsage GetUsage() const;
 
 	virtual RenderAPI::IndexFormat GetFormat() const;
@@ -18,16 +19,27 @@ public:
 
 	virtual void* Lock(unsigned int offset, unsigned int lockLength, RenderAPI::LockOption lockOption);
 
-	virtual void* DiscardLock();
+	virtual void* LockAll(RenderAPI::LockOption lockOption);
 
 	virtual void Unlock();
-	
-	virtual bool NeedRecreateWhenDeviceLost();
+
+	virtual unsigned int AddReference();
 
 	virtual void Release();
+
+	virtual bool NeedRecreateWhenDeviceLost() const;
+
+	bool IsDynamic() { return m_isDynamic; }
+
 private:
+	RefCount m_refCount;
 	RenderAPI::ResourceUsage m_usage;
 	RenderAPI::IndexFormat m_indexFormat;
-	unsigned int m_indexCount;
-	unsigned int m_bufferLength;
+	const bool m_isManaged;
+	const bool m_isDynamic;
+	const bool m_writeOnly;
+	const unsigned int m_indexCount;
+	const unsigned int m_bufferLength;
+
+	std::vector<char> m_buffer;
 };

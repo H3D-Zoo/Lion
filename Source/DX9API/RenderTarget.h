@@ -9,9 +9,9 @@
 class RenderTarget : public RenderAPI::RenderTarget
 {
 public:
-	RenderTarget(APIInstance* pAPI, IDirect3DSurface9* rtSurface, RenderAPI::RenderTargetFormat format, unsigned int width, unsigned int height);
+	RenderTarget(IDirect3DSurface9*, RenderAPI::RenderTargetFormat, unsigned int width, unsigned int height, IInternalLogger&);
 
-	RenderTarget(APIInstance* pAPI, IDirect3DTexture9* rtTexture, RenderAPI::TextureFormat format, unsigned int width, unsigned int height);
+	RenderTarget(IDirect3DTexture9*, RenderAPI::TextureFormat, unsigned int width, unsigned int height, IInternalLogger&);
 
 	~RenderTarget();
 

@@ -1,6 +1,6 @@
 #pragma once
-#include "../../RenderAPI/RenderAPI.h"
 #include <vector>
+#include "../../RenderAPI/RenderAPI.h"
 #include "APIInstance.h"
 #include "RefCount.hpp"
 #include "DX9Include.h"
@@ -12,7 +12,7 @@ class Texture2D;
 class TextureSurface : public RenderAPI::TextureSurface
 {
 public:
-	TextureSurface(Texture2D* pTexture, IDirect3DSurface9* pSurface);
+	TextureSurface(::Texture2D*, IDirect3DSurface9*);
 
 	~TextureSurface();
 
@@ -30,7 +30,7 @@ public:
 
 private:
 	RefCount m_refCount;
-	Texture2D* m_pParentTexture;
+	::Texture2D* m_pParentTexture;
 	IDirect3DSurface9* m_pSurface;
 	HDC m_hDC;
 };
@@ -38,8 +38,8 @@ private:
 class Texture2D : public RenderAPI::Texture2D
 {
 public:
-	Texture2D(APIInstance* pAPIInstance, IDirect3DTexture9* texture, RenderAPI::TextureFormat format, RenderAPI::ResourceUsage usage, bool isManaged,
-		unsigned int width, unsigned int height, bool autoGenMipmaps);
+	Texture2D(IDirect3DTexture9*, RenderAPI::TextureFormat, RenderAPI::ResourceUsage, bool isManaged,
+		unsigned int width, unsigned int height, bool autoGenMipmaps, IInternalLogger&);
 
 	~Texture2D();
 
@@ -84,8 +84,7 @@ public:
 	unsigned int ClearStamp;
 
 protected:
-	APIInstance* m_pAPIInstance;
-
+	IInternalLogger& m_internalLogger;
 	IDirect3DTexture9* m_pTexture;
 	const bool m_autoGenMipmaps;
 	const bool m_isManaged;
@@ -103,8 +102,8 @@ private:
 class RenderTexture2D : public Texture2D
 {
 public:
-	RenderTexture2D(APIInstance* pAPIInstance, IDirect3DTexture9* texture, RenderAPI::TextureFormat format, RenderAPI::ResourceUsage usage,
-		unsigned int width, unsigned int height);
+	RenderTexture2D(IDirect3DTexture9*, RenderAPI::TextureFormat, RenderAPI::ResourceUsage usage,
+		unsigned int width, unsigned int height, IInternalLogger&);
 
 	~RenderTexture2D();
 
@@ -133,9 +132,8 @@ private:
 class NoLockableTexture2D : public Texture2D
 {
 public:
-	NoLockableTexture2D(APIInstance* pAPIInstance, IDirect3DTexture9* texture, RenderAPI::TextureFormat format, RenderAPI::ResourceUsage usage, bool isManaged,
-		unsigned int width, unsigned int height,
-		bool autoGenMipmaps);
+	NoLockableTexture2D(IDirect3DTexture9*, RenderAPI::TextureFormat, RenderAPI::ResourceUsage, bool isManaged,
+		unsigned int width, unsigned int height, bool autoGenMipmaps, IInternalLogger&);
 
 	~NoLockableTexture2D();
 	
@@ -163,7 +161,7 @@ private:
 class RenderSurface2D : public RenderAPI::Texture2D, public ::TextureSurface
 {
 public:
-	RenderSurface2D(APIInstance* pAPIInstance, IDirect3DSurface9* pSurface, RenderAPI::TextureFormat format, unsigned int width, unsigned int height);
+	RenderSurface2D(IDirect3DSurface9*, RenderAPI::TextureFormat, unsigned int width, unsigned int height, IInternalLogger&);
 
 	~RenderSurface2D();
 
@@ -217,9 +215,8 @@ private:
 
 	void ReleaseCopiedSystemTexture();
 
-	APIInstance* m_pAPIInstance;
 	IDirect3DTexture9* m_pTempTextureForCopy;
-
+	IInternalLogger& m_internalLogger;
 	const RenderAPI::TextureFormat m_texFormat;
 	unsigned int m_texWidth;
 	unsigned int m_texHeight;

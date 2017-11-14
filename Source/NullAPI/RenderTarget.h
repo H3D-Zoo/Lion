@@ -1,14 +1,14 @@
 #pragma once
-
 #include "../../RenderAPI/RenderAPI.h"
 #include "RefCount.hpp"
-
-class Texture2D;
+#include "Texture2D.h"
 
 class RenderTarget : public RenderAPI::RenderTarget
 {
 public:
-	RenderTarget(RenderAPI::RenderTargetFormat format, unsigned int width, unsigned int height, bool isTexture);
+	RenderTarget(RenderAPI::RenderTargetFormat format, unsigned int width, unsigned int height);
+
+	RenderTarget(RenderAPI::TextureFormat format, unsigned int width, unsigned int height);
 
 	~RenderTarget();
 
@@ -18,22 +18,22 @@ public:
 
 	virtual unsigned int GetHeight() const;
 
-	virtual bool IsTexture2D() const;
-
 	virtual RenderAPI::Texture2D* GetTexturePtr();
+
+	virtual unsigned int AddReference();
 
 	virtual void Release();
 
-	void AddRef(); 
-	
 	void Resize(unsigned int width, unsigned int height);
 
+	void ReleaseWhenDeviceLost();
 
+	void Reset(unsigned int width, unsigned int height, RenderAPI::RenderTargetFormat rtFormat);
 
 private:
 	RefCount m_refCount;
 	RenderAPI::RenderTargetFormat m_format;
-	::Texture2D* m_texture;
 	unsigned int m_width;
 	unsigned int m_height;
+	RenderAPI::Texture2D* m_rtTexture;
 };

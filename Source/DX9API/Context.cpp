@@ -10,7 +10,6 @@
 #include "AutoPtr.hpp"
 #include "Texture2D.h"
 #include "TextureCube.h"
-#include <ddraw.h>
 
 struct DDrawX
 {
@@ -125,19 +124,18 @@ namespace
 		D3DTA_TFACTOR,
 	};
 }
-Context::Context(APIInstance* pAPI, IDirect3DDevice9 * device, RenderAPI::RenderTarget* defRT, RenderAPI::DepthStencil* defDS, RenderStatistic& renderStatic)
+Context::Context(APIInstance* pAPI, IDirect3DDevice9 * device, RenderAPI::RenderTarget* defRT, RenderAPI::DepthStencil* defDS)
 	: m_pAPI(pAPI)
 	, m_pDevice(device)
-	, m_backBufferManager(device, defRT, defDS, renderStatic)
-	, m_renderStateManager(device, renderStatic)
+	, m_backBufferManager(device, defRT, defDS, pAPI->GetRenderStatistic())
+	, m_renderStateManager(device, pAPI->GetRenderStatistic())
 	, m_nNXCacheFVF(0)
 	, m_pNXCacheVertexShader(NULL)
 	, m_pNXCachePixelShader(NULL)
 	, m_pNXCacheTexture(NULL)
-	, m_renderStatistic(renderStatic)
 {
 	m_pAPI->AddRef();
-	m_pAPI->pContext = this;
+
 	if (m_pAPI->IsSupportD3D9EX())
 	{
 		m_pDeviceEx = (IDirect3DDevice9Ex*)m_pDevice;
@@ -272,7 +270,7 @@ void Context::SetVertexBuffers(RenderAPI::VertexBufferInfo* buffers, unsigned in
 			}
 
 			//统计信息
-			m_renderStatistic.OnSetSourceStream(pVertexBuffer);
+			m_pAPI->GetRenderStatistic().OnSetSourceStream(pVertexBuffer);
 		}
 	}
 }
@@ -285,7 +283,7 @@ void Context::SetIndexBuffer(RenderAPI::IndexBuffer* buffer, unsigned int offset
 		m_pDevice->SetIndices(pIndexBuffer->GetD3DIndexBuffer());
 		m_indexBufferOffset = offset;
 
-		m_renderStatistic.OnSetIndexBuffer(pIndexBuffer);
+		m_pAPI->GetRenderStatistic().OnSetIndexBuffer(pIndexBuffer);
 	}
 }
 
@@ -301,7 +299,7 @@ void Context::SetVertexDeclaration(RenderAPI::VertexDeclaration * decl)
 		m_pDevice->SetVertexDeclaration(NULL);
 	}
 
-	m_renderStatistic.OnSetVertexDeclaration();
+	m_pAPI->GetRenderStatistic().OnSetVertexDeclaration();
 }
 
 void Context::SetTexture(unsigned int slot, RenderAPI::Texture* texture)
@@ -316,7 +314,7 @@ void Context::SetTexture(unsigned int slot, RenderAPI::Texture* texture)
 	}
 	m_pDevice->SetTexture(slot, pTexture);
 
-	m_renderStatistic.OnSetTexture(texture);
+	m_pAPI->GetRenderStatistic().OnSetTexture(texture);
 }
 
 void Context::SetBlendState(const RenderAPI::BlendState& state)
@@ -586,14 +584,14 @@ void Context::Draw(RenderAPI::Primitive primitive, unsigned int startVertex, uns
 {
 	m_pDevice->DrawPrimitive(s_primitives[primitive], startVertex, primitiveCount);
 
-	m_renderStatistic.OnDraw(primitive, primitiveCount);
+	m_pAPI->GetRenderStatistic().OnDraw(primitive, primitiveCount);
 }
 
 void Context::DrawWithDynamicVertex(RenderAPI::Primitive primitive, unsigned int primitiveCount, const void* pVertexData, unsigned int vertexStride)
 {
 	m_pDevice->DrawPrimitiveUP(s_primitives[primitive], primitiveCount, pVertexData, vertexStride);
 
-	m_renderStatistic.OnDrawUp(primitive, primitiveCount);
+	m_pAPI->GetRenderStatistic().OnDrawUp(primitive, primitiveCount);
 }
 
 void Context::DrawIndexed(RenderAPI::Primitive primitive, unsigned int baseVertex, unsigned int vertexCount, unsigned int startIndex, unsigned int primitiveCount)
@@ -603,21 +601,21 @@ void Context::DrawIndexed(RenderAPI::Primitive primitive, unsigned int baseVerte
 
 	m_pDevice->DrawIndexedPrimitive(s_primitives[primitive], baseVertex, 0, vertexCount, startIndex, primitiveCount);
 
-	m_renderStatistic.OnDrawIndexed(primitive, primitiveCount);
+	m_pAPI->GetRenderStatistic().OnDrawIndexed(primitive, primitiveCount);
 }
 
 void Context::DrawIndexedWithDynamicVertex(RenderAPI::Primitive primitive, unsigned int vertexCount, unsigned int primitiveCount, const unsigned int* pIndexData, const void* pVertexData, unsigned int vertexStride)
 {
 	m_pDevice->DrawIndexedPrimitiveUP(s_primitives[primitive], 0, vertexCount, primitiveCount, pIndexData, D3DFMT_INDEX32, pVertexData, vertexStride);
 
-	m_renderStatistic.OnDrawIndexedUp(primitive, primitiveCount);
+	m_pAPI->GetRenderStatistic().OnDrawIndexedUp(primitive, primitiveCount);
 }
 
 void Context::DrawIndexedWithDynamicVertex(RenderAPI::Primitive primitive, unsigned int vertexCount, unsigned int primitiveCount, const unsigned short* pIndexData, const void* pVertexData, unsigned int vertexStride)
 {
 	m_pDevice->DrawIndexedPrimitiveUP(s_primitives[primitive], 0, vertexCount, primitiveCount, pIndexData, D3DFMT_INDEX16, pVertexData, vertexStride);
 
-	m_renderStatistic.OnDrawIndexedUp(primitive, primitiveCount);
+	m_pAPI->GetRenderStatistic().OnDrawIndexedUp(primitive, primitiveCount);
 }
 
 bool Context::UpdateTexture(RenderAPI::Texture2D * src, RenderAPI::Texture2D * dst)
@@ -841,12 +839,12 @@ void Context::EvictManagedResources()
 
 const RenderAPI::RenderStatisticsData& Context::GetRenderStatisticsData() const
 {
-	return m_renderStatistic.GetData();
+	return m_pAPI->GetRenderStatistic().GetData();
 }
 
 void Context::ClearRenderStatisticsData()
 {
-	m_renderStatistic.Reset();
+	m_pAPI->GetRenderStatistic().Reset();
 }
 
 unsigned int Context::AddReference()
@@ -944,7 +942,7 @@ void BackBufferManager::SetRenderTarget(unsigned int index, RenderAPI::RenderTar
 
 	if (index >= m_pCurrentRTs.size())
 	{
-		m_pCurrentRTs.resize(index + 1);
+		EnlargeCurrentRTVector(index + 1);
 		m_pDevice->SetRenderTarget(index, rtSurface);
 		m_pCurrentRTs[index] = rtSurface;
 	}
@@ -999,6 +997,16 @@ void BackBufferManager::ResetDefaultRenderTarget(RenderAPI::RenderTarget * defRT
 void BackBufferManager::SetMaxTextureStage(unsigned int maxStage)
 {
 	m_maxTextureStage = maxStage;
+}
+
+void BackBufferManager::EnlargeCurrentRTVector(unsigned int count)
+{
+	size_t oldSize = m_pCurrentRTs.size();
+	size_t newSize = count;
+	for (; oldSize < newSize; oldSize++)
+	{
+		m_pCurrentRTs.push_back(NULL);
+	}
 }
 
 bool operator != (const RenderAPI::VertexElement& left, const RenderAPI::VertexElement& right)

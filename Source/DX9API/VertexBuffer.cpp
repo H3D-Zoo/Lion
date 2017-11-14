@@ -1,8 +1,8 @@
 #include "VertexBuffer.h"
 #include "EnumMapping.h"
 
-VertexBuffer::VertexBuffer(APIInstance* pAPIInstance, IDirect3DVertexBuffer9* vertexBuffer, RenderAPI::ResourceUsage usage, bool isManaged, unsigned int vertexCount, unsigned int vertexSize)
-	: m_pAPIInstance(pAPIInstance)
+VertexBuffer::VertexBuffer(IDirect3DVertexBuffer9* vertexBuffer, RenderAPI::ResourceUsage usage, bool isManaged, unsigned int vertexCount, unsigned int vertexSize, IInternalLogger& logger)
+	: m_internalLogger(logger)
 	, m_usage(usage)
 	, m_isManaged(isManaged)
 	, m_isDynamic(usage == RenderAPI::RESUSAGE_Dynamic || usage == RenderAPI::RESUSAGE_DynamicManaged)
@@ -64,7 +64,7 @@ void * VertexBuffer::Lock(unsigned int offset, unsigned int lockLength, RenderAP
 	}
 	else
 	{
-		m_pAPIInstance->LogError("VertexBuffer::Lock", "Lock failed.", hr);
+		m_internalLogger.LogError("VertexBuffer::Lock", "Lock failed.", hr);
 		return NULL;
 	}
 }

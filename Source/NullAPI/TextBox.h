@@ -1,15 +1,12 @@
 #pragma once
 #include <string>
 #include "../../RenderAPI/RenderAPI.h"
-#include "DX9Include.h"
 #include "RefCount.hpp"
 
 class TextBox : public RenderAPI::TextBox
 {
 public:
-	TextBox(ID3DXFont*, int screen_x, int screen_y, int width, int height);
-
-	~TextBox();
+	TextBox(int screen_x, int screen_y, int width, int height);
 
 	virtual void SetPosSize(int x, int y, int width, int height);
 
@@ -32,15 +29,10 @@ public:
 	virtual void Release();
 
 private:
-	RECT LazyUpdateRect(LPD3DXFONT font, const RECT& in, UINT dtFormat);
-
 	RefCount m_refCount;
-	LPD3DXFONT m_pFont;
-	D3DXCOLOR m_color;
-
 	std::string m_text;
 	RECT m_rect;
+	float m_color[4];
 	bool m_wordWarp;
 	bool m_isShow;
-	bool needUpdateTextureRect;
 };

@@ -1,8 +1,8 @@
 #pragma once
 
-#include "../../RenderAPI/RenderAPI.h"
 #include <vector>
 #include <map>
+#include "../../RenderAPI/RenderAPI.h"
 #include "StateManager.h"
 #include "DX9Include.h"
 #include "RenderStatistic.h"
@@ -35,6 +35,8 @@ public:
 	void SetMaxTextureStage(unsigned int maxStage);
 
 private:
+	void EnlargeCurrentRTVector(unsigned int count);
+
 	IDirect3DDevice9* m_pDevice;
 	std::vector<IDirect3DSurface9*> m_pCurrentRTs;
 	IDirect3DSurface9* m_pCurrentDS;
@@ -47,7 +49,7 @@ private:
 class Context :public RenderAPI::Context, public RenderAPI::ContextLegacy
 {
 public:
-	Context(APIInstance* pAPIContext, IDirect3DDevice9* device, RenderAPI::RenderTarget* defRT, RenderAPI::DepthStencil* defDS,  RenderStatistic& renderStatic);
+	Context(APIInstance* pAPIContext, IDirect3DDevice9* device, RenderAPI::RenderTarget* defRT, RenderAPI::DepthStencil* defDS);
 
 	~Context();
 
@@ -231,6 +233,4 @@ private:
 	IDirect3DVertexShader9* m_pNXCacheVertexShader;
 	IDirect3DPixelShader9* m_pNXCachePixelShader;
 	IDirect3DBaseTexture9* m_pNXCacheTexture;
-
-	RenderStatistic& m_renderStatistic;
 };

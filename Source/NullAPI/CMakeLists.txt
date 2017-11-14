@@ -23,7 +23,8 @@ set(RENDERAPI_INCLUDE_FILES
 )
 
 set(RENDERAPI_IMPL_INCLUDE_FILES
-	./APIGlobal.h
+	./AutoPtr.hpp
+	./APIInstance.h
 	./Device.h
 	./Context.h
 	./SwapChain.h
@@ -33,23 +34,31 @@ set(RENDERAPI_IMPL_INCLUDE_FILES
 	./IndexBuffer.h
 	./VertexDeclaration.h
 	./Texture2D.h
+	./TextureCube.h
 	./FXEffect.h
+	./StateManager.h
 	./OcclusionQuery.h
+	./TextBox.h
+	./RenderStatistic.h
 )
 
 set(RENDERAPI_IMPL_SOURCE_FILES
-	 ./APIGlobal.cpp
-	 ./Device.cpp
-	 ./Context.cpp
-	 ./SwapChain.cpp
-	 ./RenderTarget.cpp
-	 ./DepthStencil.cpp
-	 ./VertexBuffer.cpp
-	 ./IndexBuffer.cpp
-	 ./VertexDeclaration.cpp
-	 ./Texture2D.cpp
-	 ./FXEffect.cpp
-	 ./OcclusionQuery.cpp
+	./APIInstance.cpp
+	./Device.cpp
+	./Context.cpp
+	./ContextLegacy.cpp
+	./SwapChain.cpp
+	./RenderTarget.cpp
+	./DepthStencil.cpp
+	./VertexBuffer.cpp
+	./IndexBuffer.cpp
+	./VertexDeclaration.cpp
+	./Texture2D.cpp
+	./TextureCube.cpp
+	./FXEffect.cpp
+	./OcclusionQuery.cpp
+	./TextBox.cpp
+	./RenderStatistic.cpp
 )
 
 source_group(include FILES ${DIR_INTERFACE})
@@ -65,6 +74,7 @@ list(APPEND ${THIS_TARGET}_SOURCE_FILES
 )
 
 add_library(${THIS_TARGET} SHARED ${${THIS_TARGET}_SOURCE_FILES})
+
 set_target_properties( ${THIS_TARGET} PROPERTIES OUTPUT_NAME_DEBUG "${THIS_TARGET}_d")
 set_target_properties( ${THIS_TARGET} PROPERTIES OUTPUT_NAME_RELEASE "${THIS_TARGET}")
 
@@ -72,6 +82,5 @@ set (CMAKE_SHARED_LINKER_FLAGS_RELEASE "/DEBUG")
 set_target_properties( ${THIS_TARGET} PROPERTIES LINK_FLAGS_DEBUG "/NXCOMPAT")
 set_target_properties( ${THIS_TARGET} PROPERTIES LINK_FLAGS_RELEASE "/OPT:REF /OPT:ICF")
 
-#TODO
-#install (TARGETS ${THIS_TARGET} RUNTIME DESTINATION .)
-#install (FILES $<TARGET_PDB_FILE:${THIS_TARGET}> DESTINATION .)
+install (TARGETS ${THIS_TARGET} RUNTIME DESTINATION .)
+install (FILES $<TARGET_PDB_FILE:${THIS_TARGET}> DESTINATION .)

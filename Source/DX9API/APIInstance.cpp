@@ -1,5 +1,4 @@
 #include "APIInstance.h"
-#include <string>
 #include "EnumMapping.h"
 #include "Device.h"
 #include "Context.h"
@@ -408,20 +407,18 @@ RenderAPI::CreationResult APIInstance::CreateDeviceAndContext(const RenderAPI::S
 				newDesc.backbufferHeight = rect.bottom - rect.top;
 			}
 
-			result.Success = true;
 			hDeviceWindow = (HWND)desc.hWindow;
+			pDevice = new ::Device(this, devicePtr, newDesc, isFullscreen, useVerticalSync);
 
+			AutoR<RenderAPI::SwapChain> swapChain = pDevice->GetDefaultSwapChain();
+			AutoR<RenderAPI::RenderTarget> rt = swapChain->GetRenderTarget();
+			AutoR<RenderAPI::DepthStencil> ds = swapChain->GetDepthStencil();
 			devicePtr->AddRef();
+			pContext = new ::Context(this, devicePtr, rt, ds);
 
-			result.DevicePtr = new ::Device(this, devicePtr, newDesc, isFullscreen, useVerticalSync);
-
-			RenderAPI::SwapChain* swapChain = result.DevicePtr->GetDefaultSwapChain();
-			RenderAPI::RenderTarget* rt = swapChain->GetRenderTarget();
-			RenderAPI::DepthStencil* ds = swapChain->GetDepthStencil();
-			result.ContextPtr = new ::Context(this, devicePtr, rt, ds, m_renderStatistic);
-			rt->Release();
-			ds->Release();
-			swapChain->Release();
+			result.Success = true;
+			result.DevicePtr = pDevice;
+			result.ContextPtr = pContext;
 		}
 	}
 	return result;
