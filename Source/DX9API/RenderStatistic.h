@@ -38,8 +38,6 @@ public:
 
 	void OnSetTextureOnlySize(RenderAPI::Texture* pTexture);
 
-	void OnSetCustomFVF();
-
 	void OnSetVertexShader();
 
 	void OnSetPixelShader();

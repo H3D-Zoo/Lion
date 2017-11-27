@@ -291,12 +291,12 @@ void Context::SetVertexDeclaration(RenderAPI::VertexDeclaration * decl)
 {
 	if (decl != NULL)
 	{
-		IDirect3DVertexDeclaration9* pDeclaration = ((::VertexDeclaration*)decl)->GetD3DVertexDeclarationPtr();
-		m_pDevice->SetVertexDeclaration(pDeclaration);
+		::VertexDeclaration* pDeclaration = (::VertexDeclaration*)decl;
+		m_pDevice->SetFVF(pDeclaration->GetCustomFVF());
 	}
 	else
 	{
-		m_pDevice->SetVertexDeclaration(NULL);
+		m_pDevice->SetFVF(0);
 	}
 
 	m_pAPI->GetRenderStatistic().OnSetVertexDeclaration();

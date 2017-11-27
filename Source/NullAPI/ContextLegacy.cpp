@@ -20,11 +20,6 @@ void Context::DisableCustomShaderUsage()
 	
 }
 
-void Context::SetCustomFVF(unsigned int fvf)
-{
-	m_renderStatistic.OnSetCustomFVF();
-}
-
 void Context::SetWorldMatrix(const float * matrix)
 {
 

@@ -8,9 +8,7 @@
 class VertexDeclaration : public RenderAPI::VertexDeclaration
 {
 public:
-	VertexDeclaration(IDirect3DVertexDeclaration9*, const std::vector<RenderAPI::VertexElement>&);
-
-	~VertexDeclaration();
+	VertexDeclaration(const std::vector<RenderAPI::VertexElement>&, unsigned int fvf);
 
 	virtual const RenderAPI::VertexElement* GetElements() const;
 
@@ -20,10 +18,10 @@ public:
 
 	virtual void Release();
 
-	IDirect3DVertexDeclaration9* GetD3DVertexDeclarationPtr();
+	unsigned int GetCustomFVF() const;
 
 private:
 	RefCount m_refCount;
 	const std::vector<RenderAPI::VertexElement> m_vertexElements;
-	IDirect3DVertexDeclaration9* m_pDeclaration;
+	const unsigned int m_customFVF;
 };

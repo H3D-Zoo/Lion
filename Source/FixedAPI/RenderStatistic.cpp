@@ -171,11 +171,6 @@ void RenderStatistic::OnSetTextureOnlySize(RenderAPI::Texture * pTexture)
 	}
 }
 
-void RenderStatistic::OnSetCustomFVF()
-{
-	++m_data.NumSetCustomFVF;
-}
-
 void RenderStatistic::OnSetVertexShader()
 {
 	++m_data.NumSetVertexShader;

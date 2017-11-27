@@ -177,8 +177,6 @@ public:
 
 	virtual void DisableCustomShaderUsage();
 
-	virtual void SetCustomFVF(unsigned int fvf);
-
 	virtual void SetWorldMatrix(const float* matrix);
 
 	virtual void SetViewMatrix(const float* matrix);

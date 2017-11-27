@@ -81,7 +81,6 @@ HRESULT FXStateManager::SetPixelShader(THIS_ LPDIRECT3DPIXELSHADER9 pShader)
 
 HRESULT FXStateManager::SetFVF(THIS_ DWORD dwFVF)
 {
-	m_renderStatistic.OnSetCustomFVF();
 	return m_pDevice->SetFVF(dwFVF);
 }
 

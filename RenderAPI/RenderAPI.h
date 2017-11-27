@@ -67,13 +67,13 @@ namespace RenderAPI
 	enum Semantic
 	{
 		SEMANTIC_Position = 0,
-		SEMANTIC_Color = 1,
-		SEMANTIC_Normal = 2,
-		SEMANTIC_Texcoord = 3,
-		SEMANTIC_Tangent = 4,
-		SEMANTIC_Binormal = 5,
-		SEMANTIC_BlendWeight = 6,
-		SEMANTIC_BlendIndices = 7,
+		SEMANTIC_Normal = 1,
+		SEMANTIC_Color = 2,			//兼容模式下，Index0 = Diffuse, Index1 = Specular
+		SEMANTIC_Texcoord = 3,		//兼容模式下，只允许最多有8个Texcoord
+		SEMANTIC_Tangent = 4,		//兼容模式无法使用
+		SEMANTIC_Binormal = 5,		//兼容模式无法使用
+		SEMANTIC_BlendWeight = 6,	//兼容模式无法使用
+		SEMANTIC_BlendIndices = 7,	//兼容模式无法使用
 	};
 
 	enum StreamFrequncy
@@ -397,7 +397,6 @@ namespace RenderAPI
 		unsigned int NumSetStaticIndices;
 		unsigned int NumSetDynamicIndices;
 		unsigned int NumSetVertexDeclaration;
-		unsigned int NumSetCustomFVF;
 		unsigned int NumSetVertexShader;
 		unsigned int NumSetPixelShader;
 		unsigned int NumSetTexture;
@@ -1025,22 +1024,6 @@ namespace RenderAPI
 
 		virtual TextBox* CreateTextBox(int screenX, int screenY, int width, int height) = 0;
 	};
-	
-	enum LegacyFVF
-	{
-		FVF_XYZ = 1 << 0,
-		FVF_NORMAL = 1 << 1,
-		FVF_DIFFUSE = 1 << 2,
-		FVF_SPECULAR = 1 << 3,
-		FVF_TEXCOORD0 = 1 << 4,
-		FVF_TEXCOORD1 = 1 << 5,
-		FVF_TEXCOORD2 = 1 << 6,
-		FVF_TEXCOORD3 = 1 << 7,
-		FVF_TEXCOORD4 = 1 << 8,
-		FVF_TEXCOORD5 = 1 << 9,
-		FVF_TEXCOORD6 = 1 << 10,
-		FVF_TEXCOORD7 = 1 << 11,
-	};
 
 	class ContextLegacy
 	{
@@ -1057,8 +1040,6 @@ namespace RenderAPI
 		virtual void ResetTexcoordIndex(unsigned int slot) = 0;
 
 		virtual void DisableCustomShaderUsage() = 0;
-
-		virtual void SetCustomFVF(unsigned int fvf) = 0;
 
 		virtual void SetWorldMatrix(const float* matrix) = 0;
 

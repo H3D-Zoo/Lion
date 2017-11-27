@@ -41,31 +41,6 @@ void Context::DisableCustomShaderUsage()
 	m_pDevice->SetPixelShader(NULL);
 }
 
-unsigned int TransformCustomFVF(unsigned int legacyFVF)
-{
-	unsigned int ret = 0;
-	if (legacyFVF&RenderAPI::FVF_XYZ)			ret |= D3DFVF_XYZ;
-	if (legacyFVF&RenderAPI::FVF_NORMAL)		ret |= D3DFVF_NORMAL;
-	if (legacyFVF&RenderAPI::FVF_DIFFUSE)		ret |= D3DFVF_DIFFUSE;
-	if (legacyFVF&RenderAPI::FVF_SPECULAR)		ret |= D3DFVF_SPECULAR;
-	if (legacyFVF&RenderAPI::FVF_TEXCOORD0)			ret |= D3DFVF_TEX0;
-	if (legacyFVF&RenderAPI::FVF_TEXCOORD1)			ret |= D3DFVF_TEX1;
-	if (legacyFVF&RenderAPI::FVF_TEXCOORD2)			ret |= D3DFVF_TEX2;
-	if (legacyFVF&RenderAPI::FVF_TEXCOORD3)			ret |= D3DFVF_TEX3;
-	if (legacyFVF&RenderAPI::FVF_TEXCOORD4)			ret |= D3DFVF_TEX4;
-	if (legacyFVF&RenderAPI::FVF_TEXCOORD5)			ret |= D3DFVF_TEX5;
-	if (legacyFVF&RenderAPI::FVF_TEXCOORD6)			ret |= D3DFVF_TEX6;
-	if (legacyFVF&RenderAPI::FVF_TEXCOORD7)			ret |= D3DFVF_TEX7;
-	return ret;
-}
-
-void Context::SetCustomFVF(unsigned int fvf)
-{
-	m_pDevice->SetFVF(fvf);
-
-	m_pAPI->GetRenderStatistic().OnSetCustomFVF();
-}
-
 void Context::SetWorldMatrix(const float * matrix)
 {
 	m_pDevice->SetTransform(D3DTS_WORLD, (const D3DMATRIX*)matrix);
@@ -289,7 +264,6 @@ void Context::SaveNXDebugRenderState()
 
 	m_pDevice->SetFVF(D3DFVF_DIFFUSE | D3DFVF_XYZ);
 
-	m_pAPI->GetRenderStatistic().OnSetCustomFVF();
 	m_pAPI->GetRenderStatistic().OnSetVertexShader();
 	m_pAPI->GetRenderStatistic().OnSetPixelShader();
 	m_pAPI->GetRenderStatistic().OnSetTexture(NULL);
@@ -324,6 +298,5 @@ void Context::RestoreNXDebugRenderState(bool lightsOn)
 
 	m_pAPI->GetRenderStatistic().OnSetVertexShader();
 	m_pAPI->GetRenderStatistic().OnSetPixelShader();
-	m_pAPI->GetRenderStatistic().OnSetCustomFVF();
 	m_pAPI->GetRenderStatistic().OnSetTexture(NULL);
 }
