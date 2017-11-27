@@ -48,21 +48,36 @@ unsigned int TransformCustomFVF(unsigned int legacyFVF)
 	if (legacyFVF&RenderAPI::FVF_NORMAL)		ret |= D3DFVF_NORMAL;
 	if (legacyFVF&RenderAPI::FVF_DIFFUSE)		ret |= D3DFVF_DIFFUSE;
 	if (legacyFVF&RenderAPI::FVF_SPECULAR)		ret |= D3DFVF_SPECULAR;
-	if (legacyFVF&RenderAPI::FVF_TEXCOORD0)			ret |= D3DFVF_TEX0;
-	if (legacyFVF&RenderAPI::FVF_TEXCOORD1)			ret |= D3DFVF_TEX1;
-	if (legacyFVF&RenderAPI::FVF_TEXCOORD2)			ret |= D3DFVF_TEX2;
-	if (legacyFVF&RenderAPI::FVF_TEXCOORD3)			ret |= D3DFVF_TEX3;
-	if (legacyFVF&RenderAPI::FVF_TEXCOORD4)			ret |= D3DFVF_TEX4;
-	if (legacyFVF&RenderAPI::FVF_TEXCOORD5)			ret |= D3DFVF_TEX5;
-	if (legacyFVF&RenderAPI::FVF_TEXCOORD6)			ret |= D3DFVF_TEX6;
-	if (legacyFVF&RenderAPI::FVF_TEXCOORD7)			ret |= D3DFVF_TEX7;
+
+	// 所有的Texcoord都是float2
+	// float2使用D3DFVF_TEXCOORDSIZE2，这个是个常数0
+	// 所以此处代码忽略 D3DFVF_TEXCOORDSIZE2(TC_Index);
+	int numTextureCoord = 0;
+	if (legacyFVF&RenderAPI::FVF_TEXCOORD0)++numTextureCoord;
+	if (legacyFVF&RenderAPI::FVF_TEXCOORD1)++numTextureCoord;
+	if (legacyFVF&RenderAPI::FVF_TEXCOORD2)++numTextureCoord;
+	if (legacyFVF&RenderAPI::FVF_TEXCOORD3)++numTextureCoord;
+	if (legacyFVF&RenderAPI::FVF_TEXCOORD4)++numTextureCoord;
+	if (legacyFVF&RenderAPI::FVF_TEXCOORD5)++numTextureCoord;
+	if (legacyFVF&RenderAPI::FVF_TEXCOORD6)++numTextureCoord;
+	if (legacyFVF&RenderAPI::FVF_TEXCOORD7)++numTextureCoord;
+
+	switch (numTextureCoord)
+	{
+	case 1: ret |= D3DFVF_TEX1;		break;
+	case 2: ret |= D3DFVF_TEX2;		break;
+	case 3: ret |= D3DFVF_TEX3;		break;
+	case 4: ret |= D3DFVF_TEX4;		break;
+	case 5: ret |= D3DFVF_TEX5;		break;
+	case 6: ret |= D3DFVF_TEX6;		break;
+	case 7: ret |= D3DFVF_TEX7;		break;
+	}
 	return ret;
 }
 
 void Context::SetCustomFVF(unsigned int fvf)
 {
-	m_pDevice->SetFVF(fvf);
-
+	m_pDevice->SetFVF(TransformCustomFVF(fvf));
 	m_pAPI->GetRenderStatistic().OnSetCustomFVF();
 }
 
