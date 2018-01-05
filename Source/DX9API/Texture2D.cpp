@@ -71,6 +71,7 @@ void Texture2D::Release()
 
 void Texture2D::Resize(unsigned int width, unsigned int height)
 {
+	LOG_FUNCTION_CALL(m_internalLogger);
 	m_texWidth = width;
 	m_texHeight = height;
 }
@@ -87,6 +88,8 @@ IDirect3DTexture9 * Texture2D::GetD3DTexture()
 
 RenderAPI::MappedResource Texture2D::LockRect(unsigned int layer, RenderAPI::LockOption lockOption)
 {
+	LOG_FUNCTION_PARAM(m_internalLogger, "layer=%d, lock option=%d", layer, lockOption);
+
 	//D3DLOCK_DISCARD, is only valid when the resource is created with USAGE_DYNAMIC.
 	if (lockOption == RenderAPI::LOCK_NoOverWrite ||
 		(!m_isDynamic && lockOption == RenderAPI::LOCK_Discard))
@@ -105,7 +108,7 @@ RenderAPI::MappedResource Texture2D::LockRect(unsigned int layer, RenderAPI::Loc
 	}
 	else
 	{
-		m_internalLogger.LogError("Texture2D::Lock", " Lock failed.", hr);
+		LOG_FUNCTION_FAILED_ERRCODE(&m_internalLogger, "LockRect Failed.", hr);
 		ret.Success = false;
 	}
 
@@ -114,16 +117,20 @@ RenderAPI::MappedResource Texture2D::LockRect(unsigned int layer, RenderAPI::Loc
 
 void Texture2D::UnlockRect(unsigned int layer)
 {
+	LOG_FUNCTION_CALL(m_internalLogger);
 	m_pTexture->UnlockRect(layer);
 }
 
 void Texture2D::SetMipmapGenerateFilter(RenderAPI::SamplerFilter filter)
 {
+	LOG_FUNCTION_PARAM(m_internalLogger, "filter=%d", filter);
+
 	m_pTexture->SetAutoGenFilterType(s_d3dSamplerFilter[filter]);
 }
 
 void Texture2D::GenerateMipmaps()
 {
+	LOG_FUNCTION_CALL(m_internalLogger);
 	if (!m_autoGenMipmaps)
 	{
 		m_pTexture->GenerateMipSubLevels();
@@ -132,6 +139,8 @@ void Texture2D::GenerateMipmaps()
 
 RenderAPI::TextureSurface* Texture2D::GetSurface(unsigned int index)
 {
+	LOG_FUNCTION_PARAM(m_internalLogger, "index=%d", index);
+
 	if (m_surfaces.size() <= index)
 	{
 		size_t oldSize = m_surfaces.size();
@@ -148,7 +157,7 @@ RenderAPI::TextureSurface* Texture2D::GetSurface(unsigned int index)
 		IDirect3DSurface9* pSurface = NULL;
 		if (S_OK == m_pTexture->GetSurfaceLevel(index, &pSurface))
 		{
-			m_surfaces[index] = new TextureSurface(this, pSurface);
+			m_surfaces[index] = new TextureSurface(m_internalLogger, this, pSurface);
 		}
 	}
 
@@ -176,14 +185,17 @@ bool Texture2D::AutoGenMipmaps() const
 
 bool Texture2D::SaveToFile(const char * fileName, RenderAPI::ImageFormat format)
 {
+	LOG_FUNCTION_CALL(m_internalLogger);
+
 	if (format == RenderAPI::IMG_ERR)
 		return false;
 
 	return S_OK == D3DXSaveTextureToFileA(fileName, s_d3dxFileFormat[format], NULL, NULL);
 }
 
-TextureSurface::TextureSurface(Texture2D* pTexture, IDirect3DSurface9 * pSurface)
+TextureSurface::TextureSurface(IInternalLogger& logger, Texture2D* pTexture, IDirect3DSurface9 * pSurface)
 	: m_pParentTexture(pTexture)
+	, m_internalLogger(logger)
 	, m_pSurface(pSurface)
 	, m_hDC(NULL)
 {
@@ -198,6 +210,7 @@ TextureSurface::~TextureSurface()
 
 void* TextureSurface::GetDC()
 {
+	LOG_FUNCTION_CALL(m_internalLogger);
 	if (m_hDC == NULL)
 	{
 		m_pSurface->GetDC(&m_hDC);
@@ -207,6 +220,7 @@ void* TextureSurface::GetDC()
 
 void TextureSurface::ReleaseDC()
 {
+	LOG_FUNCTION_CALL(m_internalLogger);
 	if (m_hDC != NULL)
 	{
 		m_pSurface->ReleaseDC(m_hDC);
@@ -224,6 +238,8 @@ bool TextureSurface::SaveToFile(const char * fileName, RenderAPI::ImageFormat fo
 
 void TextureSurface::Release()
 {
+	LOG_FUNCTION_CALL(m_internalLogger);
+
 	if (0 == --m_refCount)
 	{
 		delete this;
@@ -252,7 +268,7 @@ IDirect3DSurface9 * TextureSurface::GetD3DTextureSurfacePtr()
 }
 
 RenderSurface2D::RenderSurface2D(IDirect3DSurface9* pSurface, RenderAPI::TextureFormat format, unsigned int width, unsigned int height, IInternalLogger& logger)
-	: TextureSurface(NULL, pSurface)
+	: TextureSurface(logger, NULL, pSurface)
 	, m_internalLogger(logger)
 	, m_texFormat(format)
 	, m_texWidth(width)
@@ -268,7 +284,9 @@ RenderSurface2D::~RenderSurface2D()
 
 
 RenderAPI::MappedResource RenderSurface2D::LockRect(unsigned int layer, RenderAPI::LockOption lockOption) 
-{ 
+{
+	LOG_FUNCTION_PARAM(m_internalLogger, "layer=%d, lock option=%d", layer, lockOption);
+
 	RenderAPI::MappedResource ret;
 
 	if (lockOption == RenderAPI::LOCK_NoOverWrite)
@@ -289,7 +307,7 @@ RenderAPI::MappedResource RenderSurface2D::LockRect(unsigned int layer, RenderAP
 		}
 		else
 		{
-			m_internalLogger.LogError("Rendersurface2D::Lock", " Render Texture cannot be locked because.");
+			LOG_FUNCTION_FAILED_ERRCODE(&m_internalLogger, "Render Texture cannot be locked.", hr);
 		}
 	}
 	return ret;
@@ -297,6 +315,7 @@ RenderAPI::MappedResource RenderSurface2D::LockRect(unsigned int layer, RenderAP
 
 void RenderSurface2D::UnlockRect(unsigned int layer) 
 {
+	LOG_FUNCTION_CALL(m_internalLogger);
 	if (m_pTempTextureForCopy != NULL)
 	{
 		m_pTempTextureForCopy->UnlockRect(layer);
@@ -307,6 +326,7 @@ void RenderSurface2D::UnlockRect(unsigned int layer)
 
 RenderAPI::TextureSurface * RenderSurface2D::GetSurface(unsigned int layer)
 {
+	LOG_FUNCTION_PARAM(m_internalLogger, "layer=%d", layer);
 	if (layer == 0)
 	{
 		AddReference();

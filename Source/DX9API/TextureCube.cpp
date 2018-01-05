@@ -87,13 +87,13 @@ RenderAPI::MappedResource TextureCube::LockRect(RenderAPI::CubemapFace face, uns
 		else
 		{
 			ret.Success = false;
-			m_internalLogger.LogError("TextureCube::LockRect", "Lock failed.", hr);
+			LOG_FUNCTION_FAILED_ERRCODE(&m_internalLogger, "LockRect Failed", hr);
 		}
 	}
 	else
 	{
 		ret.Success = false;
-		m_internalLogger.LogError("TextureCube::LockRect", "Only Dynamic or Managed Texture can be loked.");
+		LOG_FUNCTION_FAILED_INVALID_CALL(&m_internalLogger, "Only Dynamic or Managed Texture can be loked.");
 	}
 	return ret;
 }

@@ -12,7 +12,7 @@ class Texture2D;
 class TextureSurface : public RenderAPI::TextureSurface
 {
 public:
-	TextureSurface(::Texture2D*, IDirect3DSurface9*);
+	TextureSurface(IInternalLogger&, ::Texture2D*, IDirect3DSurface9*);
 
 	~TextureSurface();
 
@@ -30,6 +30,7 @@ public:
 
 private:
 	RefCount m_refCount;
+	IInternalLogger& m_internalLogger;
 	::Texture2D* m_pParentTexture;
 	IDirect3DSurface9* m_pSurface;
 	HDC m_hDC;

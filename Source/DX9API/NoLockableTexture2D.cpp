@@ -61,13 +61,13 @@ RenderAPI::MappedResource NoLockableTexture2D::LockRect(unsigned int layer, Rend
 			}
 			else
 			{
-				m_internalLogger.LogError("Texture2D::Lock", "helper texture lock failed.", hr);
+				LOG_FUNCTION_FAILED_ERRCODE(&m_internalLogger, "helper texture lock failed.", hr);
 				ret.Success = false;
 			}
 		}
 		else
 		{
-			m_internalLogger.LogError("Texture2D::Lock", "helper texture creation failed.", hr);
+			LOG_FUNCTION_FAILED_ERRCODE(&m_internalLogger, "helper texture creation failed.", hr);
 			ret.Success = false;
 		}
 	}
@@ -92,7 +92,7 @@ void NoLockableTexture2D::UnlockRect(unsigned int layer)
 				hr = pDevice->UpdateSurface(pSurfaceSrc, NULL, pSurfaceDst, NULL);
 				if (hr != S_OK)
 				{
-					m_internalLogger.LogError("Texture2D::UnlockRect", "helper texture update failed.", hr);
+					LOG_FUNCTION_FAILED_ERRCODE(&m_internalLogger, "helper texture update failed.", hr);
 				}
 				pSurfaceSrc->Release();
 				pSurfaceDst->Release();

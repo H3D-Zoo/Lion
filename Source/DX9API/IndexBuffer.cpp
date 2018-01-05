@@ -74,7 +74,7 @@ void * IndexBuffer::Lock(unsigned int offset, unsigned int lockLength, RenderAPI
 	}
 	else
 	{
-		m_internalLogger.LogError("IndexBuffer::Lock", "IndexBuffer Cannot be locked.", hr);
+		LOG_FUNCTION_FAILED_ERRCODE(&m_internalLogger, "Lock Failed : IndexBuffer Cannot be locked.", hr);
 		return NULL;
 	}
 }

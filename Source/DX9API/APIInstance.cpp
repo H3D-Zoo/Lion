@@ -356,18 +356,43 @@ void APIInstance::AddRef()
 	++m_refCount;
 }
 
-void APIInstance::LogError(const char* action, const char * detail)
+void APIInstance::LogStr(LogLevel level, const char* desc)
 {
-	char buff[512];
-	_sprintf_p(buff, 512, "%s Failed, %s, ", action, detail);
-	GetCurrentLogger()->LogE(buff);
+	LevelLog(level, desc);
 }
 
-void APIInstance::LogError(const char* action, const char * detail, HRESULT errorCode)
+void APIInstance::LogStr(LogLevel level, const char* desc, const char* detail)
 {
 	char buff[512];
-	_sprintf_p(buff, 512, "%s Failed, error:%d, %s, ", action, errorCode, detail);
-	GetCurrentLogger()->LogE(buff);
+	_sprintf_p(buff, 512, "%s, detail = %s, ", desc, detail);
+	LevelLog(level, buff);
+}
+
+
+void APIInstance::LogErr(LogLevel level, const char* desc, HRESULT errCode)
+{
+	char buff[512];
+	_sprintf_p(buff, 512, "%s, error = %d, ", desc, errCode);
+	LevelLog(level, buff);
+}
+
+void APIInstance::LogErr(LogLevel level, const char* desc, const char* detail, HRESULT errCode)
+{
+	char buff[512];
+	_sprintf_p(buff, 512, "%s, detail = %s, error = %d, ", desc, detail, errCode);
+	LevelLog(level, buff);
+}
+
+
+void APIInstance::LevelLog(LogLevel level, const char* desc)
+{
+	switch (level)
+	{
+	case LOG_Verbose:GetCurrentLogger()->LogV(desc); break;
+	case LOG_Debug:GetCurrentLogger()->LogD(desc); break;
+	case LOG_Warning:GetCurrentLogger()->LogW(desc); break;
+	case LOG_Error: GetCurrentLogger()->LogE(desc); break;
+	}
 }
 
 void APIInstance::Release()
@@ -438,7 +463,7 @@ bool APIInstance::CompileFXEffectFromFile(const char* sourceFXFile, const char* 
 		if (pErrorBuffer.IsNotNullPtr())
 		{
 			std::string errorStr = (char*)pErrorBuffer->GetBufferPointer();
-			LogError("APIInstance::CompileFXEffectFromFile D3DXCreateEffectCompilerFromFileA Failed.", errorStr.c_str(), hr);
+			LOG_FUNCTION_FAILED_DETAIL(this, "D3DXCreateEffectCompilerFromFileA Failed.", errorStr.c_str(), hr);
 		}
 		return false;
 	}
@@ -459,7 +484,7 @@ bool APIInstance::CompileFXEffectFromFile(const char* sourceFXFile, const char* 
 		if (pErrorBuffer.IsNotNullPtr())
 		{
 			std::string errorStr = (char*)pErrorBuffer->GetBufferPointer();
-			LogError("APIInstance::CompileFXEffectFromFile CompileEffect Failed.", errorStr.c_str(), hr);
+			LOG_FUNCTION_FAILED_DETAIL(this, "APIInstance::CompileFXEffectFromFile CompileEffect Failed.", errorStr.c_str(), hr);
 		}
 		return false;
 	}
@@ -649,5 +674,17 @@ HRESULT STDMETHODCALLTYPE EffectInclude::Close(LPCVOID pData)
 	return S_OK;
 }
 
+void LogFunctionCall(IInternalLogger& logger, const char* functionName, const char* format, ...)
+{
+	char logBuffer[1024];
 
+	int offset = _sprintf_p(logBuffer, 1024, "%s involke.", functionName) - 1;
 
+	//²ÎÊý×Ö·û´®
+	va_list va;
+	va_start(va, format);
+	vsprintf_s(logBuffer + offset, 1024 - offset, format, va);
+	va_end(va);
+
+	logger.LogStr(LOG_Verbose, logBuffer);
+}

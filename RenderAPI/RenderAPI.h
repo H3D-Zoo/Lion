@@ -454,7 +454,6 @@ namespace RenderAPI
 		BlendFactor SrcBlend;
 		BlendFactor DstBlend;
 		BlendOperator BlendOp;
-		BlendOperator AlphaOp;
 	};
 
 	struct AlphaTestingState

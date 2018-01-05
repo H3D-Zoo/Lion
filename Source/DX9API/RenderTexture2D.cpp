@@ -15,6 +15,8 @@ RenderTexture2D::~RenderTexture2D()
 
 RenderAPI::MappedResource RenderTexture2D::LockRect(unsigned int layer, RenderAPI::LockOption lockOption)
 {
+	LOG_FUNCTION_PARAM(m_internalLogger, "layer=%d, option=%d", layer, lockOption);
+
 	RenderAPI::MappedResource ret;
 
 	if (lockOption == RenderAPI::LOCK_NoOverWrite)
@@ -35,24 +37,36 @@ RenderAPI::MappedResource RenderTexture2D::LockRect(unsigned int layer, RenderAP
 		}
 		else
 		{
-			m_internalLogger.LogError("RenderTexture2D::Lock", " Render Texture cannot be locked because.");
+			LOG_FUNCTION_FAILED_ERRCODE(&m_internalLogger, "Render Texture cannot be locked.", hr);
 		}
+	}
+	else
+	{
+		LOG_FUNCTION_FAILED(&m_internalLogger, "Temporary Texture is not created.");
 	}
 	return ret;
 }
 
 void RenderTexture2D::UnlockRect(unsigned int layer)
 {
+	LOG_FUNCTION_PARAM(m_internalLogger, "layer=%d", layer);
+
 	if (m_pTempTextureForCopy != NULL)
 	{
 		m_pTempTextureForCopy->UnlockRect(layer);
 		m_pTempTextureForCopy->Release();
 		m_pTempTextureForCopy = NULL;
 	}
+	else
+	{
+		LOG_FUNCTION_FAILED(&m_internalLogger, "Temporary Texture is not created.");
+	}
 }
 
 void RenderTexture2D::Resize(unsigned int width, unsigned int height)
 {
+	LOG_FUNCTION_PARAM(m_internalLogger, "width=%d, height=%d", width, height);
+
 	ReleaseCopiedSystemTexture();
 	Texture2D::Resize(width, height);
 }
@@ -72,6 +86,7 @@ IDirect3DTexture9* RenderTexture2D::GetCopiedSystemTexture()
 		HRESULT creation = pDevice->CreateTexture(m_texWidth, m_texHeight, 0, D3DUSAGE_DYNAMIC, s_TextureFormats[m_texFormat], D3DPOOL_SYSTEMMEM, &m_pTempTextureForCopy, NULL);
 		if (FAILED(creation))
 		{
+			LOG_FUNCTION_FAILED_ERRCODE(&m_internalLogger, "Copy Texture cant be created.", creation);
 			return NULL;
 		}
 	}

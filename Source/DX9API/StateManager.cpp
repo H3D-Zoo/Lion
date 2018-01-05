@@ -542,7 +542,7 @@ void StateManager::SetDstBlending(RenderAPI::BlendFactor blendFactor)
 void StateManager::SetAlphaBlendingOp(RenderAPI::BlendOperator blendOp)
 {
 	SetRS(D3DRS_BLENDOPALPHA, s_blendOps[blendOp]);
-	m_blendState.AlphaOp = blendOp;
+	m_blendState.BlendOp = blendOp;
 }
 
 void StateManager::SetAlphaSrcBlending(RenderAPI::BlendFactor blendFactor)

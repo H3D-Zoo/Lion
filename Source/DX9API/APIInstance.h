@@ -69,9 +69,13 @@ public:
 	void AddRef();
 
 	//InternalLogger
-	virtual void LogError(const char* action, const char* detail);
+	virtual void LogStr(LogLevel level, const char* desc);
 
-	virtual void LogError(const char* action, const char* detail, HRESULT errorCode);
+	virtual void LogStr(LogLevel level, const char* desc, const char* detail);
+
+	virtual void LogErr(LogLevel level, const char* desc, HRESULT errCode);
+
+	virtual void LogErr(LogLevel level, const char* desc, const char* detail, HRESULT errCode);
 
 	RenderStatistic& GetRenderStatistic() { return m_renderStatistic; }
 
@@ -87,6 +91,8 @@ private:
 	void CreateD3D();
 
 	void DestroyD3D();
+
+	void LevelLog(LogLevel level, const char* desc);
 
 	HMODULE m_hDLL;
 	RefCount m_refCount;

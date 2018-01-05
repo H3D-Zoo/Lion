@@ -64,7 +64,7 @@ void * VertexBuffer::Lock(unsigned int offset, unsigned int lockLength, RenderAP
 	}
 	else
 	{
-		m_internalLogger.LogError("VertexBuffer::Lock", "Lock failed.", hr);
+		LOG_FUNCTION_FAILED_ERRCODE(&m_internalLogger, "Lock failed.", hr);
 		return NULL;
 	}
 }
