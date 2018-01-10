@@ -3,63 +3,43 @@
 
 RenderTexture2D::RenderTexture2D(IDirect3DTexture9 * texture, RenderAPI::TextureFormat format, RenderAPI::ResourceUsage usage
 	, unsigned int width, unsigned int height, IInternalLogger& logger)
-	: Texture2D( texture, format, usage, false, width, height, false, logger)
-	, m_pTempTextureForCopy(NULL)
+	: Texture2D(texture, format, usage, false, width, height, false, logger)
+	, m_pTempTextureForCopy(format, width, height, texture->GetLevelCount())
 {
 }
 
 RenderTexture2D::~RenderTexture2D()
 {
-	ReleaseCopiedSystemTexture();
+	m_pTempTextureForCopy.ReleaseTexture();
 }
 
 RenderAPI::MappedResource RenderTexture2D::LockRect(unsigned int layer, RenderAPI::LockOption lockOption)
 {
 	LOG_FUNCTION_PARAM(m_internalLogger, "layer=%d, option=%d", layer, lockOption);
 
-	RenderAPI::MappedResource ret;
-
 	if (lockOption == RenderAPI::LOCK_NoOverWrite)
 	{
 		lockOption = RenderAPI::LOCK_Normal;
 	}
 
-	IDirect3DTexture9* pCopiedTexture = GetCopiedSystemTexture();
-	if (pCopiedTexture != NULL)
+	if (CopyToSystemTexture())
 	{
-		D3DLOCKED_RECT lockedRect;
-		HRESULT hr = pCopiedTexture->LockRect(layer, &lockedRect, NULL, s_lockOptions[lockOption]);
-		if (hr == S_OK)
-		{
-			ret.DataPtr = lockedRect.pBits;
-			ret.LinePitch = lockedRect.Pitch;
-			ret.Success = true;
-		}
-		else
-		{
-			LOG_FUNCTION_FAILED_ERRCODE(&m_internalLogger, "Render Texture cannot be locked.", hr);
-		}
+		return m_pTempTextureForCopy.Lock(layer, lockOption);
 	}
 	else
 	{
-		LOG_FUNCTION_FAILED(&m_internalLogger, "Temporary Texture is not created.");
+		return RenderAPI::MappedResource();
 	}
-	return ret;
 }
 
 void RenderTexture2D::UnlockRect(unsigned int layer)
 {
 	LOG_FUNCTION_PARAM(m_internalLogger, "layer=%d", layer);
 
-	if (m_pTempTextureForCopy != NULL)
+	m_pTempTextureForCopy.Unlock(layer);
+	if (!m_pTempTextureForCopy.IsSomeLayerLocking())
 	{
-		m_pTempTextureForCopy->UnlockRect(layer);
-		m_pTempTextureForCopy->Release();
-		m_pTempTextureForCopy = NULL;
-	}
-	else
-	{
-		LOG_FUNCTION_FAILED(&m_internalLogger, "Temporary Texture is not created.");
+		m_pTempTextureForCopy.ReleaseTexture();
 	}
 }
 
@@ -67,56 +47,45 @@ void RenderTexture2D::Resize(unsigned int width, unsigned int height)
 {
 	LOG_FUNCTION_PARAM(m_internalLogger, "width=%d, height=%d", width, height);
 
-	ReleaseCopiedSystemTexture();
+	m_pTempTextureForCopy.Resize(width, height, m_pTexture->GetLevelCount());
 	Texture2D::Resize(width, height);
 }
 
-
-IDirect3DTexture9* RenderTexture2D::GetCopiedSystemTexture()
+bool RenderTexture2D::CopyToSystemTexture()
 {
 	IDirect3DDevice9* pDevice = NULL;
 	m_pTexture->GetDevice(&pDevice);
 	if (pDevice == NULL)
 	{
-		return NULL;
+		return false;
 	}
 
-	if (m_pTempTextureForCopy == NULL)
+	if (!m_pTempTextureForCopy.IsCreated() &&
+		!m_pTempTextureForCopy.Create(pDevice))
 	{
-		HRESULT creation = pDevice->CreateTexture(m_texWidth, m_texHeight, 0, D3DUSAGE_DYNAMIC, s_TextureFormats[m_texFormat], D3DPOOL_SYSTEMMEM, &m_pTempTextureForCopy, NULL);
-		if (FAILED(creation))
-		{
-			LOG_FUNCTION_FAILED_ERRCODE(&m_internalLogger, "Copy Texture cant be created.", creation);
-			return NULL;
-		}
+		pDevice->Release();
+		return false;
 	}
 
-	if (m_pTempTextureForCopy != NULL)
-	{
-		IDirect3DSurface9* pSrcSurface = NULL, *pDstSurface = NULL;
-		m_pTexture->GetSurfaceLevel(0, &pSrcSurface);
-		m_pTempTextureForCopy->GetSurfaceLevel(0, &pDstSurface);
+	IDirect3DSurface9* pSrcSurface = NULL;
+	IDirect3DSurface9* pDstSurface = NULL;
 
-		if (pSrcSurface != NULL && pDstSurface != NULL)
-		{
-			pDevice->GetRenderTargetData(pSrcSurface, pDstSurface);
-			pSrcSurface->Release();
-			pDstSurface->Release();
-		}
-		else
-		{
-			if (pSrcSurface != NULL) pSrcSurface->Release();
-			if (pDstSurface != NULL) pDstSurface->Release();
-		}
+	HRESULT hrGetSrcSurface = m_pTexture->GetSurfaceLevel(0, &pSrcSurface);
+	HRESULT hrGetDstSurface = m_pTempTextureForCopy.GetTexturePtr()->GetSurfaceLevel(0, &pDstSurface);
+
+	if (hrGetSrcSurface == S_OK && hrGetDstSurface == S_OK)
+	{
+		HRESULT hr = pDevice->GetRenderTargetData(pSrcSurface, pDstSurface);
+		pSrcSurface->Release();
+		pDstSurface->Release();
+		pDevice->Release();
+		return hr == S_OK;
 	}
-	return m_pTempTextureForCopy;
-}
-
-void RenderTexture2D::ReleaseCopiedSystemTexture()
-{
-	if (m_pTempTextureForCopy != NULL)
+	else
 	{
-		m_pTempTextureForCopy->Release();
-		m_pTempTextureForCopy = NULL;
+		if (pSrcSurface != NULL) pSrcSurface->Release();
+		if (pDstSurface != NULL) pDstSurface->Release();
+		pDevice->Release();
+		return false;
 	}
 }

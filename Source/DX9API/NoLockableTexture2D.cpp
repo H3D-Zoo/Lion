@@ -8,18 +8,13 @@
 NoLockableTexture2D::NoLockableTexture2D(IDirect3DTexture9 * texture, RenderAPI::TextureFormat format, RenderAPI::ResourceUsage usage,
 	bool isManaged, unsigned int width, unsigned int height, bool autoGenMipmaps, IInternalLogger& logger)
 	: Texture2D(texture, format, usage, isManaged, width, height, autoGenMipmaps, logger)
-	, m_pTempTextureForUpdate(NULL)
-	, m_lockLayerBits(0)
+	, m_pTempTextureForUpdate(format, width, height, texture->GetLevelCount())
 {
 }
 
 NoLockableTexture2D::~NoLockableTexture2D()
 {
-	if (m_pTempTextureForUpdate != NULL)
-	{
-		m_pTempTextureForUpdate->Release();
-		m_pTempTextureForUpdate = NULL;
-	}
+	m_pTempTextureForUpdate.ReleaseTexture();
 }
 
 RenderAPI::MappedResource NoLockableTexture2D::LockRect(unsigned int layer, RenderAPI::LockOption lockOption)
@@ -28,126 +23,67 @@ RenderAPI::MappedResource NoLockableTexture2D::LockRect(unsigned int layer, Rend
 
 	//Textures created with D3DPOOL_DEFAULT are not lockable.
 	//Textures created in video memory are lockable when created with USAGE_DYNAMIC.
-	RenderAPI::MappedResource ret;
-
-	if (IsLayerLocking(layer))
-	{
-		return ret;
-	}
 
 	if (lockOption == RenderAPI::LOCK_NoOverWrite)
 	{
 		lockOption = RenderAPI::LOCK_Normal;
 	}
-	
-	IDirect3DDevice9* pDevice = NULL;
-	HRESULT hr = m_pTexture->GetDevice(&pDevice);
-	if (hr == S_OK)
+
+	if (!m_pTempTextureForUpdate.IsCreated())
 	{
-		if (m_pTempTextureForUpdate == NULL)
-		{
-			hr = pDevice->CreateTexture(m_texWidth, m_texHeight, 0, D3DUSAGE_DYNAMIC, s_TextureFormats[m_texFormat], D3DPOOL_SYSTEMMEM, &m_pTempTextureForUpdate, NULL);
-		}
+		IDirect3DDevice9* pDevice = NULL;
+		HRESULT hr = m_pTexture->GetDevice(&pDevice);
 
 		if (hr == S_OK)
 		{
-			D3DLOCKED_RECT lockedRect;
-			if (S_OK == m_pTempTextureForUpdate->LockRect(layer, &lockedRect, NULL, s_lockOptions[lockOption]))
-			{
-				ret.DataPtr = lockedRect.pBits;
-				ret.LinePitch = lockedRect.Pitch;
-				ret.Success = true;
-				SetLayerLocking(layer, true);
-			}
-			else
-			{
-				LOG_FUNCTION_FAILED_ERRCODE(&m_internalLogger, "helper texture lock failed.", hr);
-				ret.Success = false;
-			}
+			m_pTempTextureForUpdate.Create(pDevice);
+			pDevice->Release();
 		}
-		else
+
+		if (!m_pTempTextureForUpdate.IsCreated())
 		{
 			LOG_FUNCTION_FAILED_ERRCODE(&m_internalLogger, "helper texture creation failed.", hr);
-			ret.Success = false;
 		}
 	}
-	return ret;
+	
+	return m_pTempTextureForUpdate.Lock(layer, lockOption);
 }
 
 void NoLockableTexture2D::UnlockRect(unsigned int layer)
 {
-	if (IsLayerLocking(layer))
+	if (m_pTempTextureForUpdate.Unlock(layer))
 	{
-		SetLayerLocking(layer, false);
-		if (m_pTempTextureForUpdate != NULL)
+		IDirect3DDevice9* pDevice;
+		if (S_OK == m_pTexture->GetDevice(&pDevice))
 		{
-			HRESULT hr = m_pTempTextureForUpdate->UnlockRect(layer);
-			if (S_OK == hr)
+			IDirect3DSurface9 *pSurfaceSrc = NULL, *pSurfaceDst = NULL;
+			HRESULT hrGetSrcSurface = m_pTempTextureForUpdate.GetTexturePtr()->GetSurfaceLevel(layer, &pSurfaceSrc);
+			HRESULT hrGetDstSurface = pDevice->UpdateSurface(pSurfaceSrc, NULL, pSurfaceDst, NULL);
+			if (S_OK == hrGetSrcSurface && S_OK == hrGetDstSurface)
 			{
-				IDirect3DSurface9 *pSurfaceSrc, *pSurfaceDst;
-				IDirect3DDevice9* pDevice;
-				m_pTexture->GetDevice(&pDevice);
-				m_pTempTextureForUpdate->GetSurfaceLevel(layer, &pSurfaceSrc);
-				m_pTexture->GetSurfaceLevel(layer, &pSurfaceDst);
-				hr = pDevice->UpdateSurface(pSurfaceSrc, NULL, pSurfaceDst, NULL);
+				HRESULT hr = pDevice->UpdateSurface(pSurfaceSrc, NULL, pSurfaceDst, NULL);
 				if (hr != S_OK)
 				{
 					LOG_FUNCTION_FAILED_ERRCODE(&m_internalLogger, "helper texture update failed.", hr);
 				}
-				pSurfaceSrc->Release();
-				pSurfaceDst->Release();
-
 			}
-
-			if (!IsSomeLayerLocking())
+			else
 			{
-				m_pTempTextureForUpdate->Release();
-				m_pTempTextureForUpdate = NULL;
+				//LOG_FUNCTION_FAILED_ERRCODE(&m_internalLogger, "cannot retrieve surfaces, src=%d, dst=%d", hrGetSrcSurface, hrGetDstSurface);
 			}
+			if (pSurfaceSrc) pSurfaceSrc->Release();
+			if (pSurfaceDst) pSurfaceDst->Release();
+			pDevice->Release();
+		}
+		else
+		{
+			LOG_FUNCTION_FAILED(&m_internalLogger, "cannot retrieve device from texture");
 		}
 	}
 }
 
 void NoLockableTexture2D::GenerateMipmaps()
 {
-	unsigned int oldCount = GetLayerCount();
-	if (m_pTempTextureForUpdate != NULL)
-	{
-		for (unsigned int i = 0, n = oldCount; i < n; i++)
-		{
-			if (IsLayerLocking(i))
-			{
-				m_pTempTextureForUpdate->UnlockRect(i);
-			}
-		}
-		m_pTempTextureForUpdate->Release();
-		m_pTempTextureForUpdate = NULL;
-	}
-
+	m_pTempTextureForUpdate.ReleaseTexture();
 	Texture2D::GenerateMipmaps();
-	m_lockLayerBits = 0;
-}
-
-void NoLockableTexture2D::SetLayerLocking(unsigned int layer, bool locked)
-{
-	unsigned int layerMask = 1 << layer;
-	if (locked)
-	{
-		m_lockLayerBits |= layerMask;
-	}
-	else
-	{
-		m_lockLayerBits &= ~layerMask;
-	}
-}
-
-bool NoLockableTexture2D::IsLayerLocking(unsigned int layer) const
-{
-	unsigned int layerMask = 1 << layer;
-	return (m_lockLayerBits & layerMask) > 0;
-}
-
-bool NoLockableTexture2D::IsSomeLayerLocking() const
-{
-	return m_lockLayerBits > 0;
 }

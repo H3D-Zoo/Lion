@@ -273,13 +273,13 @@ RenderSurface2D::RenderSurface2D(IDirect3DSurface9* pSurface, RenderAPI::Texture
 	, m_texFormat(format)
 	, m_texWidth(width)
 	, m_texHeight(height)
-	, m_pTempTextureForCopy(NULL)
+	, m_pTempTextureForCopy(format, width, height, 1)
 {
 }
 
 RenderSurface2D::~RenderSurface2D()
 {
-	ReleaseCopiedSystemTexture();
+	m_pTempTextureForCopy.ReleaseTexture();
 }
 
 
@@ -287,40 +287,28 @@ RenderAPI::MappedResource RenderSurface2D::LockRect(unsigned int layer, RenderAP
 {
 	LOG_FUNCTION_PARAM(m_internalLogger, "layer=%d, lock option=%d", layer, lockOption);
 
-	RenderAPI::MappedResource ret;
-
 	if (lockOption == RenderAPI::LOCK_NoOverWrite)
 	{
 		lockOption = RenderAPI::LOCK_Normal;
 	}
 
-	IDirect3DTexture9* pCopiedTexture = GetCopiedSystemTexture();
-	if (pCopiedTexture != NULL)
+	if (CopyToSystemTexture())
 	{
-		D3DLOCKED_RECT lockedRect;
-		HRESULT hr = pCopiedTexture->LockRect(layer, &lockedRect, NULL, s_lockOptions[lockOption]);
-		if (hr == S_OK)
-		{
-			ret.DataPtr = lockedRect.pBits;
-			ret.LinePitch = lockedRect.Pitch;
-			ret.Success = true;
-		}
-		else
-		{
-			LOG_FUNCTION_FAILED_ERRCODE(&m_internalLogger, "Render Texture cannot be locked.", hr);
-		}
+		return m_pTempTextureForCopy.Lock(layer, lockOption);
 	}
-	return ret;
+	else
+	{
+		return RenderAPI::MappedResource();
+	}
 }
 
 void RenderSurface2D::UnlockRect(unsigned int layer) 
 {
 	LOG_FUNCTION_CALL(m_internalLogger);
-	if (m_pTempTextureForCopy != NULL)
+	m_pTempTextureForCopy.Unlock(layer);
+	if (!m_pTempTextureForCopy.IsSomeLayerLocking())
 	{
-		m_pTempTextureForCopy->UnlockRect(layer);
-		m_pTempTextureForCopy->Release();
-		m_pTempTextureForCopy = NULL;
+		m_pTempTextureForCopy.ReleaseTexture();
 	}
 }
 
@@ -339,40 +327,158 @@ RenderAPI::TextureSurface * RenderSurface2D::GetSurface(unsigned int layer)
 }
 
 
-IDirect3DTexture9* RenderSurface2D::GetCopiedSystemTexture()
+bool RenderSurface2D::CopyToSystemTexture()
 {
-	IDirect3DSurface9 *pSurface = GetD3DTextureSurfacePtr();
-	IDirect3DDevice9* pDevice;
-	pSurface->GetDevice(&pDevice);
-
-	if (m_pTempTextureForCopy == NULL)
+	IDirect3DSurface9* pSrcSurface = GetD3DTextureSurfacePtr();
+	IDirect3DDevice9* pDevice = NULL;
+	pSrcSurface->GetDevice(&pDevice);
+	if (pDevice == NULL)
 	{
-		HRESULT creation = pDevice->CreateTexture(m_texWidth, m_texHeight, 0, D3DUSAGE_DYNAMIC, s_TextureFormats[m_texFormat], D3DPOOL_SYSTEMMEM, &m_pTempTextureForCopy, NULL);
-		if (FAILED(creation))
-		{
-			return NULL;
-		}
+		return false;
 	}
 
-	if (m_pTempTextureForCopy != NULL)
+	if (!m_pTempTextureForCopy.IsCreated() &&
+		!m_pTempTextureForCopy.Create(pDevice))
 	{
-		IDirect3DSurface9 *pDstSurface = NULL;
-		m_pTempTextureForCopy->GetSurfaceLevel(0, &pDstSurface);
-
-		if (pDstSurface != NULL)
-		{
-			pDevice->GetRenderTargetData(GetD3DTextureSurfacePtr(), pDstSurface);
-			pDstSurface->Release();
-		}
+		pDevice->Release();
+		return false;
 	}
-	return m_pTempTextureForCopy;
+
+	IDirect3DSurface9* pDstSurface = NULL;
+	HRESULT hrGetDstSurface = m_pTempTextureForCopy.GetTexturePtr()->GetSurfaceLevel(0, &pDstSurface);
+
+	if (hrGetDstSurface == S_OK)
+	{
+		HRESULT hr = pDevice->GetRenderTargetData(pSrcSurface, pDstSurface);
+		pDstSurface->Release();
+		pDevice->Release();
+		return hr == S_OK;
+	}
+	else
+	{
+		pDevice->Release();
+		return false;
+	}
 }
 
-void RenderSurface2D::ReleaseCopiedSystemTexture()
+TemporaryTexture::TemporaryTexture(RenderAPI::TextureFormat f, unsigned int w, unsigned int h, unsigned int layerCount)
+	: m_pTexture(NULL)
+	, m_lockLayerBits(0)
+	, m_texFormat(f)
+	, m_texLayers(layerCount)
+	, m_texWidth(w)
+	, m_texHeight(h)
 {
-	if (m_pTempTextureForCopy != NULL)
+
+}
+
+void TemporaryTexture::SetLayerLocking(unsigned int layer, bool locked)
+{
+	unsigned int layerMask = 1 << layer;
+	if (locked)
 	{
-		m_pTempTextureForCopy->Release();
-		m_pTempTextureForCopy = NULL;
+		m_lockLayerBits |= layerMask;
+	}
+	else
+	{
+		m_lockLayerBits &= ~layerMask;
+	}
+}
+
+bool TemporaryTexture::IsLayerLocking(unsigned int layer) const
+{
+	unsigned int layerMask = 1 << layer;
+	return (m_lockLayerBits & layerMask) > 0;
+}
+
+bool TemporaryTexture::Create(IDirect3DDevice9* pDevice)
+{
+	if (m_pTexture == NULL)
+	{
+		HRESULT creation = pDevice->CreateTexture(m_texWidth, m_texHeight, 0, D3DUSAGE_DYNAMIC, s_TextureFormats[m_texFormat], D3DPOOL_SYSTEMMEM, &m_pTexture, NULL);
+		if (FAILED(creation))
+		{
+			m_pTexture = NULL;
+			return false;
+		}
+		else
+		{
+			return true;
+		}
+	}
+	else
+	{
+		return false;
+	}
+}
+
+
+RenderAPI::MappedResource TemporaryTexture::Lock(unsigned int layer, RenderAPI::LockOption lockOption)
+{
+	RenderAPI::MappedResource ret;
+	if (layer < m_texLayers && !IsLayerLocking(layer))
+	{
+		D3DLOCKED_RECT lockedRect;
+		if (S_OK == m_pTexture->LockRect(layer, &lockedRect, NULL, s_lockOptions[lockOption]))
+		{
+			ret.DataPtr = lockedRect.pBits;
+			ret.LinePitch = lockedRect.Pitch;
+			ret.Success = true;
+			SetLayerLocking(layer, true);
+		}
+		else
+		{
+			ret.Success = false;
+		}
+	}
+	else
+	{
+		ret.Success = false;
+	}
+	return ret;
+}
+
+bool TemporaryTexture::Unlock(unsigned int layer)
+{
+	if (IsLayerLocking(layer))
+	{
+		SetLayerLocking(layer, false);
+		if (m_pTexture != NULL)
+		{
+			HRESULT hr = m_pTexture->UnlockRect(layer);
+			return (S_OK == hr);
+		}
+	}
+	return false;
+}
+
+void  TemporaryTexture::Resize(unsigned int w, unsigned int h, unsigned int layerCount)
+{
+	if (m_texWidth != w || m_texHeight != h)
+	{
+		ReleaseTexture();
+		m_texWidth = w;
+		m_texHeight = h;
+		m_texLayers = layerCount;
+	}
+}
+
+void TemporaryTexture::ReleaseTexture()
+{
+	if (m_pTexture == NULL)
+	{
+		if (IsSomeLayerLocking())
+		{
+			for (int i = 0; i < m_texLayers; i++)
+			{
+				if (IsLayerLocking(i))
+				{
+					Unlock(i);
+				}
+			}
+			m_lockLayerBits = 0;
+		}
+		m_pTexture->Release();
+		m_pTexture = NULL;
 	}
 }

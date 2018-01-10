@@ -100,6 +100,28 @@ private:
 	std::vector<TextureSurface*> m_surfaces;
 };
 
+class TemporaryTexture
+{
+	RenderAPI::TextureFormat m_texFormat;
+	unsigned int m_texLayers;
+	unsigned int m_texWidth;
+	unsigned int m_texHeight;
+	IDirect3DTexture9* m_pTexture;
+	unsigned int m_lockLayerBits;
+	void SetLayerLocking(unsigned int layer, bool locked);
+	bool IsLayerLocking(unsigned int layer) const;
+public:
+	TemporaryTexture(RenderAPI::TextureFormat f, unsigned int w, unsigned int h, unsigned int layerCount);
+	bool Create(IDirect3DDevice9* pDevice);
+	IDirect3DTexture9* GetTexturePtr() const { return m_pTexture; }
+	bool IsCreated() const { return m_pTexture != NULL; }
+	bool IsSomeLayerLocking() const{ return m_lockLayerBits > 0; }
+	RenderAPI::MappedResource Lock(unsigned int layer, RenderAPI::LockOption lockOption);
+	bool Unlock(unsigned int layer);
+	void Resize(unsigned int w, unsigned int h, unsigned int layerCount);
+	void ReleaseTexture();
+};
+
 class RenderTexture2D : public Texture2D
 {
 public:
@@ -123,11 +145,8 @@ public:
 	virtual void Resize(unsigned int width, unsigned int height);
 
 private:
-	IDirect3DTexture9* GetCopiedSystemTexture();
-
-	void ReleaseCopiedSystemTexture();
-
-	IDirect3DTexture9* m_pTempTextureForCopy;
+	bool CopyToSystemTexture();
+	TemporaryTexture m_pTempTextureForCopy;
 };
 
 class NoLockableTexture2D : public Texture2D
@@ -145,15 +164,7 @@ public:
 	virtual void GenerateMipmaps();
 
 private:
-	void SetLayerLocking(unsigned int layer, bool locked);
-
-	bool IsLayerLocking(unsigned int layer) const;
-
-	bool IsSomeLayerLocking() const;
-
-	IDirect3DTexture9* m_pTempTextureForUpdate;
-	
-	unsigned int m_lockLayerBits;
+	TemporaryTexture m_pTempTextureForUpdate;
 };
 
 //为了保证上层接口的方便易用性，我们专门提供了一个为RenderTarget使用的Texture
@@ -212,11 +223,8 @@ public:
 	}
 
 private:
-	IDirect3DTexture9* GetCopiedSystemTexture();
-
-	void ReleaseCopiedSystemTexture();
-
-	IDirect3DTexture9* m_pTempTextureForCopy;
+	bool CopyToSystemTexture();
+	TemporaryTexture m_pTempTextureForCopy;
 	IInternalLogger& m_internalLogger;
 	const RenderAPI::TextureFormat m_texFormat;
 	unsigned int m_texWidth;
