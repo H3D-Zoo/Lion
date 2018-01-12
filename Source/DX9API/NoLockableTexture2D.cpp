@@ -8,7 +8,7 @@
 NoLockableTexture2D::NoLockableTexture2D(IDirect3DTexture9 * texture, RenderAPI::TextureFormat format, RenderAPI::ResourceUsage usage,
 	bool isManaged, unsigned int width, unsigned int height, bool autoGenMipmaps, IInternalLogger& logger)
 	: Texture2D(texture, format, usage, isManaged, width, height, autoGenMipmaps, logger)
-	, m_pTempTextureForUpdate(format, width, height, texture->GetLevelCount())
+	, m_pTempTextureForUpdate(logger, format, width, height, texture->GetLevelCount())
 {
 }
 
@@ -19,6 +19,7 @@ NoLockableTexture2D::~NoLockableTexture2D()
 
 RenderAPI::MappedResource NoLockableTexture2D::LockRect(unsigned int layer, RenderAPI::LockOption lockOption)
 {
+	LOG_FUNCTION_D(m_internalLogger, "object=%X, layer=%d, lock option=%d", this, layer, lockOption);
 	//if (m_isDynamic || m_isManaged)
 
 	//Textures created with D3DPOOL_DEFAULT are not lockable.
@@ -27,6 +28,7 @@ RenderAPI::MappedResource NoLockableTexture2D::LockRect(unsigned int layer, Rend
 	if (lockOption == RenderAPI::LOCK_NoOverWrite)
 	{
 		lockOption = RenderAPI::LOCK_Normal;
+		LOG_FUNCTION_V(m_internalLogger, "change lock option to normal");
 	}
 
 	if (!m_pTempTextureForUpdate.IsCreated())
@@ -39,10 +41,14 @@ RenderAPI::MappedResource NoLockableTexture2D::LockRect(unsigned int layer, Rend
 			m_pTempTextureForUpdate.Create(pDevice);
 			pDevice->Release();
 		}
+		else
+		{
+			LOG_FUNCTION_W(m_internalLogger, "cannot retrieve device form texture. error=%X", hr);
+		}
 
 		if (!m_pTempTextureForUpdate.IsCreated())
 		{
-			LOG_FUNCTION_FAILED_ERRCODE(&m_internalLogger, "helper texture creation failed.", hr);
+			LOG_FUNCTION_W(m_internalLogger, "helper texture creation failed.", hr);
 		}
 	}
 	
@@ -51,25 +57,28 @@ RenderAPI::MappedResource NoLockableTexture2D::LockRect(unsigned int layer, Rend
 
 void NoLockableTexture2D::UnlockRect(unsigned int layer)
 {
+	LOG_FUNCTION_D(m_internalLogger, "object=%X, layer=%d", this, layer);
+
 	if (m_pTempTextureForUpdate.Unlock(layer))
 	{
 		IDirect3DDevice9* pDevice;
-		if (S_OK == m_pTexture->GetDevice(&pDevice))
+		HRESULT hr = m_pTexture->GetDevice(&pDevice);
+		if (S_OK == hr)
 		{
 			IDirect3DSurface9 *pSurfaceSrc = NULL, *pSurfaceDst = NULL;
 			HRESULT hrGetSrcSurface = m_pTempTextureForUpdate.GetTexturePtr()->GetSurfaceLevel(layer, &pSurfaceSrc);
-			HRESULT hrGetDstSurface = pDevice->UpdateSurface(pSurfaceSrc, NULL, pSurfaceDst, NULL);
+			HRESULT hrGetDstSurface = m_pTexture->GetSurfaceLevel(layer, &pSurfaceDst);
 			if (S_OK == hrGetSrcSurface && S_OK == hrGetDstSurface)
 			{
 				HRESULT hr = pDevice->UpdateSurface(pSurfaceSrc, NULL, pSurfaceDst, NULL);
 				if (hr != S_OK)
 				{
-					LOG_FUNCTION_FAILED_ERRCODE(&m_internalLogger, "helper texture update failed.", hr);
+					LOG_FUNCTION_W(m_internalLogger, "helper texture update failed.", hr);
 				}
 			}
 			else
 			{
-				//LOG_FUNCTION_FAILED_ERRCODE(&m_internalLogger, "cannot retrieve surfaces, src=%d, dst=%d", hrGetSrcSurface, hrGetDstSurface);
+				LOG_FUNCTION_W(m_internalLogger, "cannot retrieve surfaces, src=%d, dst=%d", hrGetSrcSurface, hrGetDstSurface);
 			}
 			if (pSurfaceSrc) pSurfaceSrc->Release();
 			if (pSurfaceDst) pSurfaceDst->Release();
@@ -77,7 +86,7 @@ void NoLockableTexture2D::UnlockRect(unsigned int layer)
 		}
 		else
 		{
-			LOG_FUNCTION_FAILED(&m_internalLogger, "cannot retrieve device from texture");
+			LOG_FUNCTION_W(m_internalLogger, "cannot retrieve device from texture. error=%X", hr);
 		}
 	}
 }

@@ -8,12 +8,13 @@
 namespace
 {
 	const int kMaxPerfNameLength = 256;
-	bool GenerateFxoFileToDisk(AutoR<ID3DXBuffer>& pBuffer, const char* path)
+	bool GenerateFxoFileToDisk(IInternalLogger& logger, AutoR<ID3DXBuffer>& pBuffer, const char* path)
 	{
-		if (!pBuffer)
+		if (pBuffer.IsNullPtr())
 		{
 			return false;
 		}
+
 		//输出二进制文件
 		char* effectCode = (char*)pBuffer->GetBufferPointer();
 		DWORD size = pBuffer->GetBufferSize();
@@ -22,24 +23,21 @@ namespace
 			FILE* pFile = fopen(path, "wb");
 			if (pFile)
 			{
-				/*size_t writesize=*/
 				//写fxo文件
 				fwrite(effectCode, size, 1, pFile);
 				fclose(pFile);
-				//LogInfo(ENGINE_INIT, OutPut_File, "GenerateFxoFileToDisk:写fxo文件:%s", path.c_str());
+				LOG_FUNCTION_V(logger, "write fxo to file:%s", path);
 				return true;
 			}
 			else
 			{
-				//LogEWithDesc("生成fxo文件失败！fopen failed:%s", path.c_str());
-				//针对D3D加载fx失败问题；check  多打印一条
 				if (IsLocalFileExist(path))
 				{
-					//LogInfo(ENGINE_INIT, OutPut_File, "文件\\目录 存在：%s", path.c_str());
+					LOG_FUNCTION_E(logger, "cannot open fxo file, though is existed:%s.", path);
 				}
 				else
 				{
-					//LogInfo(ENGINE_INIT, OutPut_File, "文件\\目录 不存在：%s", path.c_str());
+					LOG_FUNCTION_E(logger, "cannot open fxo file because of file is not existed:%s.", path);
 				}
 				return false;
 			}
@@ -88,7 +86,7 @@ bool APIInstance::Init()
 	m_hDLL = LoadLibraryA("d3d9.dll");
 	if (m_hDLL == NULL)
 	{
-		// error:d3d9.dll 加载错误, 致命错误
+		LOG_FUNCTION_E(*this, "cannot load d3d9.dll");
 		return false;
 	}
 
@@ -141,13 +139,13 @@ bool APIInstance::CheckFormatValidate(D3DFORMAT & renderTarget, D3DFORMAT depthS
 
 	if (!CheckBackBufferFormat(renderTarget, d3ddm.Format))
 	{
-		//warning:
+		LOG_FUNCTION_W(*this, "render target format is not suit.");
 		return false;
 	}
 
 	if (!CheckDepthStencilFormat(depthStencil, d3ddm.Format))
 	{
-		//warning:
+		LOG_FUNCTION_W(*this, "depth stencil format is not suit.");
 		return false;
 	}
 	return true;
@@ -203,34 +201,36 @@ void APIInstance::CreateD3D()
 	LPDIRECT3DCREATE9 Direct3DCreate9Ptr = NULL;
 	Direct3DCreate9ExPtr = (LPDIRECT3DCREATE9EX)GetProcAddress(m_hDLL, "Direct3DCreate9Ex");
 	Direct3DCreate9Ptr = (LPDIRECT3DCREATE9)GetProcAddress(m_hDLL, "Direct3DCreate9");
-	//verbose:CheckPointStr("获得函数指针.end");
+	LOG_FUNCTION_V(*this, "retrieve function pointers");
 
 	if (Direct3DCreate9ExPtr != NULL)
 	{
 		// 如果支持D3D9EX，创建设备并赋予IDirect3D9* 父类指针
-		//CheckPointStr("创建d3d9Ex对象，begin");
+		LOG_FUNCTION_V(*this, "create d3dex object begin");
 		HRESULT hr = Direct3DCreate9ExPtr(D3D_SDK_VERSION, &m_d3d9ExPtr);
+		LOG_FUNCTION_V(*this, "create d3dex object end");
 
-		//CheckPointStr("创建d3d9Ex对象，end");
 		// 这里可能会失败！如果显卡不支持WDDM [2/4/2013 YiKaiming]
 		if (FAILED(hr))
 		{
+			LOG_FUNCTION_D(*this, "create d3dex object failed, tryo used d3d object instead.");
 			//LogInfo(ENGINE_INIT, OutPut_File, "创建d3d9Ex对象失败，改用D3D9.begin");
 			m_d3d9ExPtr = NULL;
 			m_d3d9Ptr = (IDirect3D9*)Direct3DCreate9Ptr(D3D_SDK_VERSION);
-			//LogInfo(ENGINE_INIT, OutPut_File, "创建d3d9. end");
+			LOG_FUNCTION_D(*this, "create d3d object end.");
 		}
 		else
 		{
 			m_d3d9Ptr = m_d3d9ExPtr;
-			//LogInfo(ENGINE_INIT, OutPut_File, "成功创建d3d9Ex对象.");
+			LOG_FUNCTION_V(*this, "create d3dex object successed.");
 		}
 	}
 	else
 	{
+		LOG_FUNCTION_V(*this, "d3dex is not supported, create d3d object.");
 		//CheckPointStr("不使用d3d9Ex,创建D3D9对象，begin");
 		m_d3d9Ptr = (IDirect3D9*)Direct3DCreate9Ptr(D3D_SDK_VERSION);
-		//CheckPointStr("创建d3d9. end");
+		LOG_FUNCTION_V(*this, "create d3d object end.");
 	}
 }
 
@@ -308,47 +308,48 @@ IDirect3DDevice9* APIInstance::CreateDevice(HWND hWindow, unsigned int width, un
 		d3dpp.MultiSampleType = D3DMULTISAMPLE_NONE;
 	}
 
+	HRESULT hr = S_OK;
+	IDirect3DDevice9* devicePtr = NULL;
 	if (IsSupportD3D9EX())
 	{
-		IDirect3DDevice9Ex* devicePtr = NULL;
+		IDirect3DDevice9Ex* deviceExPtr = NULL;
 		// 如果支持D3D9 EX，创建EX设备，并赋回父类指针
-		//CheckPointStr("CreateDeviceEx begin,try D3DCREATE_HARDWARE_VERTEXPROCESSING");
-		HRESULT hr = m_d3d9ExPtr->CreateDeviceEx(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, hWindow, hardwareBehaviorFlag, &d3dpp, NULL, &devicePtr);
-		//CheckPointStr("创建Device end");
+		LOG_FUNCTION_V(*this, "CreateDeviceEx begin, try D3DCREATE_HARDWARE_VERTEXPROCESSING");
+		hr = m_d3d9ExPtr->CreateDeviceEx(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, hWindow, hardwareBehaviorFlag, &d3dpp, NULL, &deviceExPtr);
+		LOG_FUNCTION_V(*this, "CreateDeviceEx end");
 
-		if (devicePtr == NULL)
+		if (hr != S_OK || deviceExPtr == NULL)
 		{
-			//CheckPointStr("CreateDeviceEx begin,try D3DCREATE_SOFTWARE_VERTEXPROCESSING");
-			hr = m_d3d9ExPtr->CreateDeviceEx(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, hWindow, softwareBehaviorFlag, &d3dpp, NULL, &devicePtr);
-			//CheckPointStr("CreateDeviceEx，end");
+			LOG_FUNCTION_V(*this, "CreateDeviceEx begin, try D3DCREATE_SOFTWARE_VERTEXPROCESSING");
+			hr = m_d3d9ExPtr->CreateDeviceEx(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, hWindow, softwareBehaviorFlag, &d3dpp, NULL, &deviceExPtr);
+			LOG_FUNCTION_V(*this, "CreateDeviceEx end");
 		}
-
-		if (devicePtr != NULL)
-		{
-			m_supportOcclusionQuery = S_OK == devicePtr->CreateQuery(D3DQUERYTYPE_OCCLUSION, NULL);
-		}
-		return devicePtr;
+		devicePtr = deviceExPtr;
 	}
 	else
 	{
-		IDirect3DDevice9* devicePtr = NULL;
-		//CheckPointStr("D3DCREATE_HARDWARE_VERTEXPROCESSING创建Device begin");
-		m_d3d9Ptr->CreateDevice(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, hWindow, hardwareBehaviorFlag, &d3dpp, &devicePtr);
-		//CheckPointStr("创建Device end");
-		if (devicePtr == NULL)
+		LOG_FUNCTION_V(*this, "CreateDevice begin, try D3DCREATE_HARDWARE_VERTEXPROCESSING");
+		HRESULT hr = m_d3d9Ptr->CreateDevice(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, hWindow, hardwareBehaviorFlag, &d3dpp, &devicePtr);
+		LOG_FUNCTION_V(*this, "CreateDevice end");
+
+		if (hr != S_OK || devicePtr == NULL)
 		{
 			//有的集成显卡没有硬件TNL
-			//CheckPointStr("D3DCREATE_SOFTWARE_VERTEXPROCESSING创建Device begin");
+			LOG_FUNCTION_V(*this, "CreateDevice begin, try D3DCREATE_SOFTWARE_VERTEXPROCESSING");
 			m_d3d9Ptr->CreateDevice(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, hWindow, softwareBehaviorFlag, &d3dpp, &devicePtr);
-			//CheckPointStr("创建Device end");
+			LOG_FUNCTION_V(*this, "CreateDevice end");
 		}
-
-		if (devicePtr != NULL)
-		{
-			m_supportOcclusionQuery = S_OK == devicePtr->CreateQuery(D3DQUERYTYPE_OCCLUSION, NULL);
-		}
-		return devicePtr;
 	}
+
+	if (hr == S_OK && devicePtr != NULL)
+	{
+		m_supportOcclusionQuery = S_OK == devicePtr->CreateQuery(D3DQUERYTYPE_OCCLUSION, NULL);
+	}
+	else
+	{
+		LOG_FUNCTION_E(*this, "failed. error=%X", hr);
+	}
+	return devicePtr;
 }
 
 void APIInstance::AddRef()
@@ -356,35 +357,12 @@ void APIInstance::AddRef()
 	++m_refCount;
 }
 
-void APIInstance::LogStr(LogLevel level, const char* desc)
+void APIInstance::LogStr(LogLevel level, const char* desc) const
 {
 	LevelLog(level, desc);
 }
 
-void APIInstance::LogStr(LogLevel level, const char* desc, const char* detail)
-{
-	char buff[512];
-	_sprintf_p(buff, 512, "%s, detail = %s, ", desc, detail);
-	LevelLog(level, buff);
-}
-
-
-void APIInstance::LogErr(LogLevel level, const char* desc, HRESULT errCode)
-{
-	char buff[512];
-	_sprintf_p(buff, 512, "%s, error = %d, ", desc, errCode);
-	LevelLog(level, buff);
-}
-
-void APIInstance::LogErr(LogLevel level, const char* desc, const char* detail, HRESULT errCode)
-{
-	char buff[512];
-	_sprintf_p(buff, 512, "%s, detail = %s, error = %d, ", desc, detail, errCode);
-	LevelLog(level, buff);
-}
-
-
-void APIInstance::LevelLog(LogLevel level, const char* desc)
+void APIInstance::LevelLog(LogLevel level, const char* desc) const
 {
 	switch (level)
 	{
@@ -397,6 +375,7 @@ void APIInstance::LevelLog(LogLevel level, const char* desc)
 
 void APIInstance::Release()
 {
+	LOG_FUNCTION_CALL(*this, LOG_Debug);
 	if (0 == --m_refCount)
 	{
 		delete this;
@@ -406,6 +385,8 @@ void APIInstance::Release()
 
 RenderAPI::CreationResult APIInstance::CreateDeviceAndContext(const RenderAPI::SwapChainDesc& desc, bool isFullscreen, bool useVerticalSync)
 {
+	LOG_FUNCTION_CALL(*this, LOG_Debug);
+
 	RenderAPI::CreationResult result;
 
 	D3DFORMAT rtFormat = s_RTFormats[desc.backbufferFormat];
@@ -451,7 +432,9 @@ RenderAPI::CreationResult APIInstance::CreateDeviceAndContext(const RenderAPI::S
 
 bool APIInstance::CompileFXEffectFromFile(const char* sourceFXFile, const char* compiledFXFile, const char* includeDir)
 {
-	EffectInclude includeCallback(includeDir);
+	LOG_FUNCTION_CALL(*this, LOG_Debug);
+
+	EffectInclude includeCallback(*this, includeDir);
 	AutoR<ID3DXBuffer> pErrorBuffer;
 	AutoR<ID3DXBuffer> pEffectBuffer;
 	ID3DXEffectCompiler* pEffectCompile;
@@ -463,7 +446,11 @@ bool APIInstance::CompileFXEffectFromFile(const char* sourceFXFile, const char* 
 		if (pErrorBuffer.IsNotNullPtr())
 		{
 			std::string errorStr = (char*)pErrorBuffer->GetBufferPointer();
-			LOG_FUNCTION_FAILED_DETAIL(this, "D3DXCreateEffectCompilerFromFileA Failed.", errorStr.c_str(), hr);
+			LOG_FUNCTION_W(*this, "failed, error=%X, reason=%s.", hr, errorStr.c_str());
+		}
+		else
+		{
+			LOG_FUNCTION_W(*this, "failed, error=%X.", hr);
 		}
 		return false;
 	}
@@ -484,12 +471,16 @@ bool APIInstance::CompileFXEffectFromFile(const char* sourceFXFile, const char* 
 		if (pErrorBuffer.IsNotNullPtr())
 		{
 			std::string errorStr = (char*)pErrorBuffer->GetBufferPointer();
-			LOG_FUNCTION_FAILED_DETAIL(this, "APIInstance::CompileFXEffectFromFile CompileEffect Failed.", errorStr.c_str(), hr);
+			LOG_FUNCTION_W(*this, "failed, error=%X, reason=%s.", hr, errorStr.c_str());
+		}
+		else
+		{
+			LOG_FUNCTION_W(*this, "failed, error=%X.", hr);
 		}
 		return false;
 	}
 
-	return GenerateFxoFileToDisk(pEffectBuffer, compiledFXFile);
+	return GenerateFxoFileToDisk(*this, pEffectBuffer, compiledFXFile);
 
 }
 
@@ -578,8 +569,9 @@ void APIInstance::PerfEnd()
 }
 
 
-EffectInclude::EffectInclude(const std::string & includeDir)
-	: m_dirInclude(includeDir)
+EffectInclude::EffectInclude(IInternalLogger& logger, const std::string & includeDir)
+	: m_internalLogger(logger)
+	, m_dirInclude(includeDir)
 {
 	if (!m_dirInclude.empty())
 	{
@@ -616,7 +608,7 @@ HRESULT STDMETHODCALLTYPE EffectInclude::Open(D3DXINCLUDE_TYPE includeType, LPCS
 
 			if (!IsLocalFileExist(fileName))
 			{
-				//g_Log.OutPutConsole(true,"无法打开Fx Include文件%s.\n当前目录:%s",pFileName,buff);
+				LOG_FUNCTION_W(m_internalLogger, "无法打开Fx Include文件%s.", pFileName);
 				return E_INVALIDARG;
 			}
 		}
@@ -646,7 +638,7 @@ HRESULT STDMETHODCALLTYPE EffectInclude::Open(D3DXINCLUDE_TYPE includeType, LPCS
 		if (!readRes)
 		{
 			int errCode = GetLastError();
-			//LogEWithDesc("Read Include File 失败%s. pFileName=%s;dest_filename=%s;%d=", pFileName, dest_filename.c_str(), errcode);
+			LOG_FUNCTION_W(m_internalLogger, "Read Include File 失败%s. pFileName=%s, error=%d", pFileName, errCode);
 			*ppData = 0;
 			CloseHandle(hFile);
 			return S_FALSE;
@@ -663,7 +655,8 @@ HRESULT STDMETHODCALLTYPE EffectInclude::Open(D3DXINCLUDE_TYPE includeType, LPCS
 	{
 		*ppData = NULL;
 		*pBytes = 0;
-		//LogEWithDesc("无法打开Fx 文件dest_filename=%s.\n当前目录:%s ;pFileName=%s", dest_filename.c_str(), buff, pFileName);
+
+		LOG_FUNCTION_W(m_internalLogger, "无法打开Fx 文件dest_filename=%s.", pFileName);
 		return S_FALSE;
 	}
 }
@@ -674,17 +667,18 @@ HRESULT STDMETHODCALLTYPE EffectInclude::Close(LPCVOID pData)
 	return S_OK;
 }
 
-void LogFunctionCall(IInternalLogger& logger, const char* functionName, const char* format, ...)
+void LogFunctionCall(const IInternalLogger& logger, LogLevel level, const char* functionName, const char* format, ...)
 {
-	char logBuffer[1024];
+	const int kBufferLength = 2048;
+	char logBuffer[kBufferLength];
 
-	int offset = _sprintf_p(logBuffer, 1024, "%s involke.", functionName) - 1;
+	int offset = _sprintf_p(logBuffer, kBufferLength, "%s : ", functionName) - 1;
 
 	//参数字符串
 	va_list va;
 	va_start(va, format);
-	vsprintf_s(logBuffer + offset, 1024 - offset, format, va);
+	vsprintf_s(logBuffer + offset, kBufferLength - offset, format, va);
 	va_end(va);
 
-	logger.LogStr(LOG_Verbose, logBuffer);
+	logger.LogStr(level, logBuffer);
 }

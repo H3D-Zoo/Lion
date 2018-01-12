@@ -13,28 +13,22 @@ class IInternalLogger
 public:
 	~IInternalLogger() { }
 
-	virtual void LogStr(LogLevel level, const char* desc) = 0;
-
-	virtual void LogStr(LogLevel level, const char* desc, const char* detail) = 0;
-
-	virtual void LogErr(LogLevel level, const char* desc, HRESULT errCode) = 0;
-
-	virtual void LogErr(LogLevel level, const char* desc, const char* detail, HRESULT errCode) = 0;
+	virtual void LogStr(LogLevel level, const char* desc) const = 0;
 };
 
-#define LOG_FUNC_NAME(desc) __FUNCTION__ " : " desc
-#define LOG_FUNCTION_FAILED(logger,desc) (logger)->LogStr(LOG_Warning,LOG_FUNC_NAME(desc))
-#define LOG_FUNCTION_FAILED_INVALID_CALL(logger,desc) (logger)->LogStr(LOG_Warning,LOG_FUNC_NAME("Invalid Call"),desc)
-#define LOG_FUNCTION_FAILED_ERRCODE(logger,desc,errCode) (logger)->LogErr(LOG_Warning,LOG_FUNC_NAME(desc),errCode)
-#define LOG_FUNCTION_FAILED_DETAIL(logger,desc,detail,errCode) (logger)->LogErr(LOG_Warning,LOG_FUNC_NAME(desc),detail,errCode)
-
-void LogFunctionCall(IInternalLogger& logger, const char* functionName, const char* format, ...);
+void LogFunctionCall(const IInternalLogger& logger, LogLevel level, const char* functionName, const char* format, ...);
 
 //#ifdef _DEBUG
 #if 1
-#define LOG_FUNCTION_CALL(logger) LogFunctionCall(logger,__FUNCTION__,"")
-#define LOG_FUNCTION_PARAM(logger,format,...) LogFunctionCall(logger,__FUNCTION__,format,##__VA_ARGS__)
+#define LOG_FUNCTION_CALL(logger,level) LogFunctionCall(logger,level,__FUNCTION__,"object=%X",this)
+#define LOG_FUNCTION_V(logger,format,...) LogFunctionCall(logger,LOG_Verbose,__FUNCTION__,format,##__VA_ARGS__)
+#define LOG_FUNCTION_D(logger,format,...) LogFunctionCall(logger,LOG_Debug,__FUNCTION__,format,##__VA_ARGS__)
+#define LOG_FUNCTION_W(logger,format,...) LogFunctionCall(logger,LOG_Warning,__FUNCTION__,format,##__VA_ARGS__)
+#define LOG_FUNCTION_E(logger,format,...) LogFunctionCall(logger,LOG_Error,__FUNCTION__,format,##__VA_ARGS__)
 #else
-#define LOG_FUNCTION_CALL(logger)
-#define LOG_FUNCTION_PARAM(logger,format,...) 
+#define LOG_FUNCTION_CALL(logger) 
+#define LOG_FUNCTION_V(logger,format,...) 
+#define LOG_FUNCTION_D(logger,format,...) 
+#define LOG_FUNCTION_E(logger,format,...) LogFunctionCall(logger,LOG_Error,__FUNCTION__,format,##__VA_ARGS__)
+#define LOG_FUNCTION_E(logger,format,...) LogFunctionCall(logger,LOG_Error,__FUNCTION__,format,##__VA_ARGS__)
 #endif

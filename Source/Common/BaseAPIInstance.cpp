@@ -8,12 +8,12 @@ BaseAPIInstance::BaseAPIInstance() : m_currentLogger(GetDefaultLogger())
 
 }
 
-RenderAPI::Logger* BaseAPIInstance::GetDefaultLogger()
+RenderAPI::Logger* BaseAPIInstance::GetDefaultLogger() const
 {
 	return &(SilentLogger::GetInstance());
 }
 
-RenderAPI::Logger* BaseAPIInstance::GetCurrentLogger()
+RenderAPI::Logger* BaseAPIInstance::GetCurrentLogger() const
 {
 	return m_currentLogger;
 }

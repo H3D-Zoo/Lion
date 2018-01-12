@@ -42,8 +42,12 @@ unsigned int VertexBuffer::GetLength() const
 
 void * VertexBuffer::Lock(unsigned int offset, unsigned int lockLength, RenderAPI::LockOption lockOption)
 {
+	LOG_FUNCTION_V(m_internalLogger, "object=%X, offset=%d, lockLength=%d, lockOption=%d", 
+		this, offset, lockLength, lockOption);
+
 	if (m_writeOnly && lockOption == RenderAPI::LOCK_ReadOnly)
 	{
+		LOG_FUNCTION_W(m_internalLogger, "write-only buffers cannot be read");
 		return NULL;
 	}
 	else if (lockOption == RenderAPI::LOCK_NoOverWrite || lockOption == RenderAPI::LOCK_Discard)
@@ -52,6 +56,7 @@ void * VertexBuffer::Lock(unsigned int offset, unsigned int lockLength, RenderAP
 		//on buffers created with D3DUSAGE_DYNAMIC.
 		if (!m_isDynamic)
 		{
+			LOG_FUNCTION_V(m_internalLogger, "reset lock option to normal.");
 			lockOption = RenderAPI::LOCK_Normal;
 		}
 	}
@@ -64,7 +69,7 @@ void * VertexBuffer::Lock(unsigned int offset, unsigned int lockLength, RenderAP
 	}
 	else
 	{
-		LOG_FUNCTION_FAILED_ERRCODE(&m_internalLogger, "Lock failed.", hr);
+		LOG_FUNCTION_W(m_internalLogger, "failed, error=%X", hr);
 		return NULL;
 	}
 }
@@ -76,6 +81,7 @@ void* VertexBuffer::LockAll(RenderAPI::LockOption lockOption)
 
 void VertexBuffer::Unlock()
 {
+	LOG_FUNCTION_CALL(m_internalLogger, LOG_Verbose);
 	m_pVertexBuffer->Unlock();
 }
 

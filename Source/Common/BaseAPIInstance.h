@@ -7,10 +7,10 @@ public:
 	BaseAPIInstance();
 
 	// 获得系统内置默认Log对象
-	virtual RenderAPI::Logger* GetDefaultLogger();
+	virtual RenderAPI::Logger* GetDefaultLogger() const;
 
 	// 获取当前系统正在使用的Log对象
-	virtual RenderAPI::Logger* GetCurrentLogger();
+	virtual RenderAPI::Logger* GetCurrentLogger() const;
 
 	// 修改系统使用的Log对象，以自定义log输出位置。
 	// 当参数为nullptr的时候，系统会使用默认的log对象处理输出

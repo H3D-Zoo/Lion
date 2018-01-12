@@ -11,7 +11,7 @@ IndexBuffer::IndexBuffer(IDirect3DIndexBuffer9* indexBuffer, RenderAPI::Resource
 	, m_indexCount(count)
 	, m_bufferLength(s_IndexLengths[format] * m_indexCount)
 	, m_pIndexBuffer(indexBuffer)
-	
+
 {
 }
 
@@ -52,8 +52,12 @@ IDirect3DIndexBuffer9 * IndexBuffer::GetD3DIndexBuffer()
 }
 void * IndexBuffer::Lock(unsigned int offset, unsigned int lockLength, RenderAPI::LockOption lockOption)
 {
+	LOG_FUNCTION_V(m_internalLogger, "object=%X, offset=%d, lockLength=%d, lockOption=%d",
+		this, offset, lockLength, lockOption);
+
 	if (m_writeOnly && lockOption == RenderAPI::LOCK_ReadOnly)
 	{
+		LOG_FUNCTION_W(m_internalLogger, "failed, the buffer is read-only.");
 		return NULL;
 	}
 	else if (lockOption == RenderAPI::LOCK_NoOverWrite || lockOption == RenderAPI::LOCK_Discard)
@@ -63,6 +67,7 @@ void * IndexBuffer::Lock(unsigned int offset, unsigned int lockLength, RenderAPI
 		if (!m_isDynamic)
 		{
 			lockOption = RenderAPI::LOCK_Normal;
+			LOG_FUNCTION_V(m_internalLogger, "change lock option from %d to normal", lockOption);
 		}
 	}
 
@@ -74,7 +79,7 @@ void * IndexBuffer::Lock(unsigned int offset, unsigned int lockLength, RenderAPI
 	}
 	else
 	{
-		LOG_FUNCTION_FAILED_ERRCODE(&m_internalLogger, "Lock Failed : IndexBuffer Cannot be locked.", hr);
+		LOG_FUNCTION_W(m_internalLogger, "failed, error=%X", hr);
 		return NULL;
 	}
 }
@@ -86,6 +91,7 @@ void* IndexBuffer::LockAll(RenderAPI::LockOption lockOption)
 
 void IndexBuffer::Unlock()
 {
+	LOG_FUNCTION_V(m_internalLogger, "object=%X", this);
 	m_pIndexBuffer->Unlock();
 }
 

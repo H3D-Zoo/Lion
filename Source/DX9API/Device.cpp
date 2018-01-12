@@ -115,14 +115,14 @@ Device::~Device()
 
 void Device::ReleaseDefaultSwapChainWhenLost()
 {
-	LOG_FUNCTION_CALL(*m_pAPIInstance);
+	LOG_FUNCTION_CALL(*m_pAPIInstance, LOG_Verbose);
 
 	m_pDefaultSwapChain->ReleaseSurfaceWhenLost();
 }
 
 void Device::ResetDefaultBackBuffer(unsigned int width, unsigned int height, RenderAPI::RenderTargetFormat rtFormat, RenderAPI::DepthStencilFormat dsFormat)
 {
-	LOG_FUNCTION_PARAM(*m_pAPIInstance, "width=%d, height=%d, rt format=%d, ds format=%d", width, height, rtFormat, dsFormat);
+	LOG_FUNCTION_D(*m_pAPIInstance, "width=%d, height=%d, rt format=%d, ds format=%d", width, height, rtFormat, dsFormat);
 
 	IDirect3DSurface9* pDSSurafce = NULL;
 	m_pDevice->GetDepthStencilSurface(&pDSSurafce);
@@ -131,15 +131,14 @@ void Device::ResetDefaultBackBuffer(unsigned int width, unsigned int height, Ren
 
 RenderAPI::SwapChain * Device::GetDefaultSwapChain()
 {
-	LOG_FUNCTION_CALL(*m_pAPIInstance);
-
+	LOG_FUNCTION_CALL(*m_pAPIInstance, LOG_Verbose);
 	m_pDefaultSwapChain->AddReference();
 	return m_pDefaultSwapChain;
 }
 
 RenderAPI::SwapChain * Device::CreateAdditionalSwapChain(const RenderAPI::SwapChainDesc & swapChainDesc)
 {
-	LOG_FUNCTION_PARAM(*m_pAPIInstance, "hwindow=%X, width=%d, height=%d, rt format=%d, ds format=%d, aamode = %d", 
+	LOG_FUNCTION_D(*m_pAPIInstance, "hwindow=%X, width=%d, height=%d, rt format=%d, ds format=%d, aamode = %d",
 		swapChainDesc.hWindow,
 		swapChainDesc.backbufferWidth, 
 		swapChainDesc.backbufferHeight,
@@ -245,12 +244,12 @@ void FormatBufferUsage(RenderAPI::ResourceUsage& usage, bool& dynamic, bool& man
 
 RenderAPI::VertexBuffer* Device::CreateVertexBuffer(RenderAPI::ResourceUsage usage, unsigned int vertexCount, unsigned int vertexSize)
 {
-	LOG_FUNCTION_PARAM(*m_pAPIInstance, "usage=%d, vertex count=%d, vertex stride=%d",
+	LOG_FUNCTION_D(*m_pAPIInstance, "usage=%d, vertex count=%d, vertex stride=%d",
 		usage, vertexCount, vertexSize);
 
 	if (vertexCount == 0 || vertexSize == 0)
 	{
-		LOG_FUNCTION_FAILED(m_pAPIInstance, "Vertex Count and Vertex Size cannot be 0.");
+		LOG_FUNCTION_W(*m_pAPIInstance, "failed. vertex count/size cannot be 0.");
 		return NULL;
 	}
 
@@ -265,7 +264,7 @@ RenderAPI::VertexBuffer* Device::CreateVertexBuffer(RenderAPI::ResourceUsage usa
 	HRESULT hr = m_pDevice->CreateVertexBuffer(bufferSize, d3dUsage, 0, d3dPool, &pVertexBuffer, NULL);
 	if (hr != S_OK)
 	{
-		LOG_FUNCTION_FAILED_ERRCODE(m_pAPIInstance, "CreateVertexBuffer Failed", hr);
+		LOG_FUNCTION_W(*m_pAPIInstance, "failed, error=%X", hr);
 		return NULL;
 	}
 	return new VertexBuffer(pVertexBuffer, usage, managed, vertexCount, vertexSize, *m_pAPIInstance);
@@ -274,15 +273,14 @@ RenderAPI::VertexBuffer* Device::CreateVertexBuffer(RenderAPI::ResourceUsage usa
 
 RenderAPI::IndexBuffer* Device::CreateIndexBuffer(RenderAPI::ResourceUsage usage, RenderAPI::IndexFormat format, unsigned int indexCount)
 {
-	LOG_FUNCTION_PARAM(*m_pAPIInstance, "usage=%d, index format=%s, index count=%d",
+	LOG_FUNCTION_D(*m_pAPIInstance, "usage=%d, index format=%s, index count=%d",
 		usage, (format == RenderAPI::INDEX_Int16 ? "index16":"index32"), indexCount);
 
 	if (indexCount == 0)
 	{
-		LOG_FUNCTION_FAILED(m_pAPIInstance, "Index Count cannot be 0.");
+		LOG_FUNCTION_W(*m_pAPIInstance, "failed. index count cannot be 0.");
 		return NULL;
 	}
-
 
 	bool managed = m_pAPIInstance->IsSupportManaged();
 	bool dynamic = false;
@@ -296,7 +294,7 @@ RenderAPI::IndexBuffer* Device::CreateIndexBuffer(RenderAPI::ResourceUsage usage
 
 	if (hr != S_OK)
 	{
-		LOG_FUNCTION_FAILED_ERRCODE(m_pAPIInstance, "CreateIndexBuffer Failed", hr);
+		LOG_FUNCTION_W(*m_pAPIInstance, "failed, error=%X", hr);
 		return NULL;
 	}
 
@@ -305,11 +303,11 @@ RenderAPI::IndexBuffer* Device::CreateIndexBuffer(RenderAPI::ResourceUsage usage
 
 RenderAPI::VertexDeclaration* Device::CreateVertexDeclaration(const RenderAPI::VertexElement * elements, unsigned int elementCount)
 {
-	LOG_FUNCTION_CALL(*m_pAPIInstance);
+	LOG_FUNCTION_CALL(*m_pAPIInstance, LOG_Debug);
 
 	if (elementCount == 0 || elements == NULL)
 	{
-		LOG_FUNCTION_FAILED_INVALID_CALL(m_pAPIInstance, "Element Count cannot be 0.");
+		LOG_FUNCTION_D(*m_pAPIInstance, "failed. element count cannot be 0.");
 		return NULL;
 	}
 
@@ -355,7 +353,7 @@ RenderAPI::VertexDeclaration* Device::CreateVertexDeclaration(const RenderAPI::V
 	}
 	else
 	{
-		LOG_FUNCTION_FAILED_ERRCODE(m_pAPIInstance, "CreateVertexDeclaration Failed", hr);
+		LOG_FUNCTION_W(*m_pAPIInstance, "failed, error=%X", hr);
 		return NULL;
 	}
 }
@@ -406,12 +404,12 @@ void FormatTextureUsage(RenderAPI::ResourceUsage& usage, bool& dynamic, bool& ma
 
 RenderAPI::Texture2D * Device::CreateTexture2D(RenderAPI::ResourceUsage usage, RenderAPI::TextureFormat format, unsigned int width, unsigned int height, unsigned int layer, bool autoGenMipmaps)
 {
-	LOG_FUNCTION_PARAM(*m_pAPIInstance, "usage=%d, format=%d, width=%d, height=%d, layer=%d, auto generate mipmaps=%d",
+	LOG_FUNCTION_D(*m_pAPIInstance, "usage=%d, format=%d, width=%d, height=%d, layer=%d, auto generate mipmaps=%d",
 		usage, format, width, height, layer, autoGenMipmaps);
 
 	if (width == 0 || height == 0)
 	{
-		LOG_FUNCTION_FAILED_INVALID_CALL(m_pAPIInstance, "Width and Height cannot be 0.");
+		LOG_FUNCTION_W(*m_pAPIInstance, "failed. width/height count cannot be 0.");
 		return NULL;
 	}
 
@@ -431,7 +429,7 @@ RenderAPI::Texture2D * Device::CreateTexture2D(RenderAPI::ResourceUsage usage, R
 	HRESULT hr = m_pDevice->CreateTexture(width, height, layer, d3dUsage, s_TextureFormats[format], d3dPool, &pTexture, NULL);
 	if (hr != S_OK)
 	{
-		LOG_FUNCTION_FAILED_ERRCODE(m_pAPIInstance, "CreateTexture Failed.", hr);
+		LOG_FUNCTION_W(*m_pAPIInstance, "failed, error=%X", hr);
 		return NULL;
 	}
 
@@ -454,11 +452,11 @@ RenderAPI::Texture2D * Device::CreateTexture2D(RenderAPI::ResourceUsage usage, R
 
 RenderAPI::Texture2D * Device::CreateScaledTexture2D(RenderAPI::ResourceUsage usage, unsigned int width, unsigned int height, char* fileBuffer, unsigned int fileLengh)
 {
-	LOG_FUNCTION_PARAM(*m_pAPIInstance, "usage=%d, width=%d, height=%d", usage, width, height);
+	LOG_FUNCTION_D(*m_pAPIInstance, "usage=%d, width=%d, height=%d", usage, width, height);
 
 	if (width == 0 || height == 0)
 	{
-		LOG_FUNCTION_FAILED_INVALID_CALL(m_pAPIInstance, "Width and Height cannot be 0.");
+		LOG_FUNCTION_W(*m_pAPIInstance, "failed. width/height count cannot be 0.");
 		return NULL;
 	}
 
@@ -513,12 +511,12 @@ RenderAPI::Texture2D * Device::CreateScaledTexture2D(RenderAPI::ResourceUsage us
 
 RenderAPI::TextureCube * Device::CreateTextureCube(RenderAPI::ResourceUsage usage, RenderAPI::TextureFormat format, unsigned int edgeLength, unsigned int layer, bool autoGenMipmaps)
 {
-	LOG_FUNCTION_PARAM(*m_pAPIInstance, "usage=%d, format=%d, edge length=%d, layer=%d, auto generate mipmaps=%d",
+	LOG_FUNCTION_D(*m_pAPIInstance, "usage=%d, format=%d, edge length=%d, layer=%d, auto generate mipmaps=%d",
 		usage, format, edgeLength, layer, autoGenMipmaps);
 
 	if (edgeLength == 0)
 	{
-		LOG_FUNCTION_FAILED_INVALID_CALL(m_pAPIInstance, "Edge Length cannot be 0.");
+		LOG_FUNCTION_W(*m_pAPIInstance, "failed. edge length count cannot be 0.");
 		return NULL;
 	}
 
@@ -539,7 +537,7 @@ RenderAPI::TextureCube * Device::CreateTextureCube(RenderAPI::ResourceUsage usag
 
 	if (hr != S_OK)
 	{
-		LOG_FUNCTION_FAILED_ERRCODE(m_pAPIInstance, "CreateCubeTexture Failed.", hr);
+		LOG_FUNCTION_W(*m_pAPIInstance, "failed, error=%X", hr);
 		return NULL;
 	}
 
@@ -549,11 +547,11 @@ RenderAPI::TextureCube * Device::CreateTextureCube(RenderAPI::ResourceUsage usag
 
 RenderAPI::FXEffect * Device::CreateFXEffectFromFile(const char * effectFilePath, const char * includeDir)
 {
-	LOG_FUNCTION_CALL(*m_pAPIInstance);
+	LOG_FUNCTION_D(*m_pAPIInstance, "file=%s, include=%s", effectFilePath, includeDir);
 
 	ID3DXEffect* pEffect = NULL;
 	AutoR<ID3DXBuffer> pErrorBuffer;
-	EffectInclude includeCallback(includeDir);
+	EffectInclude includeCallback(*m_pAPIInstance, includeDir);
 	DWORD flags = D3DXSHADER_USE_LEGACY_D3DX9_31_DLL; //要想支持ps 1_x 需要使用这个。
 
 
@@ -572,7 +570,7 @@ RenderAPI::FXEffect * Device::CreateFXEffectFromFile(const char * effectFilePath
 		if (pErrorBuffer.IsNotNullPtr())
 		{
 			std::string errorStr = (char*)pErrorBuffer->GetBufferPointer();
-			LOG_FUNCTION_FAILED_DETAIL(m_pAPIInstance, "D3DXCreateEffectFromFileA Failed.", errorStr.c_str(), hr);
+			LOG_FUNCTION_W(*m_pAPIInstance, "failed, error=%X", hr);
 		}
 		return NULL;
 	}
@@ -581,7 +579,7 @@ RenderAPI::FXEffect * Device::CreateFXEffectFromFile(const char * effectFilePath
 
 RenderAPI::RenderTarget* Device::CreateRenderTarget(RenderAPI::TextureFormat format, unsigned int width, unsigned int height)
 {
-	LOG_FUNCTION_PARAM(*m_pAPIInstance, "format=%d, width=%d, height=%d", format, width, height);
+	LOG_FUNCTION_D(*m_pAPIInstance, "format=%d, width=%d, height=%d", format, width, height);
 
 	D3DFORMAT rtFormat = s_TextureFormats[format];
 	IDirect3DTexture9* pTexture = NULL;
@@ -589,7 +587,7 @@ RenderAPI::RenderTarget* Device::CreateRenderTarget(RenderAPI::TextureFormat for
 
 	if (hr != S_OK)
 	{
-		LOG_FUNCTION_FAILED_ERRCODE(m_pAPIInstance, "CreateTexture Failed.", hr);
+		LOG_FUNCTION_W(*m_pAPIInstance, "failed, error=%X", hr);
 		return NULL;
 	}
 
@@ -603,7 +601,7 @@ RenderAPI::DepthStencil * Device::CreateDepthStencil(RenderAPI::DepthStencilForm
 
 RenderAPI::OcclusionQuery* Device::CreateOcclusionQuery()
 {
-	LOG_FUNCTION_CALL(*m_pAPIInstance);
+	LOG_FUNCTION_CALL(*m_pAPIInstance, LOG_Verbose);
 
 	if (m_pAPIInstance->IsSupportOcclusionQuery())
 	{
@@ -618,7 +616,7 @@ RenderAPI::OcclusionQuery* Device::CreateOcclusionQuery()
 
 RenderAPI::TextBox * Device::CreateTextBox(int screen_x, int screen_y, int width, int height)
 {
-	LOG_FUNCTION_PARAM(*m_pAPIInstance, "screen_x=%d, screen_y=%d, width=%d, height=%d", screen_x, screen_y, width, height);
+	LOG_FUNCTION_D(*m_pAPIInstance, "screen_x=%d, screen_y=%d, width=%d, height=%d", screen_x, screen_y, width, height);
 
 	ID3DXFont* pFont = NULL;
 
@@ -627,6 +625,7 @@ RenderAPI::TextBox * Device::CreateTextBox(int screen_x, int screen_y, int width
 
 	if (hr != S_OK)
 	{
+		LOG_FUNCTION_W(*m_pAPIInstance, "failed, error=%X", hr);
 		return NULL;
 	}
 	else
@@ -649,7 +648,7 @@ unsigned int Device::AddReference()
 	HRESULT hr = m_pDevice->CreateDepthStencilSurface(width, height, s_DSFormats[format], D3DMULTISAMPLE_NONE, 0, TRUE, &pDSSurface, NULL);
 	if (hr != S_OK)
 	{
-		LOG_FUNCTION_FAILED_ERRCODE(m_pAPIInstance, "CreateDepthStencilSurface Failed.", hr);
+		LOG_FUNCTION_W(*m_pAPIInstance, "failed, error=%X", hr);
 		return NULL;
 	}
 
@@ -658,7 +657,7 @@ unsigned int Device::AddReference()
 
 void Device::Release()
 {
-	LOG_FUNCTION_CALL(*m_pAPIInstance);
+	LOG_FUNCTION_CALL(*m_pAPIInstance, LOG_Debug);
 
 	if (0 == --m_refCount)
 	{

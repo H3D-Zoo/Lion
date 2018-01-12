@@ -102,6 +102,7 @@ private:
 
 class TemporaryTexture
 {
+	IInternalLogger& m_logger;
 	RenderAPI::TextureFormat m_texFormat;
 	unsigned int m_texLayers;
 	unsigned int m_texWidth;
@@ -111,7 +112,7 @@ class TemporaryTexture
 	void SetLayerLocking(unsigned int layer, bool locked);
 	bool IsLayerLocking(unsigned int layer) const;
 public:
-	TemporaryTexture(RenderAPI::TextureFormat f, unsigned int w, unsigned int h, unsigned int layerCount);
+	TemporaryTexture(IInternalLogger& logger, RenderAPI::TextureFormat f, unsigned int w, unsigned int h, unsigned int layerCount);
 	bool Create(IDirect3DDevice9* pDevice);
 	IDirect3DTexture9* GetTexturePtr() const { return m_pTexture; }
 	bool IsCreated() const { return m_pTexture != NULL; }

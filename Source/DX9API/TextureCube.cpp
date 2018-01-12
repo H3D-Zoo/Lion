@@ -67,11 +67,14 @@ IDirect3DCubeTexture9 * TextureCube::GetD3DTexture()
 
 RenderAPI::MappedResource TextureCube::LockRect(RenderAPI::CubemapFace face, unsigned int layer, RenderAPI::LockOption lockOption)
 {
+	LOG_FUNCTION_D(m_internalLogger, "object=%X, face=%d, layer=%d, lock option=%d", this, face, layer, lockOption);
+
 	RenderAPI::MappedResource ret;
 	
 	if (lockOption == RenderAPI::LOCK_NoOverWrite)
 	{
 		lockOption = RenderAPI::LOCK_Normal;
+		LOG_FUNCTION_V(m_internalLogger, "change lock option to normal");
 	}
 
 	if (m_isDynamic || m_isManaged)
@@ -87,19 +90,20 @@ RenderAPI::MappedResource TextureCube::LockRect(RenderAPI::CubemapFace face, uns
 		else
 		{
 			ret.Success = false;
-			LOG_FUNCTION_FAILED_ERRCODE(&m_internalLogger, "LockRect Failed", hr);
+			LOG_FUNCTION_W(m_internalLogger, "LockRect Failed", hr);
 		}
 	}
 	else
 	{
 		ret.Success = false;
-		LOG_FUNCTION_FAILED_INVALID_CALL(&m_internalLogger, "Only Dynamic or Managed Texture can be loked.");
+		LOG_FUNCTION_W(m_internalLogger, "only dynamic/Managed texture can be locked.");
 	}
 	return ret;
 }
 
 void TextureCube::UnlockRect(RenderAPI::CubemapFace face, unsigned int layer)
 {
+	LOG_FUNCTION_D(m_internalLogger, "object=%X, face=%d, layer=%d", this, face, layer);
 	m_pTexture->UnlockRect(s_d3dCubeFaces[face], layer);
 }
 
@@ -115,6 +119,8 @@ void TextureCube::SetMipmapGenerateFilter(RenderAPI::SamplerFilter filter)
 
 void TextureCube::GenerateMipmaps()
 {
+	LOG_FUNCTION_CALL(m_internalLogger, LOG_Verbose);
+
 	if (!m_autoGenMipmaps)
 	{
 		m_pTexture->GenerateMipSubLevels();

@@ -69,13 +69,7 @@ public:
 	void AddRef();
 
 	//InternalLogger
-	virtual void LogStr(LogLevel level, const char* desc);
-
-	virtual void LogStr(LogLevel level, const char* desc, const char* detail);
-
-	virtual void LogErr(LogLevel level, const char* desc, HRESULT errCode);
-
-	virtual void LogErr(LogLevel level, const char* desc, const char* detail, HRESULT errCode);
+	virtual void LogStr(LogLevel level, const char* desc) const;
 
 	RenderStatistic& GetRenderStatistic() { return m_renderStatistic; }
 
@@ -92,7 +86,7 @@ private:
 
 	void DestroyD3D();
 
-	void LevelLog(LogLevel level, const char* desc);
+	void LevelLog(LogLevel level, const char* desc) const;
 
 	HMODULE m_hDLL;
 	RefCount m_refCount;
@@ -123,9 +117,10 @@ public:
 class EffectInclude : public ID3DXInclude
 {
 public:
-	EffectInclude(const std::string& includeDir);
+	EffectInclude(IInternalLogger& logger, const std::string& includeDir);
 	HRESULT STDMETHODCALLTYPE Open(D3DXINCLUDE_TYPE IncludeType, LPCSTR pFileName, LPCVOID pParentData, LPCVOID *ppData, UINT *pBytes);
 	HRESULT STDMETHODCALLTYPE Close(LPCVOID pData);
 private:
+	IInternalLogger& m_internalLogger;
 	std::string m_dirInclude;
 };
