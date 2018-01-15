@@ -15,7 +15,7 @@ class Device;
 class Context;
 
 
-class APIInstance : public BaseAPIInstance, public IInternalLogger
+class APIInstance : public BaseAPIInstance, public RenderAPI::Logger
 {
 public:
 	static D3DPRESENT_PARAMETERS FillCreationParam(APIInstance& self, HWND hWindow, unsigned int width, unsigned int height, bool isFullscreen, bool vsync, D3DFORMAT rtFormat, D3DFORMAT dsFormat, D3DMULTISAMPLE_TYPE mulsample);
@@ -68,10 +68,8 @@ public:
 
 	void AddRef();
 
-	//InternalLogger
-	virtual void LogError(const char* action, const char* detail);
-
-	virtual void LogError(const char* action, const char* detail, HRESULT errorCode);
+	// RenderAPI::Logger
+	virtual void Log(RenderAPI::LogLevel level, const char* desc);
 
 	RenderStatistic& GetRenderStatistic() { return m_renderStatistic; }
 
@@ -117,9 +115,10 @@ public:
 class EffectInclude : public ID3DXInclude
 {
 public:
-	EffectInclude(const std::string& includeDir);
+	EffectInclude(RenderAPI::Logger& logger, const std::string& includeDir);
 	HRESULT STDMETHODCALLTYPE Open(D3DXINCLUDE_TYPE IncludeType, LPCSTR pFileName, LPCVOID pParentData, LPCVOID *ppData, UINT *pBytes);
 	HRESULT STDMETHODCALLTYPE Close(LPCVOID pData);
 private:
+	RenderAPI::Logger& m_internalLogger;
 	std::string m_dirInclude;
 };

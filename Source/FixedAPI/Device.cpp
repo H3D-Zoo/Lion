@@ -110,11 +110,15 @@ Device::~Device()
 
 void Device::ReleaseDefaultSwapChainWhenLost()
 {
+	LOG_FUNCTION_CALL(*m_pAPIInstance, RenderAPI::LOG_Verbose);
+
 	m_pDefaultSwapChain->ReleaseSurfaceWhenLost();
 }
 
 void Device::ResetDefaultBackBuffer(unsigned int width, unsigned int height, RenderAPI::RenderTargetFormat rtFormat, RenderAPI::DepthStencilFormat dsFormat)
 {
+	LOG_FUNCTION_V(*m_pAPIInstance, "width=%d, height=%d, rt format=%d, ds format=%d", width, height, rtFormat, dsFormat);
+
 	IDirect3DSurface9* pDSSurafce = NULL;
 	m_pDevice->GetDepthStencilSurface(&pDSSurafce);
 	m_pDefaultSwapChain->ResetBackBuffers(width, height, rtFormat, dsFormat, pDSSurafce);
@@ -122,12 +126,21 @@ void Device::ResetDefaultBackBuffer(unsigned int width, unsigned int height, Ren
 
 RenderAPI::SwapChain * Device::GetDefaultSwapChain()
 {
+	LOG_FUNCTION_CALL(*m_pAPIInstance, RenderAPI::LOG_Verbose);
 	m_pDefaultSwapChain->AddReference();
 	return m_pDefaultSwapChain;
 }
 
 RenderAPI::SwapChain * Device::CreateAdditionalSwapChain(const RenderAPI::SwapChainDesc & swapChainDesc)
 {
+	LOG_FUNCTION_V(*m_pAPIInstance, "hwindow=%X, width=%d, height=%d, rt format=%d, ds format=%d, aamode = %d",
+		swapChainDesc.hWindow,
+		swapChainDesc.backbufferWidth, 
+		swapChainDesc.backbufferHeight,
+		swapChainDesc.backbufferFormat,
+		swapChainDesc.zbufferFormat,
+		swapChainDesc.aaMode);
+
 	IDirect3DSwapChain9* swapChain = NULL;
 	D3DPRESENT_PARAMETERS param;
 	ZeroMemory(&param, sizeof(param));
@@ -226,9 +239,12 @@ void FormatBufferUsage(RenderAPI::ResourceUsage& usage, bool& dynamic, bool& man
 
 RenderAPI::VertexBuffer* Device::CreateVertexBuffer(RenderAPI::ResourceUsage usage, unsigned int vertexCount, unsigned int vertexSize)
 {
+	LOG_FUNCTION_V(*m_pAPIInstance, "usage=%d, vertex count=%d, vertex stride=%d",
+		usage, vertexCount, vertexSize);
+
 	if (vertexCount == 0 || vertexSize == 0)
 	{
-		m_pAPIInstance->LogError("CreateVertexBuffer", "Vertex Count and Vertex Size cannot be 0.");
+		LOG_FUNCTION_W(*m_pAPIInstance, "failed. vertex count/size cannot be 0.");
 		return NULL;
 	}
 
@@ -243,23 +259,26 @@ RenderAPI::VertexBuffer* Device::CreateVertexBuffer(RenderAPI::ResourceUsage usa
 	HRESULT hr = m_pDevice->CreateVertexBuffer(bufferSize, d3dUsage, 0, d3dPool, &pVertexBuffer, NULL);
 	if (hr != S_OK)
 	{
-		m_pAPIInstance->LogError("CreateVertexBuffer", "CreateVertexBuffer failed", hr);
+		LOG_FUNCTION_E(*m_pAPIInstance, "failed, error=%X", hr);
 		return NULL;
 	}
-
-	return new VertexBuffer(pVertexBuffer, usage, managed, vertexCount, vertexSize, *m_pAPIInstance);
+	else
+	{
+		return new VertexBuffer(pVertexBuffer, usage, managed, vertexCount, vertexSize, *m_pAPIInstance);
+	}
 
 }
 
-
 RenderAPI::IndexBuffer* Device::CreateIndexBuffer(RenderAPI::ResourceUsage usage, RenderAPI::IndexFormat format, unsigned int indexCount)
 {
+	LOG_FUNCTION_V(*m_pAPIInstance, "usage=%d, index format=%s, index count=%d",
+		usage, (format == RenderAPI::INDEX_Int16 ? "index16":"index32"), indexCount);
+
 	if (indexCount == 0)
 	{
-		m_pAPIInstance->LogError("CreateIndexBuffer", "Index Count cannot be 0.");
+		LOG_FUNCTION_W(*m_pAPIInstance, "failed. index count cannot be 0.");
 		return NULL;
 	}
-
 
 	bool managed = m_pAPIInstance->IsSupportManaged();
 	bool dynamic = false;
@@ -273,11 +292,13 @@ RenderAPI::IndexBuffer* Device::CreateIndexBuffer(RenderAPI::ResourceUsage usage
 
 	if (hr != S_OK)
 	{
-		m_pAPIInstance->LogError("CreateIndexBuffer", "CreateIndexBuffer failed", hr);
+		LOG_FUNCTION_E(*m_pAPIInstance, "failed, error=%X", hr);
 		return NULL;
 	}
-
-	return new IndexBuffer(pIndexBuffer, usage, format, managed, indexCount, *m_pAPIInstance);
+	else
+	{
+		return new IndexBuffer(pIndexBuffer, usage, format, managed, indexCount, *m_pAPIInstance);
+	}
 }
 
 struct ElementSorter
@@ -298,9 +319,11 @@ struct ElementSorter
 
 RenderAPI::VertexDeclaration* Device::CreateVertexDeclaration(const RenderAPI::VertexElement * elements, unsigned int elementCount)
 {
+	LOG_FUNCTION_CALL(*m_pAPIInstance, RenderAPI::LOG_Debug);
+
 	if (elementCount == 0 || elements == NULL)
 	{
-		m_pAPIInstance->LogError("CreateVertexDeclaration", "Element Count cannot be 0.");
+		LOG_FUNCTION_D(*m_pAPIInstance, "failed. element count cannot be 0.");
 		return NULL;
 	}
 
@@ -313,7 +336,7 @@ RenderAPI::VertexDeclaration* Device::CreateVertexDeclaration(const RenderAPI::V
 		const RenderAPI::VertexElement& element = elements[i];
 		if (element.StreamIndex != 0)
 		{
-			m_pAPIInstance->LogError("CreateVertexDeclaration", "Mutilple Vertices Stream is not supported in Fixed Mode.");
+			LOG_FUNCTION_W(*m_pAPIInstance, "Mutilple Vertices Stream is not supported in Fixed Mode.");
 			return NULL;
 		}
 
@@ -322,12 +345,12 @@ RenderAPI::VertexDeclaration* Device::CreateVertexDeclaration(const RenderAPI::V
 		case RenderAPI::SEMANTIC_Position:
 			if (element.SemanticIndex != 0)
 			{
-				m_pAPIInstance->LogError("CreateVertexDeclaration", "Semantic Index of Position must be 0.");
+				LOG_FUNCTION_W(*m_pAPIInstance, "Semantic Index of Position must be 0.");
 				return NULL;
 			}
 			else if ((customFVF & D3DFVF_XYZ) != 0)
 			{
-				m_pAPIInstance->LogError("CreateVertexDeclaration", "Semantic Position duplicated.");
+				LOG_FUNCTION_W(*m_pAPIInstance, "Semantic Position duplicated.");
 				return NULL;
 			}
 			else
@@ -342,7 +365,7 @@ RenderAPI::VertexDeclaration* Device::CreateVertexDeclaration(const RenderAPI::V
 			{
 				if ((customFVF & D3DFVF_DIFFUSE) != 0)
 				{
-					m_pAPIInstance->LogError("CreateVertexDeclaration", "Semantic DiffuseColor duplicated.");
+					LOG_FUNCTION_W(*m_pAPIInstance, "Semantic DiffuseColor duplicated.");
 					return NULL;
 				}
 				else
@@ -356,7 +379,7 @@ RenderAPI::VertexDeclaration* Device::CreateVertexDeclaration(const RenderAPI::V
 			{
 				if ((customFVF & D3DFVF_SPECULAR) != 0)
 				{
-					m_pAPIInstance->LogError("CreateVertexDeclaration", "Semantic SpecularColor duplicated.");
+					LOG_FUNCTION_W(*m_pAPIInstance, "Semantic SpecularColor duplicated.");
 					return NULL;
 				}
 				else
@@ -367,19 +390,19 @@ RenderAPI::VertexDeclaration* Device::CreateVertexDeclaration(const RenderAPI::V
 			}
 			else
 			{
-				m_pAPIInstance->LogError("CreateVertexDeclaration", "Semantic Index of Color should be 0 or 1.");
+				LOG_FUNCTION_W(*m_pAPIInstance, "Semantic Index of Color should be 0 or 1.");
 				return NULL;
 			}
 			break;
 		case RenderAPI::SEMANTIC_Normal:
 			if (element.SemanticIndex != 0)
 			{
-				m_pAPIInstance->LogError("CreateVertexDeclaration", "Semantic Index of Position must be 0.");
+				LOG_FUNCTION_W(*m_pAPIInstance, "Semantic Index of Position must be 0.");
 				return NULL;
 			}
 			else if ((customFVF & D3DFVF_NORMAL) != 0)
 			{
-				m_pAPIInstance->LogError("CreateVertexDeclaration", "Semantic Position duplicated.");
+				LOG_FUNCTION_W(*m_pAPIInstance, "Semantic Position duplicated.");
 				return NULL;
 			}
 			else
@@ -391,7 +414,7 @@ RenderAPI::VertexDeclaration* Device::CreateVertexDeclaration(const RenderAPI::V
 		case RenderAPI::SEMANTIC_Texcoord:
 			if (element.SemanticIndex > 7)
 			{
-				m_pAPIInstance->LogError("CreateVertexDeclaration", "Semantic Index of Position must be 0.");
+				LOG_FUNCTION_W(*m_pAPIInstance, "Semantic Index of Position must be 0.");
 				return NULL;
 			}
 			else
@@ -399,7 +422,7 @@ RenderAPI::VertexDeclaration* Device::CreateVertexDeclaration(const RenderAPI::V
 				unsigned int mask = 1 << element.SemanticIndex;
 				if ((texcoordMask & mask) != 0)
 				{
-					m_pAPIInstance->LogError("CreateVertexDeclaration", "Semantic Position duplicated.");
+					LOG_FUNCTION_W(*m_pAPIInstance, "Semantic Position duplicated.");
 					return NULL;
 				}
 				else
@@ -413,7 +436,7 @@ RenderAPI::VertexDeclaration* Device::CreateVertexDeclaration(const RenderAPI::V
 		case RenderAPI::SEMANTIC_Binormal:
 		case RenderAPI::SEMANTIC_BlendWeight:
 		case RenderAPI::SEMANTIC_BlendIndices:
-			m_pAPIInstance->LogError("CreateVertexDeclaration", "Mutilple Vertices Stream is not supported in Fixed Mode.");
+			LOG_FUNCTION_W(*m_pAPIInstance, "Mutilple Vertices Stream is not supported in Fixed Mode.");
 			return NULL;
 		}
 	}
@@ -500,9 +523,12 @@ void FormatTextureUsage(RenderAPI::ResourceUsage& usage, bool& dynamic, bool& ma
 
 RenderAPI::Texture2D * Device::CreateTexture2D(RenderAPI::ResourceUsage usage, RenderAPI::TextureFormat format, unsigned int width, unsigned int height, unsigned int layer, bool autoGenMipmaps)
 {
+	LOG_FUNCTION_V(*m_pAPIInstance, "usage=%d, format=%d, width=%d, height=%d, layer=%d, auto generate mipmaps=%d",
+		usage, format, width, height, layer, autoGenMipmaps);
+
 	if (width == 0 || height == 0)
 	{
-		m_pAPIInstance->LogError("CreateTexture", "Width and Height cannot be 0.");
+		LOG_FUNCTION_W(*m_pAPIInstance, "failed. width/height count cannot be 0.");
 		return NULL;
 	}
 
@@ -522,31 +548,36 @@ RenderAPI::Texture2D * Device::CreateTexture2D(RenderAPI::ResourceUsage usage, R
 	HRESULT hr = m_pDevice->CreateTexture(width, height, layer, d3dUsage, s_TextureFormats[format], d3dPool, &pTexture, NULL);
 	if (hr != S_OK)
 	{
-		m_pAPIInstance->LogError("CreateTexture2D", "CreateTexture failed.", hr);
+		LOG_FUNCTION_E(*m_pAPIInstance, "failed, error=%X", hr);
 		return NULL;
-	}
-
-	::Texture2D* texture = NULL;
-
-	//Textures created with D3DPOOL_DEFAULT are not lockable.
-	//Textures created in video memory are lockable when created with USAGE_DYNAMIC.
-	//D3DLOCK_DISCARD, is only valid when the resource is created with USAGE_DYNAMIC.
-	if (dynamic || managed)
-	{
-		texture = new ::Texture2D(pTexture, format, usage, managed, width, height, autoGenMipmaps, *m_pAPIInstance);
 	}
 	else
 	{
-		texture = new ::NoLockableTexture2D(pTexture, format, usage, managed, width, height, autoGenMipmaps, *m_pAPIInstance);
+		::Texture2D* texture = NULL;
+
+		//Textures created with D3DPOOL_DEFAULT are not lockable.
+		//Textures created in video memory are lockable when created with USAGE_DYNAMIC.
+		//D3DLOCK_DISCARD, is only valid when the resource is created with USAGE_DYNAMIC.
+		if (dynamic || managed)
+		{
+			texture = new ::Texture2D(pTexture, format, usage, managed, width, height, autoGenMipmaps, *m_pAPIInstance);
+		}
+		else
+		{
+			texture = new ::NoLockableTexture2D(pTexture, format, usage, managed, width, height, autoGenMipmaps, *m_pAPIInstance);
+		}
+
+		return texture;
 	}
-	return texture;
 }
 
 RenderAPI::Texture2D * Device::CreateScaledTexture2D(RenderAPI::ResourceUsage usage, unsigned int width, unsigned int height, char* fileBuffer, unsigned int fileLengh)
 {
+	LOG_FUNCTION_V(*m_pAPIInstance, "usage=%d, width=%d, height=%d", usage, width, height);
+
 	if (width == 0 || height == 0)
 	{
-		m_pAPIInstance->LogError("CreateTexture", "Width and Height cannot be 0.");
+		LOG_FUNCTION_W(*m_pAPIInstance, "failed. width/height count cannot be 0.");
 		return NULL;
 	}
 
@@ -593,6 +624,7 @@ RenderAPI::Texture2D * Device::CreateScaledTexture2D(RenderAPI::ResourceUsage us
 	}
 	else
 	{
+		LOG_FUNCTION_E(*m_pAPIInstance, "failed, error=%X", hr);
 		return NULL;
 	}
 }
@@ -601,9 +633,12 @@ RenderAPI::Texture2D * Device::CreateScaledTexture2D(RenderAPI::ResourceUsage us
 
 RenderAPI::TextureCube * Device::CreateTextureCube(RenderAPI::ResourceUsage usage, RenderAPI::TextureFormat format, unsigned int edgeLength, unsigned int layer, bool autoGenMipmaps)
 {
+	LOG_FUNCTION_V(*m_pAPIInstance, "usage=%d, format=%d, edge length=%d, layer=%d, auto generate mipmaps=%d",
+		usage, format, edgeLength, layer, autoGenMipmaps);
+
 	if (edgeLength == 0)
 	{
-		m_pAPIInstance->LogError("CreateTextureCube", "edgeLength cannot be 0.");
+		LOG_FUNCTION_W(*m_pAPIInstance, "failed. edge length count cannot be 0.");
 		return NULL;
 	}
 
@@ -624,19 +659,22 @@ RenderAPI::TextureCube * Device::CreateTextureCube(RenderAPI::ResourceUsage usag
 
 	if (hr != S_OK)
 	{
-		m_pAPIInstance->LogError("CreateTextureCube", "CreateCubeTexture failed.", hr);
+		LOG_FUNCTION_E(*m_pAPIInstance, "failed, error=%X", hr);
 		return NULL;
 	}
-
-	::TextureCube* texture = new ::TextureCube(pTexture, format, usage, managed, edgeLength, autoGenMipmaps, *m_pAPIInstance);
-	return texture;
+	else
+	{
+		return new ::TextureCube(pTexture, format, usage, managed, edgeLength, autoGenMipmaps, *m_pAPIInstance);
+	}
 }
 
 RenderAPI::FXEffect * Device::CreateFXEffectFromFile(const char * effectFilePath, const char * includeDir)
 {
+	LOG_FUNCTION_V(*m_pAPIInstance, "file=%s, include=%s", effectFilePath, includeDir);
+
 	ID3DXEffect* pEffect = NULL;
 	AutoR<ID3DXBuffer> pErrorBuffer;
-	EffectInclude includeCallback(includeDir);
+	EffectInclude includeCallback(*m_pAPIInstance, includeDir);
 	DWORD flags = D3DXSHADER_USE_LEGACY_D3DX9_31_DLL; //要想支持ps 1_x 需要使用这个。
 
 
@@ -655,7 +693,11 @@ RenderAPI::FXEffect * Device::CreateFXEffectFromFile(const char * effectFilePath
 		if (pErrorBuffer.IsNotNullPtr())
 		{
 			std::string errorStr = (char*)pErrorBuffer->GetBufferPointer();
-			m_pAPIInstance->LogError("Device::CreateFXEffectFromFile", errorStr.c_str(), hr);
+			LOG_FUNCTION_E(*m_pAPIInstance, "failed, error=%X, reason=%s", hr, errorStr.c_str());
+		}
+		else
+		{
+			LOG_FUNCTION_E(*m_pAPIInstance, "failed, error=%X", hr);
 		}
 		return NULL;
 	}
@@ -664,17 +706,21 @@ RenderAPI::FXEffect * Device::CreateFXEffectFromFile(const char * effectFilePath
 
 RenderAPI::RenderTarget* Device::CreateRenderTarget(RenderAPI::TextureFormat format, unsigned int width, unsigned int height)
 {
+	LOG_FUNCTION_V(*m_pAPIInstance, "format=%d, width=%d, height=%d", format, width, height);
+
 	D3DFORMAT rtFormat = s_TextureFormats[format];
 	IDirect3DTexture9* pTexture = NULL;
 	HRESULT hr = m_pDevice->CreateTexture(width, height, 1, D3DUSAGE_RENDERTARGET, rtFormat, D3DPOOL_DEFAULT, &pTexture, NULL);
 
 	if (hr != S_OK)
 	{
-		m_pAPIInstance->LogError("CreateRenderTarget", "CreateTexture failed.", hr);
+		LOG_FUNCTION_E(*m_pAPIInstance, "failed, error=%X", hr);
 		return NULL;
 	}
-
-	return new RenderTarget(pTexture, format, width, height, *m_pAPIInstance);
+	else
+	{
+		return new RenderTarget(pTexture, format, width, height, *m_pAPIInstance);
+	}
 }
 
 RenderAPI::DepthStencil * Device::CreateDepthStencil(RenderAPI::DepthStencilFormat format, unsigned int width, unsigned int height)
@@ -684,6 +730,8 @@ RenderAPI::DepthStencil * Device::CreateDepthStencil(RenderAPI::DepthStencilForm
 
 RenderAPI::OcclusionQuery* Device::CreateOcclusionQuery()
 {
+	LOG_FUNCTION_CALL(*m_pAPIInstance, RenderAPI::LOG_Verbose);
+
 	if (m_pAPIInstance->IsSupportOcclusionQuery())
 	{
 		IDirect3DQuery9* pOcclusionQuery = NULL;
@@ -697,6 +745,7 @@ RenderAPI::OcclusionQuery* Device::CreateOcclusionQuery()
 
 RenderAPI::TextBox * Device::CreateTextBox(int screen_x, int screen_y, int width, int height)
 {
+	LOG_FUNCTION_V(*m_pAPIInstance, "screen_x=%d, screen_y=%d, width=%d, height=%d", screen_x, screen_y, width, height);
 
 	ID3DXFont* pFont = NULL;
 
@@ -705,6 +754,7 @@ RenderAPI::TextBox * Device::CreateTextBox(int screen_x, int screen_y, int width
 
 	if (hr != S_OK)
 	{
+		LOG_FUNCTION_E(*m_pAPIInstance, "failed, error=%X", hr);
 		return NULL;
 	}
 	else
@@ -727,15 +777,19 @@ unsigned int Device::AddReference()
 	HRESULT hr = m_pDevice->CreateDepthStencilSurface(width, height, s_DSFormats[format], D3DMULTISAMPLE_NONE, 0, TRUE, &pDSSurface, NULL);
 	if (hr != S_OK)
 	{
-		m_pAPIInstance->LogError("CreateDepthStencilImplement", "CreateDepthStencilSurface failed.", hr);
+		LOG_FUNCTION_E(*m_pAPIInstance, "failed, error=%X", hr);
 		return NULL;
 	}
-
-	return new DepthStencil(pDSSurface, format, width, height);
+	else
+	{
+		return new DepthStencil(pDSSurface, format, width, height);
+	}
 }
 
 void Device::Release()
 {
+	LOG_FUNCTION_CALL(*m_pAPIInstance, RenderAPI::LOG_Debug);
+
 	if (0 == --m_refCount)
 	{
 		delete this;

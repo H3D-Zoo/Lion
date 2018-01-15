@@ -75,7 +75,7 @@ struct DDrawX
 
 private:
 	//by sssa2000 2008.03.11
-	IDirectDraw7* m_pDD7;
+	IDirectDraw7 * m_pDD7;
 };
 
 namespace
@@ -127,7 +127,7 @@ namespace
 Context::Context(APIInstance* pAPI, IDirect3DDevice9 * device, RenderAPI::RenderTarget* defRT, RenderAPI::DepthStencil* defDS)
 	: m_pAPI(pAPI)
 	, m_pDevice(device)
-	, m_backBufferManager(device, defRT, defDS, pAPI->GetRenderStatistic())
+	, m_backBufferManager(device, defRT, defDS, pAPI->GetRenderStatistic(), *pAPI)
 	, m_renderStateManager(device, pAPI->GetRenderStatistic())
 	, m_nNXCacheFVF(0)
 	, m_pNXCacheVertexShader(NULL)
@@ -170,7 +170,6 @@ Context::~Context()
 
 const RenderAPI::DeviceCaps& Context::GetDeviceCaps() const
 {
-
 	return m_deviceCaps;
 }
 
@@ -181,21 +180,30 @@ unsigned int Context::GetAvailableTextureMemory() const
 
 void Context::ClearRenderTarget(unsigned int color)
 {
+	LOG_FUNCTION_V(*m_pAPI, "color=%X", color);
+
 	m_pDevice->Clear(0, NULL, D3DCLEAR_TARGET, color, 0, 0);
 }
 
 void Context::ClearDepthBuffer(float z)
 {
+	LOG_FUNCTION_V(*m_pAPI, "z=%f", z);
+
 	m_pDevice->Clear(0, NULL, D3DCLEAR_ZBUFFER, 0, z, 0);
 }
 
 void Context::ClearStencilBuffer(unsigned int stencil)
 {
+	LOG_FUNCTION_V(*m_pAPI, "stencil=%X", stencil);
+
 	m_pDevice->Clear(0, NULL, D3DCLEAR_STENCIL, 0, 0, stencil);
 }
 
 void Context::SetViewport(const RenderAPI::Viewport& vp)
 {
+	LOG_FUNCTION_D(*m_pAPI, "left=%d, top=%d, width=%d, height=%d, minz=%f, maxz=%f",
+		vp.Left, vp.Top, vp.Width, vp.Height, vp.MinZ, vp.MaxZ);
+
 	D3DVIEWPORT9 d3dViewPort;
 	d3dViewPort.X = vp.Left;
 	d3dViewPort.Y = vp.Top;
@@ -234,6 +242,8 @@ void Context::SetDepthStencil(RenderAPI::DepthStencil* depthStencil)
 
 void Context::SetVertexBuffers(RenderAPI::VertexBufferInfo* buffers, unsigned int bufferCount)
 {
+	LOG_FUNCTION_CALL(*m_pAPI, RenderAPI::LOG_Verbose);
+
 	while (m_useStreamFrequency.size() < bufferCount)
 	{
 		m_useStreamFrequency.push_back(false);
@@ -246,7 +256,7 @@ void Context::SetVertexBuffers(RenderAPI::VertexBufferInfo* buffers, unsigned in
 		{
 			::VertexBuffer* pVertexBuffer = (::VertexBuffer*)buffers[i].BufferPtr;
 			IDirect3DVertexBuffer9* vertexBufferPtr = pVertexBuffer->GetBufferPtr();
-			
+
 
 			if (m_vertexBufferCount == 0 || m_vertexBufferCount > pVertexBuffer->GetVertexCount())
 			{
@@ -257,7 +267,7 @@ void Context::SetVertexBuffers(RenderAPI::VertexBufferInfo* buffers, unsigned in
 			bool useFreq = buffers->FrequencyMethod != RenderAPI::FREQUENCY_Normal;
 			if (useFreq)
 			{
-				unsigned int freqParam = (buffers->FrequencyMethod == RenderAPI::FREQUENCY_Instanced ? D3DSTREAMSOURCE_INSTANCEDATA : D3DSTREAMSOURCE_INDEXEDDATA) 
+				unsigned int freqParam = (buffers->FrequencyMethod == RenderAPI::FREQUENCY_Instanced ? D3DSTREAMSOURCE_INSTANCEDATA : D3DSTREAMSOURCE_INDEXEDDATA)
 					| buffers[i].OptionalFrequencyInterval;
 
 				m_pDevice->SetStreamSourceFreq(i, freqParam);
@@ -277,6 +287,8 @@ void Context::SetVertexBuffers(RenderAPI::VertexBufferInfo* buffers, unsigned in
 
 void Context::SetIndexBuffer(RenderAPI::IndexBuffer* buffer, unsigned int offset)
 {
+	LOG_FUNCTION_V(*m_pAPI, "index buffer=%X, offset=%d", buffer, offset);
+
 	if (buffer != NULL)
 	{
 		::IndexBuffer* pIndexBuffer = (::IndexBuffer*)buffer;
@@ -289,6 +301,7 @@ void Context::SetIndexBuffer(RenderAPI::IndexBuffer* buffer, unsigned int offset
 
 void Context::SetVertexDeclaration(RenderAPI::VertexDeclaration * decl)
 {
+	LOG_FUNCTION_V(*m_pAPI, "vertex declaration=%X", decl);
 	if (decl != NULL)
 	{
 		::VertexDeclaration* pDeclaration = (::VertexDeclaration*)decl;
@@ -304,6 +317,8 @@ void Context::SetVertexDeclaration(RenderAPI::VertexDeclaration * decl)
 
 void Context::SetTexture(unsigned int slot, RenderAPI::Texture* texture)
 {
+	LOG_FUNCTION_V(*m_pAPI, "slot=%d, texture=%X", slot, texture);
+
 	IDirect3DBaseTexture9* pTexture = NULL;
 	if (texture != NULL)
 	{
@@ -319,6 +334,9 @@ void Context::SetTexture(unsigned int slot, RenderAPI::Texture* texture)
 
 void Context::SetBlendState(const RenderAPI::BlendState& state)
 {
+	LOG_FUNCTION_V(*m_pAPI, "enable=%d, op=%d, src=%d, dst=%d",
+		state.IsEnable, state.BlendOp, state.SrcBlend, state.DstBlend);
+
 	if (state.IsEnable)
 	{
 		m_renderStateManager.SetAlphaBlending(TRUE);
@@ -335,6 +353,9 @@ void Context::SetBlendState(const RenderAPI::BlendState& state)
 
 void Context::SetAlphaSeparateBlendState(const RenderAPI::BlendState& state)
 {
+	LOG_FUNCTION_V(*m_pAPI, "enable=%d, op=%d, src=%d, dst=%d",
+		state.IsEnable, state.BlendOp, state.SrcBlend, state.DstBlend);
+
 	if (state.IsEnable)
 	{
 		m_renderStateManager.SetSeparateAlphaBlending(TRUE);
@@ -360,6 +381,9 @@ RenderAPI::BlendState Context::GetAlphaSeparateBlendState() const
 
 void Context::SetAlphaTestingState(const RenderAPI::AlphaTestingState& state)
 {
+	LOG_FUNCTION_V(*m_pAPI, "enable=%d, function=%d, ref=%X",
+		state.IsEnable, state.Function, state.Reference);
+
 	if (state.IsEnable)
 	{
 		m_renderStateManager.SetAlphaTest(TRUE);
@@ -379,6 +403,8 @@ RenderAPI::AlphaTestingState Context::GetAlphaTestingState() const
 
 void Context::SetDepthTestingState(const RenderAPI::DepthTestingState& state)
 {
+	LOG_FUNCTION_V(*m_pAPI, "enable=%d, function=%d", state.IsEnable, state.Function);
+
 	if (state.IsEnable)
 	{
 		m_renderStateManager.SetDepthTest(D3DZB_TRUE);
@@ -397,14 +423,25 @@ RenderAPI::DepthTestingState Context::GetDepthTestingState() const
 }
 void Context::SetClipPlaneState(bool enable)
 {
+	LOG_FUNCTION_V(*m_pAPI, "enable=%d", enable);
+
 	m_renderStateManager.SetClipPlaneState(enable);
 }
+
 bool Context::GetClipPlaneState() const
 {
-	return m_renderStateManager.GetClipplaneenable();
+	return m_renderStateManager.GetClipPlaneEnable();
 }
+
 void Context::SetStencilTestingState(const RenderAPI::StencilTestingState& state)
 {
+	LOG_FUNCTION_V(*m_pAPI, "enable=%d, two side=%d, test mask=%X, write mask=%X, ref=%X,"
+		"front function=%d, front sfail=%d, front zfail=%d, back pass=%d"
+		"back function=%d, back sfail=%d, back zfail=%d, back pass=%d",
+		state.IsEnable, state.TwoSide, state.TestMask, state.WriteMask, state.Reference,
+		state.FrontSide.Function, state.FrontSide.SFail, state.FrontSide.SPassZFail, state.FrontSide.AllPass,
+		state.BackSide.Function, state.BackSide.SFail, state.BackSide.SPassZFail, state.BackSide.AllPass);
+
 	if (state.IsEnable)
 	{
 		m_renderStateManager.SetStencilTest(TRUE);
@@ -442,11 +479,16 @@ RenderAPI::StencilTestingState Context::GetStencilTestingState() const
 
 void Context::SetDepthWriting(bool enable)
 {
+	LOG_FUNCTION_V(*m_pAPI, "enable=%d", enable);
+
 	m_renderStateManager.SetDepthWrite(enable ? TRUE : FALSE);
 }
 
 void Context::SetTextureColorBlendingState(unsigned int slot, const RenderAPI::TextureBlendingState& state)
 {
+	LOG_FUNCTION_V(*m_pAPI, "slot=%d, op=%d, arg0=%d, arg1=%d",
+		slot, state.BlendOp, state.Argument0, state.Argument1);
+
 	if (state.BlendOp == RenderAPI::TEXOP_Disable)
 	{
 		m_renderStateManager.SetTextureColorOp(slot, D3DTOP_DISABLE);
@@ -461,6 +503,9 @@ void Context::SetTextureColorBlendingState(unsigned int slot, const RenderAPI::T
 
 void Context::SetTextureAlphaBlendingState(unsigned int slot, const RenderAPI::TextureBlendingState& state)
 {
+	LOG_FUNCTION_V(*m_pAPI, "slot=%d, op=%d, arg0=%d, arg1=%d",
+		slot, state.BlendOp, state.Argument0, state.Argument1);
+
 	if (state.BlendOp == RenderAPI::TEXOP_Disable)
 	{
 		m_renderStateManager.SetTextureColorOp(slot, D3DTOP_DISABLE);
@@ -475,6 +520,13 @@ void Context::SetTextureAlphaBlendingState(unsigned int slot, const RenderAPI::T
 
 void Context::SetTextureSampler(unsigned int slot, const RenderAPI::TextureSampler& sampler)
 {
+	LOG_FUNCTION_V(*m_pAPI, "slot=%d, address u=%d, address v=%d, address w=%d",
+		"min filter=%d, mag filter=%d, mip filter=%d,"
+		"border color=%X, optional anisotrophic=%d",
+		slot, sampler.AddressU, sampler.AddressV, sampler.AddressW, 
+		sampler.MinFilter, sampler.MagFilter, sampler.MipFilter,
+		sampler.BorderColor, sampler.OptionalAnisotropicFilter);
+
 	m_renderStateManager.SetSamplerMinFilter(slot, s_d3dSamplerFilter[sampler.MinFilter]);
 	m_renderStateManager.SetSamplerMagFilter(slot, s_d3dSamplerFilter[sampler.MagFilter]);
 	m_renderStateManager.SetSamplerMipFilter(slot, s_d3dSamplerFilter[sampler.MipFilter]);
@@ -497,6 +549,9 @@ void Context::SetTextureSampler(unsigned int slot, const RenderAPI::TextureSampl
 
 void Context::SetScissorState(const RenderAPI::ScissorState& state)
 {
+	LOG_FUNCTION_D(*m_pAPI, "enable=%d, l=%d, r=%d, t=%d, b=%d",
+		state.IsEnable, state.Left, state.Right, state.Top, state.Bottom);
+
 	if (state.IsEnable)
 	{
 		m_renderStateManager.SetScissorTest(TRUE);
@@ -523,6 +578,8 @@ RenderAPI::ScissorState Context::GetScissorState() const
 
 void Context::SetColorWriteMask(bool r, bool g, bool b, bool a)
 {
+	LOG_FUNCTION_V(*m_pAPI, "r=%d, g=%d, b=%d, a=%d", r, g, b, a);
+
 	unsigned int mask = 0;
 	if (r)
 		mask |= D3DCOLORWRITEENABLE_RED;
@@ -537,6 +594,8 @@ void Context::SetColorWriteMask(bool r, bool g, bool b, bool a)
 
 void Context::SetFillMode(RenderAPI::FillMode mode)
 {
+	LOG_FUNCTION_V(*m_pAPI, "mode=%d", mode);
+
 	m_renderStateManager.SetFillMode(mode);
 }
 
@@ -547,6 +606,8 @@ RenderAPI::FillMode Context::GetFillMode() const
 
 void Context::SetCullMode(RenderAPI::CullMode mode)
 {
+	LOG_FUNCTION_V(*m_pAPI, "mode=%d", mode);
+
 	m_renderStateManager.SetCullMode(mode);
 }
 
@@ -557,31 +618,42 @@ RenderAPI::CullMode Context::GetCullMode() const
 
 void Context::SetDepthBias(float bias)
 {
+	LOG_FUNCTION_V(*m_pAPI, "bias=%f", bias);
+
 	m_renderStateManager.SetDepthBias((DWORD)bias);
 }
 
 void Context::SetSlopScaleDepthBias(float bias)
 {
+	LOG_FUNCTION_V(*m_pAPI, "bias=%f", bias);
+
 	m_renderStateManager.SetSlopScaleDepthBias((DWORD)bias);
 }
 
 void Context::SetTextureFactor(unsigned int factor)
 {
+	LOG_FUNCTION_V(*m_pAPI, "factor=%d", factor);
+
 	m_renderStateManager.SetTextureFactor(factor);
 }
 
 bool Context::BeginScene()
 {
+	LOG_FUNCTION_CALL(*m_pAPI, RenderAPI::LOG_Debug);
 	return S_OK == m_pDevice->BeginScene();
 }
 
 void Context::EndScene()
 {
+	LOG_FUNCTION_CALL(*m_pAPI, RenderAPI::LOG_Debug);
+
 	m_pDevice->EndScene();
 }
 
 void Context::Draw(RenderAPI::Primitive primitive, unsigned int startVertex, unsigned int primitiveCount)
 {
+	LOG_FUNCTION_V(*m_pAPI, "primitive=%d, start=%d, count=%d", primitive, startVertex, primitiveCount);
+
 	m_pDevice->DrawPrimitive(s_primitives[primitive], startVertex, primitiveCount);
 
 	m_pAPI->GetRenderStatistic().OnDraw(primitive, primitiveCount);
@@ -589,6 +661,8 @@ void Context::Draw(RenderAPI::Primitive primitive, unsigned int startVertex, uns
 
 void Context::DrawWithDynamicVertex(RenderAPI::Primitive primitive, unsigned int primitiveCount, const void* pVertexData, unsigned int vertexStride)
 {
+	LOG_FUNCTION_V(*m_pAPI, "primitive=%d, count=%d, stride=%d, data=%X", primitive, primitiveCount, vertexStride, pVertexData);
+
 	m_pDevice->DrawPrimitiveUP(s_primitives[primitive], primitiveCount, pVertexData, vertexStride);
 
 	m_pAPI->GetRenderStatistic().OnDrawUp(primitive, primitiveCount);
@@ -596,6 +670,9 @@ void Context::DrawWithDynamicVertex(RenderAPI::Primitive primitive, unsigned int
 
 void Context::DrawIndexed(RenderAPI::Primitive primitive, unsigned int baseVertex, unsigned int vertexCount, unsigned int startIndex, unsigned int primitiveCount)
 {
+	LOG_FUNCTION_V(*m_pAPI, "primitive=%d, base index=%d, vertex count=%d, saved vertex count=%d, start index=%d, primitive count=%d",
+		primitive, baseVertex, vertexCount, m_vertexBufferCount, startIndex, primitiveCount);
+
 	if (vertexCount == 0)
 		vertexCount = m_vertexBufferCount;
 
@@ -606,6 +683,9 @@ void Context::DrawIndexed(RenderAPI::Primitive primitive, unsigned int baseVerte
 
 void Context::DrawIndexedWithDynamicVertex(RenderAPI::Primitive primitive, unsigned int vertexCount, unsigned int primitiveCount, const unsigned int* pIndexData, const void* pVertexData, unsigned int vertexStride)
 {
+	LOG_FUNCTION_V(*m_pAPI, "primitive=%d, vertex count=%d, primitive count=%d, index data ptr=%X, vertex data ptr=%X, vertex stride=%d",
+		primitive, vertexCount, primitiveCount, pIndexData, pVertexData, vertexStride);
+
 	m_pDevice->DrawIndexedPrimitiveUP(s_primitives[primitive], 0, vertexCount, primitiveCount, pIndexData, D3DFMT_INDEX32, pVertexData, vertexStride);
 
 	m_pAPI->GetRenderStatistic().OnDrawIndexedUp(primitive, primitiveCount);
@@ -613,6 +693,9 @@ void Context::DrawIndexedWithDynamicVertex(RenderAPI::Primitive primitive, unsig
 
 void Context::DrawIndexedWithDynamicVertex(RenderAPI::Primitive primitive, unsigned int vertexCount, unsigned int primitiveCount, const unsigned short* pIndexData, const void* pVertexData, unsigned int vertexStride)
 {
+	LOG_FUNCTION_V(*m_pAPI, "primitive=%d, vertex count=%d, primitive count=%d, index data ptr=%X, vertex data ptr=%X, vertex stride=%d",
+		primitive, vertexCount, primitiveCount, pIndexData, pVertexData, vertexStride);
+
 	m_pDevice->DrawIndexedPrimitiveUP(s_primitives[primitive], 0, vertexCount, primitiveCount, pIndexData, D3DFMT_INDEX16, pVertexData, vertexStride);
 
 	m_pAPI->GetRenderStatistic().OnDrawIndexedUp(primitive, primitiveCount);
@@ -620,6 +703,8 @@ void Context::DrawIndexedWithDynamicVertex(RenderAPI::Primitive primitive, unsig
 
 bool Context::UpdateTexture(RenderAPI::Texture2D * src, RenderAPI::Texture2D * dst)
 {
+	LOG_FUNCTION_V(*m_pAPI, "primitive=%d, src ptr=%X dst ptr=%X", src, dst);
+
 	if (src == NULL || dst == NULL ||
 		dst->IsRenderTexture() ||
 		src->GetWidth() != dst->GetWidth() ||
@@ -727,12 +812,14 @@ void Context::InitDeviceCaps(const D3DCAPS9& d3dcaps)
 
 bool Context::StretchTexture(RenderAPI::Texture2D * src, RenderAPI::Texture2D * dst, RenderAPI::SamplerFilter filter)
 {
+	LOG_FUNCTION_V(*m_pAPI, "primitive=%d, src ptr=%X dst ptr=%X, filter=%d", src, dst, filter);
+
 	AutoR<::TextureSurface> pSurfaceSrc = (::TextureSurface*)src->GetSurface(0);
 	AutoR<::TextureSurface> pSurfaceDst = (::TextureSurface*)dst->GetSurface(0);
 
 	bool rst = S_OK == m_pDevice->StretchRect(
-		pSurfaceSrc->GetD3DTextureSurfacePtr(), NULL, 
-		pSurfaceDst->GetD3DTextureSurfacePtr(), NULL, 
+		pSurfaceSrc->GetD3DTextureSurfacePtr(), NULL,
+		pSurfaceDst->GetD3DTextureSurfacePtr(), NULL,
 		s_d3dSamplerFilter[filter]);
 
 	return rst;
@@ -740,6 +827,8 @@ bool Context::StretchTexture(RenderAPI::Texture2D * src, RenderAPI::Texture2D * 
 
 RenderAPI::DeviceState Context::Present()
 {
+	LOG_FUNCTION_CALL(*m_pAPI, RenderAPI::LOG_Debug);
+
 	HRESULT hr = m_pDevice->Present(NULL, NULL, NULL, NULL);
 	return DeviceStateMapping(hr);
 }
@@ -768,6 +857,7 @@ RenderAPI::DeviceState Context::GetState()
 
 RenderAPI::DeviceState Context::ResetDevice(const RenderAPI::SwapChainDesc& desc, bool isFullscreen, bool useVerticalSync)
 {
+	LOG_FUNCTION_CALL(*m_pAPI, RenderAPI::LOG_Debug);
 	HRESULT hr = S_OK;
 
 	D3DPRESENT_PARAMETERS CreationParam = APIInstance::FillCreationParam(
@@ -817,7 +907,7 @@ RenderAPI::DeviceState Context::ResetDevice(const RenderAPI::SwapChainDesc& desc
 				desc.backbufferHeight,
 				desc.backbufferFormat,
 				desc.zbufferFormat
-				);
+			);
 
 			RenderAPI::SwapChain* pSwapChain = m_pAPI->pDevice->GetDefaultSwapChain();
 			RenderAPI::RenderTarget* pRenderTarget = pSwapChain->GetRenderTarget();
@@ -834,6 +924,7 @@ RenderAPI::DeviceState Context::ResetDevice(const RenderAPI::SwapChainDesc& desc
 
 void Context::EvictManagedResources()
 {
+	LOG_FUNCTION_CALL(*m_pAPI, RenderAPI::LOG_Debug);
 	m_pDevice->EvictManagedResources();
 }
 
@@ -875,8 +966,9 @@ bool operator<(const D3DVERTEXELEMENT9& left, const D3DVERTEXELEMENT9& right)
 	return memcmp(&left, &right, sizeof(D3DVERTEXELEMENT9)) < 0;
 }
 
-BackBufferManager::BackBufferManager(IDirect3DDevice9 * device, RenderAPI::RenderTarget * defRT, RenderAPI::DepthStencil * defDS, RenderStatistic& renderStatistic)
-	: m_pDevice(device)
+BackBufferManager::BackBufferManager(IDirect3DDevice9 * device, RenderAPI::RenderTarget * defRT, RenderAPI::DepthStencil * defDS, RenderStatistic& renderStatistic, RenderAPI::Logger& logger)
+	: m_internalLogger(logger)
+	, m_pDevice(device)
 	, m_pCurrentRTs(1)
 	, m_pDefaultRT(NULL)
 	, m_pDefaultDS(NULL)
@@ -897,6 +989,8 @@ BackBufferManager::~BackBufferManager()
 
 void BackBufferManager::SetRenderTarget(unsigned int index, RenderAPI::RenderTarget * rt)
 {
+	LOG_FUNCTION_V(m_internalLogger, "index=%d, render target=%X", index, rt);
+
 	//当index为0时，rt为空的含义被视为使用主窗体的默认backbuffer
 	//因为manager有对rt做Cache的需求，我们用defaultRT来代替NULL作为参数使用
 	//遇到此情况会把NULL替换为defaultRT
@@ -911,6 +1005,8 @@ void BackBufferManager::SetRenderTarget(unsigned int index, RenderAPI::RenderTar
 		{
 			rtSurface = NULL;
 		}
+
+		LOG_FUNCTION_V(m_internalLogger, "switch render target to default rt since input is null");
 	}
 	else
 	{
@@ -939,15 +1035,17 @@ void BackBufferManager::SetRenderTarget(unsigned int index, RenderAPI::RenderTar
 		}
 	}
 
-
 	if (index >= m_pCurrentRTs.size())
 	{
+		LOG_FUNCTION_V(m_internalLogger, "index=%d, render target=%X", index, rt);
 		EnlargeCurrentRTVector(index + 1);
 		m_pDevice->SetRenderTarget(index, rtSurface);
 		m_pCurrentRTs[index] = rtSurface;
 	}
 	else if (rtSurface != m_pCurrentRTs[index])
 	{
+		LOG_FUNCTION_V(m_internalLogger, "index=%d, render target=%X, old=%X", index, rt, m_pCurrentRTs[index]);
+
 		HRESULT hr = m_pDevice->SetRenderTarget(0, rtSurface);
 		m_pCurrentRTs[index] = rtSurface;
 	}
@@ -955,6 +1053,8 @@ void BackBufferManager::SetRenderTarget(unsigned int index, RenderAPI::RenderTar
 
 void BackBufferManager::SetDepthStencil(RenderAPI::DepthStencil * ds)
 {
+	LOG_FUNCTION_V(m_internalLogger, "depth stencil=%X", ds);
+
 	IDirect3DSurface9* dsSurface;
 	if (ds == NULL)
 	{
@@ -967,6 +1067,7 @@ void BackBufferManager::SetDepthStencil(RenderAPI::DepthStencil * ds)
 
 	if (dsSurface != m_pCurrentDS)
 	{
+		LOG_FUNCTION_V(m_internalLogger, "depth stencil=%X, old=%X", ds, m_pCurrentDS);
 		m_pDevice->SetDepthStencilSurface(dsSurface);
 		m_pCurrentDS = dsSurface;
 	}
@@ -984,12 +1085,16 @@ bool BackBufferManager::IsDefaultDS()
 
 void BackBufferManager::ResetDefaultDepthStencil(RenderAPI::DepthStencil * defDS)
 {
+	LOG_FUNCTION_V(m_internalLogger, "depth stencil=%X", defDS);
+
 	m_pCurrentDS = ((::DepthStencil*)defDS)->GetD3DSurface();
 	m_pDefaultDS = m_pCurrentDS;
 }
 
 void BackBufferManager::ResetDefaultRenderTarget(RenderAPI::RenderTarget * defRT)
 {
+	LOG_FUNCTION_V(m_internalLogger, "render target=%X", defRT);
+
 	m_pCurrentRTs[0] = ((::RenderTarget*)defRT)->GetD3DSurface();
 	m_pDefaultRT = m_pCurrentRTs[0];
 }

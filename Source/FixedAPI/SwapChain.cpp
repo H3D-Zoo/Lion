@@ -1,7 +1,7 @@
 #include "SwapChain.h"
 #include "EnumMapping.h"
 
-SwapChain::SwapChain(IDirect3DSwapChain9* swapChain, ::DepthStencil* dsSurface, const RenderAPI::SwapChainDesc & swapChainDesc, IInternalLogger& logger)
+SwapChain::SwapChain(IDirect3DSwapChain9* swapChain, ::DepthStencil* dsSurface, const RenderAPI::SwapChainDesc & swapChainDesc, RenderAPI::Logger& logger)
 	: m_pRenderTarget(NULL)
 	, m_pDepthStencil(dsSurface)
 	, m_pSwapChain(swapChain)

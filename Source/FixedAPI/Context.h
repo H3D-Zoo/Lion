@@ -6,6 +6,7 @@
 #include "StateManager.h"
 #include "DX9Include.h"
 #include "RenderStatistic.h"
+#include "InternalLogger.h"
 
 class APIInstance;
 class VertexBuffer;
@@ -16,7 +17,7 @@ class IndexBuffer;
 class BackBufferManager
 {
 public:
-	BackBufferManager(IDirect3DDevice9* device, RenderAPI::RenderTarget* defRT, RenderAPI::DepthStencil* defDS, RenderStatistic& renderStatistic);
+	BackBufferManager(IDirect3DDevice9* device, RenderAPI::RenderTarget* defRT, RenderAPI::DepthStencil* defDS, RenderStatistic& renderStatistic, RenderAPI::Logger&);
 
 	~BackBufferManager();
 
@@ -36,7 +37,7 @@ public:
 
 private:
 	void EnlargeCurrentRTVector(unsigned int count);
-
+	RenderAPI::Logger& m_internalLogger;
 	IDirect3DDevice9* m_pDevice;
 	std::vector<IDirect3DSurface9*> m_pCurrentRTs;
 	IDirect3DSurface9* m_pCurrentDS;

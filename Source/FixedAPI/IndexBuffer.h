@@ -7,7 +7,7 @@
 class IndexBuffer : public RenderAPI::IndexBuffer
 {
 public:
-	IndexBuffer(IDirect3DIndexBuffer9*, RenderAPI::ResourceUsage, RenderAPI::IndexFormat, bool isManaged, unsigned int count, IInternalLogger&);
+	IndexBuffer(IDirect3DIndexBuffer9*, RenderAPI::ResourceUsage, RenderAPI::IndexFormat, bool isManaged, unsigned int count, RenderAPI::Logger&);
 
 	~IndexBuffer();
 
@@ -37,7 +37,7 @@ public:
 
 private:
 	RefCount m_refCount;
-	IInternalLogger& m_internalLogger;
+	RenderAPI::Logger& m_internalLogger;
 	const RenderAPI::ResourceUsage m_usage;
 	const RenderAPI::IndexFormat m_indexFormat;
 	const bool m_isManaged;

@@ -12,7 +12,7 @@ class Texture2D;
 class TextureSurface : public RenderAPI::TextureSurface
 {
 public:
-	TextureSurface(::Texture2D*, IDirect3DSurface9*);
+	TextureSurface(::Texture2D*, IDirect3DSurface9*, RenderAPI::Logger&);
 
 	~TextureSurface();
 
@@ -30,6 +30,7 @@ public:
 
 private:
 	RefCount m_refCount;
+	RenderAPI::Logger& m_internalLogger;
 	::Texture2D* m_pParentTexture;
 	IDirect3DSurface9* m_pSurface;
 	HDC m_hDC;
@@ -39,7 +40,7 @@ class Texture2D : public RenderAPI::Texture2D
 {
 public:
 	Texture2D(IDirect3DTexture9*, RenderAPI::TextureFormat, RenderAPI::ResourceUsage, bool isManaged,
-		unsigned int width, unsigned int height, bool autoGenMipmaps, IInternalLogger&);
+		unsigned int width, unsigned int height, bool autoGenMipmaps, RenderAPI::Logger&);
 
 	~Texture2D();
 
@@ -84,7 +85,7 @@ public:
 	unsigned int ClearStamp;
 
 protected:
-	IInternalLogger& m_internalLogger;
+	RenderAPI::Logger& m_internalLogger;
 	IDirect3DTexture9* m_pTexture;
 	const bool m_autoGenMipmaps;
 	const bool m_isManaged;
@@ -99,11 +100,35 @@ private:
 	std::vector<TextureSurface*> m_surfaces;
 };
 
+class TemporaryTexture
+{
+	RenderAPI::Logger& m_logger;
+	RenderAPI::TextureFormat m_texFormat;
+	unsigned int m_texLayers;
+	unsigned int m_texWidth;
+	unsigned int m_texHeight;
+	IDirect3DTexture9* m_pTexture;
+	unsigned int m_lockLayerBits;
+	void SetLayerLocking(unsigned int layer, bool locked);
+	bool IsLayerLocking(unsigned int layer) const;
+public:
+	TemporaryTexture(RenderAPI::TextureFormat f, unsigned int w, unsigned int h, unsigned int layerCount, RenderAPI::Logger&);
+	bool Create(IDirect3DDevice9* pDevice);
+	IDirect3DTexture9* GetTexturePtr() const { return m_pTexture; }
+	bool IsCreated() const { return m_pTexture != NULL; }
+	bool IsSomeLayerLocking() const{ return m_lockLayerBits > 0; }
+	RenderAPI::MappedResource Lock(unsigned int layer, RenderAPI::LockOption lockOption);
+	bool Unlock(unsigned int layer);
+	void UnlockAll();
+	void Resize(unsigned int w, unsigned int h, unsigned int layerCount);
+	void ReleaseTexture();
+};
+
 class RenderTexture2D : public Texture2D
 {
 public:
 	RenderTexture2D(IDirect3DTexture9*, RenderAPI::TextureFormat, RenderAPI::ResourceUsage usage,
-		unsigned int width, unsigned int height, IInternalLogger&);
+		unsigned int width, unsigned int height, RenderAPI::Logger&);
 
 	~RenderTexture2D();
 
@@ -122,18 +147,15 @@ public:
 	virtual void Resize(unsigned int width, unsigned int height);
 
 private:
-	IDirect3DTexture9* GetCopiedSystemTexture();
-
-	void ReleaseCopiedSystemTexture();
-
-	IDirect3DTexture9* m_pTempTextureForCopy;
+	bool CopyToSystemTexture();
+	TemporaryTexture m_pTempTextureForCopy;
 };
 
 class NoLockableTexture2D : public Texture2D
 {
 public:
 	NoLockableTexture2D(IDirect3DTexture9*, RenderAPI::TextureFormat, RenderAPI::ResourceUsage, bool isManaged,
-		unsigned int width, unsigned int height, bool autoGenMipmaps, IInternalLogger&);
+		unsigned int width, unsigned int height, bool autoGenMipmaps, RenderAPI::Logger&);
 
 	~NoLockableTexture2D();
 	
@@ -144,15 +166,7 @@ public:
 	virtual void GenerateMipmaps();
 
 private:
-	void SetLayerLocking(unsigned int layer, bool locked);
-
-	bool IsLayerLocking(unsigned int layer) const;
-
-	bool IsSomeLayerLocking() const;
-
-	IDirect3DTexture9* m_pTempTextureForUpdate;
-	
-	unsigned int m_lockLayerBits;
+	TemporaryTexture m_pTempTextureForUpdate;
 };
 
 //为了保证上层接口的方便易用性，我们专门提供了一个为RenderTarget使用的Texture
@@ -161,7 +175,7 @@ private:
 class RenderSurface2D : public RenderAPI::Texture2D, public ::TextureSurface
 {
 public:
-	RenderSurface2D(IDirect3DSurface9*, RenderAPI::TextureFormat, unsigned int width, unsigned int height, IInternalLogger&);
+	RenderSurface2D(IDirect3DSurface9*, RenderAPI::TextureFormat, unsigned int width, unsigned int height, RenderAPI::Logger&);
 
 	~RenderSurface2D();
 
@@ -211,12 +225,9 @@ public:
 	}
 
 private:
-	IDirect3DTexture9* GetCopiedSystemTexture();
-
-	void ReleaseCopiedSystemTexture();
-
-	IDirect3DTexture9* m_pTempTextureForCopy;
-	IInternalLogger& m_internalLogger;
+	bool CopyToSystemTexture();
+	TemporaryTexture m_pTempTextureForCopy;
+	RenderAPI::Logger& m_internalLogger;
 	const RenderAPI::TextureFormat m_texFormat;
 	unsigned int m_texWidth;
 	unsigned int m_texHeight;

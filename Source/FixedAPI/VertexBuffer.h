@@ -7,7 +7,7 @@
 class VertexBuffer : public RenderAPI::VertexBuffer
 {
 public:
-	VertexBuffer(IDirect3DVertexBuffer9*, RenderAPI::ResourceUsage, bool isManaged, unsigned int vertexCount, unsigned int vertexSize, IInternalLogger&);
+	VertexBuffer(IDirect3DVertexBuffer9*, RenderAPI::ResourceUsage, bool isManaged, unsigned int vertexCount, unsigned int vertexSize, RenderAPI::Logger&);
 
 	~VertexBuffer();
 
@@ -37,7 +37,7 @@ public:
 
 private:
 	RefCount m_refCount;
-	IInternalLogger& m_internalLogger;
+	RenderAPI::Logger& m_internalLogger;
 	const RenderAPI::ResourceUsage m_usage;
 	const bool m_isManaged;
 	const bool m_isDynamic;
