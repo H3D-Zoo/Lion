@@ -81,7 +81,6 @@ HRESULT FXStateManager::SetPixelShader(THIS_ LPDIRECT3DPIXELSHADER9 pShader)
 
 HRESULT FXStateManager::SetFVF(THIS_ DWORD dwFVF)
 {
-	m_renderStatistic.OnSetCustomFVF();
 	return m_pDevice->SetFVF(dwFVF);
 }
 
@@ -542,7 +541,7 @@ void StateManager::SetDstBlending(RenderAPI::BlendFactor blendFactor)
 void StateManager::SetAlphaBlendingOp(RenderAPI::BlendOperator blendOp)
 {
 	SetRS(D3DRS_BLENDOPALPHA, s_blendOps[blendOp]);
-	m_blendState.BlendOp = blendOp;
+	m_alphaSeparateBlendState.BlendOp = blendOp;
 }
 
 void StateManager::SetAlphaSrcBlending(RenderAPI::BlendFactor blendFactor)
