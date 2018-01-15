@@ -36,7 +36,6 @@ set(RENDERAPI_IMPL_INCLUDE_FILES
 	./Texture2D.h
 	./TextureCube.h
 	./FXEffect.h
-	./StateManager.h
 	./OcclusionQuery.h
 	./TextBox.h
 	./RenderStatistic.h

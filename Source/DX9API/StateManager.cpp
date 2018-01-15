@@ -190,8 +190,22 @@ StateManager::StateManager(IDirect3DDevice9* pDevice, RenderStatistic& renderSta
 	GetRS(D3DRS_DESTBLENDALPHA);
 #undef GetRS
 
+	switch(m_RSValues[D3DRS_CULLMODE])
+	{
+	case D3DCULL_NONE: m_cullMode = RenderAPI::CULL_None; break;
+	case D3DCULL_CW: m_cullMode = RenderAPI::CULL_CW; break;
+	case D3DCULL_CCW: m_cullMode = RenderAPI::CULL_CCW; break;
+	}
+
+	switch(m_RSValues[D3DRS_FILLMODE])
+	{
+	case D3DFILL_WIREFRAME: m_fillMode = RenderAPI::FILL_Wireframe; break;
+	case D3DFILL_SOLID: m_fillMode = RenderAPI::FILL_Solid; break;
+	case D3DFILL_POINT: m_fillMode = RenderAPI::FILL_Point; break;
+	}
+
 	//设置各种状态的默认值
-	m_isClipplaneenable = m_RSValues[D3DRS_CLIPPLANEENABLE] == TRUE;
+	m_isClipPlaneEnable = m_RSValues[D3DRS_CLIPPLANEENABLE] == TRUE;
 	m_blendState.IsEnable = m_RSValues[D3DRS_ALPHABLENDENABLE] == TRUE;
 	m_blendState.SrcBlend = BlendFactorMapping(m_RSValues[D3DRS_SRCBLEND]);
 	m_blendState.DstBlend = BlendFactorMapping(m_RSValues[D3DRS_DESTBLEND]);	
@@ -513,10 +527,11 @@ void StateManager::SetSeparateAlphaBlending(bool enable)
 	SetRS(D3DRS_SEPARATEALPHABLENDENABLE, enable ? TRUE : FALSE);
 	m_alphaSeparateBlendState.IsEnable = enable;
 }
+
 void StateManager::SetClipPlaneState(bool enable)
 {
 	SetRS(D3DRS_CLIPPLANEENABLE, enable ? TRUE : FALSE);
-	m_isClipplaneenable = enable;
+	m_isClipPlaneEnable = enable;
 }
 
 

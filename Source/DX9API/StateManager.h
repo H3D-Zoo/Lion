@@ -134,7 +134,8 @@ public:
 
 	SSDefine(MaxAnisotropy, D3DSAMP_MAXANISOTROPY);
 
-	bool GetClipplaneenable() const { return m_isClipplaneenable; }
+	bool GetClipPlaneEnable() const { return m_isClipPlaneEnable; }
+
 	RenderAPI::BlendState GetBlendState() const { return m_blendState; }
 
 	RenderAPI::BlendState GetAlphaSeparateBlendState() const { return m_alphaSeparateBlendState; }
@@ -171,7 +172,7 @@ protected:
 	std::vector<DWORD> m_TSSValues[TextureSlotCount];
 	std::vector<DWORD> m_SSValues[TextureSlotCount];
 
-	bool m_isClipplaneenable;
+	bool m_isClipPlaneEnable;
 	bool m_notSupportMinAnisotropic;
 	bool m_notSupportMagAnisotropic;
 	RenderAPI::BlendState m_blendState;

@@ -194,7 +194,7 @@ void Context::ClearDepthBuffer(float z)
 
 void Context::ClearStencilBuffer(unsigned int stencil)
 {
-	LOG_FUNCTION_D(*m_pAPI, "stencil=%X", stencil);
+	LOG_FUNCTION_V(*m_pAPI, "stencil=%X", stencil);
 
 	m_pDevice->Clear(0, NULL, D3DCLEAR_STENCIL, 0, 0, stencil);
 }
@@ -430,7 +430,7 @@ void Context::SetClipPlaneState(bool enable)
 
 bool Context::GetClipPlaneState() const
 {
-	return m_renderStateManager.GetClipplaneenable();
+	return m_renderStateManager.GetClipPlaneEnable();
 }
 
 void Context::SetStencilTestingState(const RenderAPI::StencilTestingState& state)
@@ -989,7 +989,7 @@ BackBufferManager::~BackBufferManager()
 
 void BackBufferManager::SetRenderTarget(unsigned int index, RenderAPI::RenderTarget * rt)
 {
-	LOG_FUNCTION_D(m_internalLogger, "index=%d, render target=%X", index, rt);
+	LOG_FUNCTION_V(m_internalLogger, "index=%d, render target=%X", index, rt);
 
 	//当index为0时，rt为空的含义被视为使用主窗体的默认backbuffer
 	//因为manager有对rt做Cache的需求，我们用defaultRT来代替NULL作为参数使用
@@ -1006,7 +1006,7 @@ void BackBufferManager::SetRenderTarget(unsigned int index, RenderAPI::RenderTar
 			rtSurface = NULL;
 		}
 
-		LOG_FUNCTION_V(m_internalLogger, "switch render target to rt since input is null");
+		LOG_FUNCTION_V(m_internalLogger, "switch render target to default rt since input is null");
 	}
 	else
 	{
@@ -1037,12 +1037,15 @@ void BackBufferManager::SetRenderTarget(unsigned int index, RenderAPI::RenderTar
 
 	if (index >= m_pCurrentRTs.size())
 	{
+		LOG_FUNCTION_D(m_internalLogger, "index=%d, render target=%X", index, rt);
 		EnlargeCurrentRTVector(index + 1);
 		m_pDevice->SetRenderTarget(index, rtSurface);
 		m_pCurrentRTs[index] = rtSurface;
 	}
 	else if (rtSurface != m_pCurrentRTs[index])
 	{
+		LOG_FUNCTION_D(m_internalLogger, "index=%d, render target=%X, old=%X", index, rt, m_pCurrentRTs[index]);
+
 		HRESULT hr = m_pDevice->SetRenderTarget(0, rtSurface);
 		m_pCurrentRTs[index] = rtSurface;
 	}
@@ -1050,7 +1053,7 @@ void BackBufferManager::SetRenderTarget(unsigned int index, RenderAPI::RenderTar
 
 void BackBufferManager::SetDepthStencil(RenderAPI::DepthStencil * ds)
 {
-	LOG_FUNCTION_D(m_internalLogger, "depth stencil=%X", ds);
+	LOG_FUNCTION_V(m_internalLogger, "depth stencil=%X", ds);
 
 	IDirect3DSurface9* dsSurface;
 	if (ds == NULL)
@@ -1064,6 +1067,7 @@ void BackBufferManager::SetDepthStencil(RenderAPI::DepthStencil * ds)
 
 	if (dsSurface != m_pCurrentDS)
 	{
+		LOG_FUNCTION_D(m_internalLogger, "depth stencil=%X, old=%X", ds, m_pCurrentDS);
 		m_pDevice->SetDepthStencilSurface(dsSurface);
 		m_pCurrentDS = dsSurface;
 	}

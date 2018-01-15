@@ -494,7 +494,7 @@ void  TemporaryTexture::Resize(unsigned int w, unsigned int h, unsigned int laye
 
 void TemporaryTexture::ReleaseTexture()
 {
-	if (m_pTexture == NULL)
+	if (m_pTexture != NULL)
 	{
 		if (IsSomeLayerLocking())
 		{
@@ -507,6 +507,8 @@ void TemporaryTexture::ReleaseTexture()
 			}
 			m_lockLayerBits = 0;
 		}
+
+		LOG_FUNCTION_CALL(m_logger, LOG_Debug);
 		m_pTexture->Release();
 		m_pTexture = NULL;
 	}
