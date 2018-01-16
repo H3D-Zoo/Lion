@@ -119,6 +119,7 @@ public:
 	bool IsSomeLayerLocking() const{ return m_lockLayerBits > 0; }
 	RenderAPI::MappedResource Lock(unsigned int layer, RenderAPI::LockOption lockOption);
 	bool Unlock(unsigned int layer);
+	void UnlockAll();
 	void Resize(unsigned int w, unsigned int h, unsigned int layerCount);
 	void ReleaseTexture();
 };

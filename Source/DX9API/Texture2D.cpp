@@ -481,6 +481,18 @@ bool TemporaryTexture::Unlock(unsigned int layer)
 	return false;
 }
 
+void TemporaryTexture::UnlockAll()
+{
+	for (unsigned int i = 0; i < m_texLayers; i++)
+	{
+		if (IsLayerLocking(i))
+		{
+			Unlock(i);
+		}
+	}
+	m_lockLayerBits = 0;
+}
+
 void  TemporaryTexture::Resize(unsigned int w, unsigned int h, unsigned int layerCount)
 {
 	if (m_texWidth != w || m_texHeight != h)
@@ -498,14 +510,7 @@ void TemporaryTexture::ReleaseTexture()
 	{
 		if (IsSomeLayerLocking())
 		{
-			for (unsigned int i = 0; i < m_texLayers; i++)
-			{
-				if (IsLayerLocking(i))
-				{
-					Unlock(i);
-				}
-			}
-			m_lockLayerBits = 0;
+			UnlockAll();
 		}
 
 		LOG_FUNCTION_CALL(m_logger, LOG_Debug);

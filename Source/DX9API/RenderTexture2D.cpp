@@ -63,12 +63,19 @@ bool RenderTexture2D::CopyToSystemTexture()
 		return false;
 	}
 
-	if (!m_pTempTextureForCopy.IsCreated() &&
-		!m_pTempTextureForCopy.Create(pDevice))
+	if (!m_pTempTextureForCopy.IsCreated())
 	{
-		pDevice->Release();
-		return false;
+		if (!m_pTempTextureForCopy.Create(pDevice))
+		{
+			pDevice->Release();
+			return false;
+		}
 	}
+	else if (m_pTempTextureForCopy.IsSomeLayerLocking())
+	{
+		m_pTempTextureForCopy.UnlockAll();
+	}
+	
 
 	IDirect3DSurface9* pSrcSurface = NULL;
 	IDirect3DSurface9* pDstSurface = NULL;
