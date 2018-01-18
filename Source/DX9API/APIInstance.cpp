@@ -8,7 +8,7 @@
 namespace
 {
 	const int kMaxPerfNameLength = 256;
-	bool GenerateFxoFileToDisk(IInternalLogger& logger, AutoR<ID3DXBuffer>& pBuffer, const char* path)
+	bool GenerateFxoFileToDisk(RenderAPI::Logger& logger, AutoR<ID3DXBuffer>& pBuffer, const char* path)
 	{
 		if (pBuffer.IsNullPtr())
 		{
@@ -139,13 +139,13 @@ bool APIInstance::CheckFormatValidate(D3DFORMAT & renderTarget, D3DFORMAT depthS
 
 	if (!CheckBackBufferFormat(renderTarget, d3ddm.Format))
 	{
-		LOG_FUNCTION_W(*this, "render target format is not suit.");
+		LOG_FUNCTION_W(*m_currentLogger, "render target format is not suit.");
 		return false;
 	}
 
 	if (!CheckDepthStencilFormat(depthStencil, d3ddm.Format))
 	{
-		LOG_FUNCTION_W(*this, "depth stencil format is not suit.");
+		LOG_FUNCTION_W(*m_currentLogger, "depth stencil format is not suit.");
 		return false;
 	}
 	return true;
@@ -196,6 +196,8 @@ bool APIInstance::CheckDeviceMultiSampleType(D3DFORMAT rtFormat, D3DFORMAT dsFor
 
 void APIInstance::CreateD3D()
 {
+	LOG_FUNCTION_CALL(*this, RenderAPI::LOG_Verbose);
+
 	// 通过查找Direct3DCreate9Ex是否存在来确认当前操作系统是否支持D3D9 EX
 	LPDIRECT3DCREATE9EX Direct3DCreate9ExPtr = NULL;
 	LPDIRECT3DCREATE9 Direct3DCreate9Ptr = NULL;
@@ -213,11 +215,11 @@ void APIInstance::CreateD3D()
 		// 这里可能会失败！如果显卡不支持WDDM [2/4/2013 YiKaiming]
 		if (FAILED(hr))
 		{
-			LOG_FUNCTION_D(*this, "create d3dex object failed, tryo used d3d object instead.");
+			LOG_FUNCTION_V(*this, "create d3dex object failed, tryo used d3d object instead.");
 			//LogInfo(ENGINE_INIT, OutPut_File, "创建d3d9Ex对象失败，改用D3D9.begin");
 			m_d3d9ExPtr = NULL;
 			m_d3d9Ptr = (IDirect3D9*)Direct3DCreate9Ptr(D3D_SDK_VERSION);
-			LOG_FUNCTION_D(*this, "create d3d object end.");
+			LOG_FUNCTION_V(*this, "create d3d object end.");
 		}
 		else
 		{
@@ -357,25 +359,15 @@ void APIInstance::AddRef()
 	++m_refCount;
 }
 
-void APIInstance::LogStr(LogLevel level, const char* desc) const
+void APIInstance::Log(RenderAPI::LogLevel level, const char* desc)
 {
-	LevelLog(level, desc);
+	GetCurrentLogger()->Log(level, desc);
 }
 
-void APIInstance::LevelLog(LogLevel level, const char* desc) const
-{
-	switch (level)
-	{
-	case LOG_Verbose:GetCurrentLogger()->LogV(desc); break;
-	case LOG_Debug:GetCurrentLogger()->LogD(desc); break;
-	case LOG_Warning:GetCurrentLogger()->LogW(desc); break;
-	case LOG_Error: GetCurrentLogger()->LogE(desc); break;
-	}
-}
 
 void APIInstance::Release()
 {
-	LOG_FUNCTION_CALL(*this, LOG_Debug);
+	LOG_FUNCTION_CALL(*this, RenderAPI::LOG_Debug);
 	if (0 == --m_refCount)
 	{
 		delete this;
@@ -385,7 +377,7 @@ void APIInstance::Release()
 
 RenderAPI::CreationResult APIInstance::CreateDeviceAndContext(const RenderAPI::SwapChainDesc& desc, bool isFullscreen, bool useVerticalSync)
 {
-	LOG_FUNCTION_CALL(*this, LOG_Debug);
+	LOG_FUNCTION_CALL(*this, RenderAPI::LOG_Debug);
 
 	RenderAPI::CreationResult result;
 
@@ -432,7 +424,7 @@ RenderAPI::CreationResult APIInstance::CreateDeviceAndContext(const RenderAPI::S
 
 bool APIInstance::CompileFXEffectFromFile(const char* sourceFXFile, const char* compiledFXFile, const char* includeDir)
 {
-	LOG_FUNCTION_CALL(*this, LOG_Debug);
+	LOG_FUNCTION_CALL(*this, RenderAPI::LOG_Debug);
 
 	EffectInclude includeCallback(*this, includeDir);
 	AutoR<ID3DXBuffer> pErrorBuffer;
@@ -446,11 +438,11 @@ bool APIInstance::CompileFXEffectFromFile(const char* sourceFXFile, const char* 
 		if (pErrorBuffer.IsNotNullPtr())
 		{
 			std::string errorStr = (char*)pErrorBuffer->GetBufferPointer();
-			LOG_FUNCTION_W(*this, "failed, error=%X, reason=%s.", hr, errorStr.c_str());
+			LOG_FUNCTION_E(*this, "failed, error=%X, reason=%s.", hr, errorStr.c_str());
 		}
 		else
 		{
-			LOG_FUNCTION_W(*this, "failed, error=%X.", hr);
+			LOG_FUNCTION_E(*this, "failed, error=%X.", hr);
 		}
 		return false;
 	}
@@ -471,11 +463,11 @@ bool APIInstance::CompileFXEffectFromFile(const char* sourceFXFile, const char* 
 		if (pErrorBuffer.IsNotNullPtr())
 		{
 			std::string errorStr = (char*)pErrorBuffer->GetBufferPointer();
-			LOG_FUNCTION_W(*this, "failed, error=%X, reason=%s.", hr, errorStr.c_str());
+			LOG_FUNCTION_E(*this, "failed, error=%X, reason=%s.", hr, errorStr.c_str());
 		}
 		else
 		{
-			LOG_FUNCTION_W(*this, "failed, error=%X.", hr);
+			LOG_FUNCTION_E(*this, "failed, error=%X.", hr);
 		}
 		return false;
 	}
@@ -569,7 +561,7 @@ void APIInstance::PerfEnd()
 }
 
 
-EffectInclude::EffectInclude(IInternalLogger& logger, const std::string & includeDir)
+EffectInclude::EffectInclude(RenderAPI::Logger& logger, const std::string & includeDir)
 	: m_internalLogger(logger)
 	, m_dirInclude(includeDir)
 {
@@ -608,7 +600,7 @@ HRESULT STDMETHODCALLTYPE EffectInclude::Open(D3DXINCLUDE_TYPE includeType, LPCS
 
 			if (!IsLocalFileExist(fileName))
 			{
-				LOG_FUNCTION_W(m_internalLogger, "无法打开Fx Include文件%s.", pFileName);
+				LOG_FUNCTION_E(m_internalLogger, "无法打开Fx Include文件%s.", pFileName);
 				return E_INVALIDARG;
 			}
 		}
@@ -638,7 +630,7 @@ HRESULT STDMETHODCALLTYPE EffectInclude::Open(D3DXINCLUDE_TYPE includeType, LPCS
 		if (!readRes)
 		{
 			int errCode = GetLastError();
-			LOG_FUNCTION_W(m_internalLogger, "Read Include File 失败%s. pFileName=%s, error=%d", pFileName, errCode);
+			LOG_FUNCTION_E(m_internalLogger, "Read Include File 失败%s. pFileName=%s, error=%d", pFileName, errCode);
 			*ppData = 0;
 			CloseHandle(hFile);
 			return S_FALSE;
@@ -656,7 +648,7 @@ HRESULT STDMETHODCALLTYPE EffectInclude::Open(D3DXINCLUDE_TYPE includeType, LPCS
 		*ppData = NULL;
 		*pBytes = 0;
 
-		LOG_FUNCTION_W(m_internalLogger, "无法打开Fx 文件dest_filename=%s.", pFileName);
+		LOG_FUNCTION_E(m_internalLogger, "无法打开Fx 文件dest_filename=%s.", pFileName);
 		return S_FALSE;
 	}
 }
@@ -667,7 +659,7 @@ HRESULT STDMETHODCALLTYPE EffectInclude::Close(LPCVOID pData)
 	return S_OK;
 }
 
-void LogFunctionCall(const IInternalLogger& logger, LogLevel level, const char* functionName, const char* format, ...)
+void LogFunctionCall(RenderAPI::Logger& logger, RenderAPI::LogLevel level, const char* functionName, const char* format, ...)
 {
 	const int kBufferLength = 2048;
 	char logBuffer[kBufferLength];
@@ -680,5 +672,5 @@ void LogFunctionCall(const IInternalLogger& logger, LogLevel level, const char* 
 	vsprintf_s(logBuffer + offset, kBufferLength - offset, format, va);
 	va_end(va);
 
-	logger.LogStr(level, logBuffer);
+	logger.Log(level, logBuffer);
 }

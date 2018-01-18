@@ -9,7 +9,7 @@
 class SwapChain : public RenderAPI::SwapChain
 {
 public:
-	SwapChain::SwapChain(IDirect3DSwapChain9*, ::DepthStencil*, const RenderAPI::SwapChainDesc&, IInternalLogger&);
+	SwapChain::SwapChain(IDirect3DSwapChain9*, ::DepthStencil*, const RenderAPI::SwapChainDesc&, RenderAPI::Logger&);
 
 	~SwapChain();
 

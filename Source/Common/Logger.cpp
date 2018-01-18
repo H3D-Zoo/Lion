@@ -1,8 +1,6 @@
 #include <assert.h>
 #include "Logger.h"
 
-
-
 FileLogger::FileLogger(const std::string & filePath)
 	: m_hFile(filePath.c_str(), std::ios_base::out)
 {
@@ -14,24 +12,16 @@ FileLogger::~FileLogger()
 	m_hFile.close();
 }
 
-void FileLogger::LogE(const char* str)
+void FileLogger::Log(RenderAPI::LogLevel level, const char* str)
 {
-	m_hFile << "error:" << str << std::endl;
-}
-
-void FileLogger::LogW(const char* str)
-{
-	m_hFile << "warning:" << str << std::endl;
-}
-
-void FileLogger::LogD(const char* str)
-{
-	m_hFile << "debug:" << str << std::endl;
-}
-
-void FileLogger::LogV(const char* str)
-{
-	m_hFile << "verbos:" << str << std::endl;
+	switch (level)
+	{
+	case RenderAPI::LOG_Verbose:m_hFile << "verbose:"; break;
+	case RenderAPI::LOG_Debug:	m_hFile << "debug:"; break;
+	case RenderAPI::LOG_Warning:m_hFile << "warning:"; break;
+	case RenderAPI::LOG_Error:	m_hFile << "error:"; break;
+	}
+	m_hFile << str << std::endl;
 }
 
 SilentLogger & SilentLogger::GetInstance()

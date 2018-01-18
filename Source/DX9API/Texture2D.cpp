@@ -5,7 +5,7 @@
 #include "EnumMapping.h"
 
 Texture2D::Texture2D(IDirect3DTexture9* texture, RenderAPI::TextureFormat format, RenderAPI::ResourceUsage usage, bool isManaged,
-	unsigned int width, unsigned int height, bool autoGenMipmaps, IInternalLogger& logger)
+	unsigned int width, unsigned int height, bool autoGenMipmaps, RenderAPI::Logger& logger)
 	: m_internalLogger(logger)
 	, m_texFormat(format)
 	, m_usage(usage)
@@ -71,7 +71,7 @@ void Texture2D::Release()
 
 void Texture2D::Resize(unsigned int width, unsigned int height)
 {
-	LOG_FUNCTION_CALL(m_internalLogger, LOG_Debug);
+	LOG_FUNCTION_CALL(m_internalLogger, RenderAPI::LOG_Debug);
 	m_texWidth = width;
 	m_texHeight = height;
 }
@@ -88,7 +88,7 @@ IDirect3DTexture9 * Texture2D::GetD3DTexture()
 
 RenderAPI::MappedResource Texture2D::LockRect(unsigned int layer, RenderAPI::LockOption lockOption)
 {
-	LOG_FUNCTION_D(m_internalLogger, "object=%X, layer=%d, lock option=%d", this, layer, lockOption);
+	LOG_FUNCTION_V(m_internalLogger, "object=%X, layer=%d, lock option=%d", this, layer, lockOption);
 
 	//D3DLOCK_DISCARD, is only valid when the resource is created with USAGE_DYNAMIC.
 	if (lockOption == RenderAPI::LOCK_NoOverWrite ||
@@ -108,7 +108,7 @@ RenderAPI::MappedResource Texture2D::LockRect(unsigned int layer, RenderAPI::Loc
 	}
 	else
 	{
-		LOG_FUNCTION_D(m_internalLogger, "failed, error=%X", hr);
+		LOG_FUNCTION_E(m_internalLogger, "failed, error=%X", hr);
 		ret.Success = false;
 	}
 
@@ -117,20 +117,20 @@ RenderAPI::MappedResource Texture2D::LockRect(unsigned int layer, RenderAPI::Loc
 
 void Texture2D::UnlockRect(unsigned int layer)
 {
-	LOG_FUNCTION_CALL(m_internalLogger, LOG_Debug);
+	LOG_FUNCTION_CALL(m_internalLogger, RenderAPI::LOG_Debug);
 	m_pTexture->UnlockRect(layer);
 }
 
 void Texture2D::SetMipmapGenerateFilter(RenderAPI::SamplerFilter filter)
 {
-	LOG_FUNCTION_D(m_internalLogger, "filter=%d", filter);
+	LOG_FUNCTION_V(m_internalLogger, "filter=%d", filter);
 
 	m_pTexture->SetAutoGenFilterType(s_d3dSamplerFilter[filter]);
 }
 
 void Texture2D::GenerateMipmaps()
 {
-	LOG_FUNCTION_CALL(m_internalLogger, LOG_Debug);
+	LOG_FUNCTION_CALL(m_internalLogger, RenderAPI::LOG_Debug);
 
 	if (!m_autoGenMipmaps)
 	{
@@ -140,7 +140,7 @@ void Texture2D::GenerateMipmaps()
 
 RenderAPI::TextureSurface* Texture2D::GetSurface(unsigned int index)
 {
-	LOG_FUNCTION_D(m_internalLogger, "index=%d", index);
+	LOG_FUNCTION_V(m_internalLogger, "index=%d", index);
 
 	if (m_surfaces.size() <= index)
 	{
@@ -159,11 +159,11 @@ RenderAPI::TextureSurface* Texture2D::GetSurface(unsigned int index)
 		HRESULT hr = m_pTexture->GetSurfaceLevel(index, &pSurface);
 		if (S_OK == hr)
 		{
-			m_surfaces[index] = new TextureSurface(m_internalLogger, this, pSurface);
+			m_surfaces[index] = new TextureSurface(this, pSurface, m_internalLogger);
 		}
 		else
 		{
-			LOG_FUNCTION_D(m_internalLogger, "GetSurfaceLevel failed error=%X", hr);
+			LOG_FUNCTION_E(m_internalLogger, "GetSurfaceLevel failed error=%X", hr);
 		}
 	}
 
@@ -191,7 +191,7 @@ bool Texture2D::AutoGenMipmaps() const
 
 bool Texture2D::SaveToFile(const char * fileName, RenderAPI::ImageFormat format)
 {
-	LOG_FUNCTION_CALL(m_internalLogger, LOG_Verbose);
+	LOG_FUNCTION_CALL(m_internalLogger, RenderAPI::LOG_Verbose);
 
 	if (format == RenderAPI::IMG_ERR)
 		return false;
@@ -199,7 +199,7 @@ bool Texture2D::SaveToFile(const char * fileName, RenderAPI::ImageFormat format)
 	return S_OK == D3DXSaveTextureToFileA(fileName, s_d3dxFileFormat[format], NULL, NULL);
 }
 
-TextureSurface::TextureSurface(IInternalLogger& logger, Texture2D* pTexture, IDirect3DSurface9 * pSurface)
+TextureSurface::TextureSurface(Texture2D* pTexture, IDirect3DSurface9 * pSurface, RenderAPI::Logger& logger)
 	: m_pParentTexture(pTexture)
 	, m_internalLogger(logger)
 	, m_pSurface(pSurface)
@@ -216,7 +216,7 @@ TextureSurface::~TextureSurface()
 
 void* TextureSurface::GetDC()
 {
-	LOG_FUNCTION_CALL(m_internalLogger, LOG_Verbose);
+	LOG_FUNCTION_CALL(m_internalLogger, RenderAPI::LOG_Verbose);
 	if (m_hDC == NULL)
 	{
 		m_pSurface->GetDC(&m_hDC);
@@ -226,7 +226,7 @@ void* TextureSurface::GetDC()
 
 void TextureSurface::ReleaseDC()
 {
-	LOG_FUNCTION_CALL(m_internalLogger, LOG_Debug);
+	LOG_FUNCTION_CALL(m_internalLogger, RenderAPI::LOG_Debug);
 	if (m_hDC != NULL)
 	{
 		m_pSurface->ReleaseDC(m_hDC);
@@ -236,7 +236,7 @@ void TextureSurface::ReleaseDC()
 
 bool TextureSurface::SaveToFile(const char * fileName, RenderAPI::ImageFormat format)
 {
-	LOG_FUNCTION_CALL(m_internalLogger, LOG_Verbose);
+	LOG_FUNCTION_CALL(m_internalLogger, RenderAPI::LOG_Verbose);
 	if (format == RenderAPI::IMG_ERR)
 		return false;
 
@@ -245,7 +245,7 @@ bool TextureSurface::SaveToFile(const char * fileName, RenderAPI::ImageFormat fo
 
 void TextureSurface::Release()
 {
-	LOG_FUNCTION_CALL(m_internalLogger, LOG_Verbose);
+	LOG_FUNCTION_CALL(m_internalLogger, RenderAPI::LOG_Verbose);
 
 	if (0 == --m_refCount)
 	{
@@ -274,13 +274,13 @@ IDirect3DSurface9 * TextureSurface::GetD3DTextureSurfacePtr()
 	return m_pSurface;
 }
 
-RenderSurface2D::RenderSurface2D(IDirect3DSurface9* pSurface, RenderAPI::TextureFormat format, unsigned int width, unsigned int height, IInternalLogger& logger)
-	: TextureSurface(logger, NULL, pSurface)
+RenderSurface2D::RenderSurface2D(IDirect3DSurface9* pSurface, RenderAPI::TextureFormat format, unsigned int width, unsigned int height, RenderAPI::Logger& logger)
+	: TextureSurface(NULL, pSurface, logger)
 	, m_internalLogger(logger)
 	, m_texFormat(format)
 	, m_texWidth(width)
 	, m_texHeight(height)
-	, m_pTempTextureForCopy(logger, format, width, height, 1)
+	, m_pTempTextureForCopy(format, width, height, 1, logger)
 {
 }
 
@@ -292,7 +292,7 @@ RenderSurface2D::~RenderSurface2D()
 
 RenderAPI::MappedResource RenderSurface2D::LockRect(unsigned int layer, RenderAPI::LockOption lockOption) 
 {
-	LOG_FUNCTION_D(m_internalLogger, "layer=%d, lock option=%d", layer, lockOption);
+	LOG_FUNCTION_V(m_internalLogger, "layer=%d, lock option=%d", layer, lockOption);
 
 	if (lockOption == RenderAPI::LOCK_NoOverWrite)
 	{
@@ -311,7 +311,7 @@ RenderAPI::MappedResource RenderSurface2D::LockRect(unsigned int layer, RenderAP
 
 void RenderSurface2D::UnlockRect(unsigned int layer) 
 {
-	LOG_FUNCTION_CALL(m_internalLogger, LOG_Debug);
+	LOG_FUNCTION_CALL(m_internalLogger, RenderAPI::LOG_Debug);
 	m_pTempTextureForCopy.Unlock(layer);
 	if (!m_pTempTextureForCopy.IsSomeLayerLocking())
 	{
@@ -321,7 +321,7 @@ void RenderSurface2D::UnlockRect(unsigned int layer)
 
 RenderAPI::TextureSurface * RenderSurface2D::GetSurface(unsigned int layer)
 {
-	LOG_FUNCTION_D(m_internalLogger, "object=%X, layer=%d", this, layer);
+	LOG_FUNCTION_V(m_internalLogger, "object=%X, layer=%d", this, layer);
 	if (layer == 0)
 	{
 		AddReference();
@@ -329,7 +329,7 @@ RenderAPI::TextureSurface * RenderSurface2D::GetSurface(unsigned int layer)
 	}
 	else
 	{
-		LOG_FUNCTION_W(m_internalLogger, "render surface only have one surface.");
+		LOG_FUNCTION_E(m_internalLogger, "render surface only have one surface.");
 		return NULL;
 	}
 }
@@ -342,14 +342,14 @@ bool RenderSurface2D::CopyToSystemTexture()
 	pSrcSurface->GetDevice(&pDevice);
 	if (pDevice == NULL)
 	{
-		LOG_FUNCTION_W(m_internalLogger, "cannot retrieve device from texture. object=%X",this);
+		LOG_FUNCTION_E(m_internalLogger, "cannot retrieve device from texture. object=%X",this);
 		return false;
 	}
 
 	if (!m_pTempTextureForCopy.IsCreated() &&
 		!m_pTempTextureForCopy.Create(pDevice))
 	{
-		LOG_FUNCTION_W(m_internalLogger, "cannot create temporary texture. object=%X", this);
+		LOG_FUNCTION_E(m_internalLogger, "cannot create temporary texture. object=%X", this);
 		pDevice->Release();
 		return false;
 	}
@@ -362,17 +362,25 @@ bool RenderSurface2D::CopyToSystemTexture()
 		HRESULT hr = pDevice->GetRenderTargetData(pSrcSurface, pDstSurface);
 		pDstSurface->Release();
 		pDevice->Release();
-		return hr == S_OK;
+		if (hr == S_OK)
+		{
+			return true;
+		}
+		else
+		{
+			LOG_FUNCTION_E(m_internalLogger, "GetRenderTargetData failed. object=%X, error=%X", this, hr);
+			return false;
+		}
 	}
 	else
 	{
-		LOG_FUNCTION_W(m_internalLogger, "cannot get surface from temporary texture. object=%X, error=%X", this, hrGetDstSurface);
+		LOG_FUNCTION_E(m_internalLogger, "cannot get surface from temporary texture. object=%X, error=%X", this, hrGetDstSurface);
 		pDevice->Release();
 		return false;
 	}
 }
 
-TemporaryTexture::TemporaryTexture(IInternalLogger& logger, RenderAPI::TextureFormat f, unsigned int w, unsigned int h, unsigned int layerCount)
+TemporaryTexture::TemporaryTexture(RenderAPI::TextureFormat f, unsigned int w, unsigned int h, unsigned int layerCount, RenderAPI::Logger& logger)
 	: m_logger(logger)
 	, m_pTexture(NULL)
 	, m_lockLayerBits(0)
@@ -410,7 +418,7 @@ bool TemporaryTexture::Create(IDirect3DDevice9* pDevice)
 		HRESULT creation = pDevice->CreateTexture(m_texWidth, m_texHeight, 0, D3DUSAGE_DYNAMIC, s_TextureFormats[m_texFormat], D3DPOOL_SYSTEMMEM, &m_pTexture, NULL);
 		if (FAILED(creation))
 		{
-			LOG_FUNCTION_W(m_logger, "cannot create temporary texture. parent texture=%X", m_pTexture);
+			LOG_FUNCTION_E(m_logger, "cannot create temporary texture. parent texture=%X, error=%X", m_pTexture, creation);
 			m_pTexture = NULL;
 			return false;
 		}
@@ -421,7 +429,7 @@ bool TemporaryTexture::Create(IDirect3DDevice9* pDevice)
 	}
 	else
 	{
-		LOG_FUNCTION_W(m_logger, "cannot create temporary texture.");
+		LOG_FUNCTION_E(m_logger, "texture is already created.");
 		return false;
 	}
 }
@@ -443,7 +451,7 @@ RenderAPI::MappedResource TemporaryTexture::Lock(unsigned int layer, RenderAPI::
 		}
 		else
 		{
-			LOG_FUNCTION_W(m_logger, "error=%X", hr);
+			LOG_FUNCTION_E(m_logger, "error=%X", hr);
 			ret.Success = false;
 		}
 	}
@@ -469,7 +477,7 @@ bool TemporaryTexture::Unlock(unsigned int layer)
 			}
 			else
 			{
-				LOG_FUNCTION_W(m_logger, "error=%X", hr);
+				LOG_FUNCTION_E(m_logger, "error=%X", hr);
 				return false;
 			}
 		}
@@ -513,7 +521,7 @@ void TemporaryTexture::ReleaseTexture()
 			UnlockAll();
 		}
 
-		LOG_FUNCTION_CALL(m_logger, LOG_Debug);
+		LOG_FUNCTION_CALL(m_logger, RenderAPI::LOG_Debug);
 		m_pTexture->Release();
 		m_pTexture = NULL;
 	}

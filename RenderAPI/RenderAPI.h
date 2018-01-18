@@ -716,18 +716,20 @@ namespace RenderAPI
 
 	// 系统日志设置函数
 	// 外部用户继承并实现此接口，以重定向或自定义处理系统内部的Log。
+	enum LogLevel
+	{
+		LOG_Verbose = 0,
+		LOG_Debug = 1,
+		LOG_Warning = 2,
+		LOG_Error = 3,
+	};
+
 	class Logger
 	{
 	public:
 		virtual ~Logger() { }
 
-		virtual void LogE(const char*) = 0;
-
-		virtual void LogW(const char*) = 0;
-
-		virtual void LogD(const char*) = 0;
-
-		virtual void LogV(const char*) = 0;
+		virtual void Log(LogLevel , const char*) = 0;
 	};
 
 	class VertexBuffer : public RObject

@@ -127,7 +127,7 @@ namespace
 Context::Context(APIInstance* pAPI, IDirect3DDevice9 * device, RenderAPI::RenderTarget* defRT, RenderAPI::DepthStencil* defDS)
 	: m_pAPI(pAPI)
 	, m_pDevice(device)
-	, m_backBufferManager(*pAPI, device, defRT, defDS, pAPI->GetRenderStatistic())
+	, m_backBufferManager(device, defRT, defDS, pAPI->GetRenderStatistic(), *pAPI)
 	, m_renderStateManager(device, pAPI->GetRenderStatistic())
 	, m_nNXCacheFVF(0)
 	, m_pNXCacheVertexShader(NULL)
@@ -201,7 +201,7 @@ void Context::ClearStencilBuffer(unsigned int stencil)
 
 void Context::SetViewport(const RenderAPI::Viewport& vp)
 {
-	LOG_FUNCTION_V(*m_pAPI, "left=%d, top=%d, width=%d, height=%d, minz=%f, maxz=%f",
+	LOG_FUNCTION_D(*m_pAPI, "left=%d, top=%d, width=%d, height=%d, minz=%f, maxz=%f",
 		vp.Left, vp.Top, vp.Width, vp.Height, vp.MinZ, vp.MaxZ);
 
 	D3DVIEWPORT9 d3dViewPort;
@@ -242,7 +242,7 @@ void Context::SetDepthStencil(RenderAPI::DepthStencil* depthStencil)
 
 void Context::SetVertexBuffers(RenderAPI::VertexBufferInfo* buffers, unsigned int bufferCount)
 {
-	LOG_FUNCTION_CALL(*m_pAPI, LOG_Verbose);
+	LOG_FUNCTION_CALL(*m_pAPI, RenderAPI::LOG_Verbose);
 
 	while (m_useStreamFrequency.size() < bufferCount)
 	{
@@ -317,7 +317,7 @@ void Context::SetVertexDeclaration(RenderAPI::VertexDeclaration * decl)
 
 void Context::SetTexture(unsigned int slot, RenderAPI::Texture* texture)
 {
-	LOG_FUNCTION_D(*m_pAPI, "slot=%d, texture=%X", slot, texture);
+	LOG_FUNCTION_V(*m_pAPI, "slot=%d, texture=%X", slot, texture);
 
 	IDirect3DBaseTexture9* pTexture = NULL;
 	if (texture != NULL)
@@ -549,7 +549,7 @@ void Context::SetTextureSampler(unsigned int slot, const RenderAPI::TextureSampl
 
 void Context::SetScissorState(const RenderAPI::ScissorState& state)
 {
-	LOG_FUNCTION_V(*m_pAPI, "enable=%d, l=%d, r=%d, t=%d, b=%d",
+	LOG_FUNCTION_D(*m_pAPI, "enable=%d, l=%d, r=%d, t=%d, b=%d",
 		state.IsEnable, state.Left, state.Right, state.Top, state.Bottom);
 
 	if (state.IsEnable)
@@ -639,13 +639,13 @@ void Context::SetTextureFactor(unsigned int factor)
 
 bool Context::BeginScene()
 {
-	LOG_FUNCTION_CALL(*m_pAPI, LOG_Debug);
+	LOG_FUNCTION_CALL(*m_pAPI, RenderAPI::LOG_Debug);
 	return S_OK == m_pDevice->BeginScene();
 }
 
 void Context::EndScene()
 {
-	LOG_FUNCTION_CALL(*m_pAPI, LOG_Debug);
+	LOG_FUNCTION_CALL(*m_pAPI, RenderAPI::LOG_Debug);
 
 	m_pDevice->EndScene();
 }
@@ -703,7 +703,7 @@ void Context::DrawIndexedWithDynamicVertex(RenderAPI::Primitive primitive, unsig
 
 bool Context::UpdateTexture(RenderAPI::Texture2D * src, RenderAPI::Texture2D * dst)
 {
-	LOG_FUNCTION_D(*m_pAPI, "primitive=%d, src ptr=%X dst ptr=%X", src, dst);
+	LOG_FUNCTION_V(*m_pAPI, "primitive=%d, src ptr=%X dst ptr=%X", src, dst);
 
 	if (src == NULL || dst == NULL ||
 		dst->IsRenderTexture() ||
@@ -812,7 +812,7 @@ void Context::InitDeviceCaps(const D3DCAPS9& d3dcaps)
 
 bool Context::StretchTexture(RenderAPI::Texture2D * src, RenderAPI::Texture2D * dst, RenderAPI::SamplerFilter filter)
 {
-	LOG_FUNCTION_D(*m_pAPI, "primitive=%d, src ptr=%X dst ptr=%X, filter=%d", src, dst, filter);
+	LOG_FUNCTION_V(*m_pAPI, "primitive=%d, src ptr=%X dst ptr=%X, filter=%d", src, dst, filter);
 
 	AutoR<::TextureSurface> pSurfaceSrc = (::TextureSurface*)src->GetSurface(0);
 	AutoR<::TextureSurface> pSurfaceDst = (::TextureSurface*)dst->GetSurface(0);
@@ -827,7 +827,7 @@ bool Context::StretchTexture(RenderAPI::Texture2D * src, RenderAPI::Texture2D * 
 
 RenderAPI::DeviceState Context::Present()
 {
-	LOG_FUNCTION_CALL(*m_pAPI, LOG_Debug);
+	LOG_FUNCTION_CALL(*m_pAPI, RenderAPI::LOG_Debug);
 
 	HRESULT hr = m_pDevice->Present(NULL, NULL, NULL, NULL);
 	return DeviceStateMapping(hr);
@@ -857,7 +857,7 @@ RenderAPI::DeviceState Context::GetState()
 
 RenderAPI::DeviceState Context::ResetDevice(const RenderAPI::SwapChainDesc& desc, bool isFullscreen, bool useVerticalSync)
 {
-	LOG_FUNCTION_CALL(*m_pAPI, LOG_Debug);
+	LOG_FUNCTION_CALL(*m_pAPI, RenderAPI::LOG_Debug);
 	HRESULT hr = S_OK;
 
 	D3DPRESENT_PARAMETERS CreationParam = APIInstance::FillCreationParam(
@@ -924,7 +924,7 @@ RenderAPI::DeviceState Context::ResetDevice(const RenderAPI::SwapChainDesc& desc
 
 void Context::EvictManagedResources()
 {
-	LOG_FUNCTION_CALL(*m_pAPI, LOG_Debug);
+	LOG_FUNCTION_CALL(*m_pAPI, RenderAPI::LOG_Debug);
 	m_pDevice->EvictManagedResources();
 }
 
@@ -966,7 +966,7 @@ bool operator<(const D3DVERTEXELEMENT9& left, const D3DVERTEXELEMENT9& right)
 	return memcmp(&left, &right, sizeof(D3DVERTEXELEMENT9)) < 0;
 }
 
-BackBufferManager::BackBufferManager(IInternalLogger& logger, IDirect3DDevice9 * device, RenderAPI::RenderTarget * defRT, RenderAPI::DepthStencil * defDS, RenderStatistic& renderStatistic)
+BackBufferManager::BackBufferManager(IDirect3DDevice9 * device, RenderAPI::RenderTarget * defRT, RenderAPI::DepthStencil * defDS, RenderStatistic& renderStatistic, RenderAPI::Logger& logger)
 	: m_internalLogger(logger)
 	, m_pDevice(device)
 	, m_pCurrentRTs(1)
@@ -1037,14 +1037,14 @@ void BackBufferManager::SetRenderTarget(unsigned int index, RenderAPI::RenderTar
 
 	if (index >= m_pCurrentRTs.size())
 	{
-		LOG_FUNCTION_D(m_internalLogger, "index=%d, render target=%X", index, rt);
+		LOG_FUNCTION_V(m_internalLogger, "index=%d, render target=%X", index, rt);
 		EnlargeCurrentRTVector(index + 1);
 		m_pDevice->SetRenderTarget(index, rtSurface);
 		m_pCurrentRTs[index] = rtSurface;
 	}
 	else if (rtSurface != m_pCurrentRTs[index])
 	{
-		LOG_FUNCTION_D(m_internalLogger, "index=%d, render target=%X, old=%X", index, rt, m_pCurrentRTs[index]);
+		LOG_FUNCTION_V(m_internalLogger, "index=%d, render target=%X, old=%X", index, rt, m_pCurrentRTs[index]);
 
 		HRESULT hr = m_pDevice->SetRenderTarget(0, rtSurface);
 		m_pCurrentRTs[index] = rtSurface;
@@ -1067,7 +1067,7 @@ void BackBufferManager::SetDepthStencil(RenderAPI::DepthStencil * ds)
 
 	if (dsSurface != m_pCurrentDS)
 	{
-		LOG_FUNCTION_D(m_internalLogger, "depth stencil=%X, old=%X", ds, m_pCurrentDS);
+		LOG_FUNCTION_V(m_internalLogger, "depth stencil=%X, old=%X", ds, m_pCurrentDS);
 		m_pDevice->SetDepthStencilSurface(dsSurface);
 		m_pCurrentDS = dsSurface;
 	}
@@ -1085,7 +1085,7 @@ bool BackBufferManager::IsDefaultDS()
 
 void BackBufferManager::ResetDefaultDepthStencil(RenderAPI::DepthStencil * defDS)
 {
-	LOG_FUNCTION_D(m_internalLogger, "depth stencil=%X", defDS);
+	LOG_FUNCTION_V(m_internalLogger, "depth stencil=%X", defDS);
 
 	m_pCurrentDS = ((::DepthStencil*)defDS)->GetD3DSurface();
 	m_pDefaultDS = m_pCurrentDS;
@@ -1093,7 +1093,7 @@ void BackBufferManager::ResetDefaultDepthStencil(RenderAPI::DepthStencil * defDS
 
 void BackBufferManager::ResetDefaultRenderTarget(RenderAPI::RenderTarget * defRT)
 {
-	LOG_FUNCTION_D(m_internalLogger, "render target=%X", defRT);
+	LOG_FUNCTION_V(m_internalLogger, "render target=%X", defRT);
 
 	m_pCurrentRTs[0] = ((::RenderTarget*)defRT)->GetD3DSurface();
 	m_pDefaultRT = m_pCurrentRTs[0];

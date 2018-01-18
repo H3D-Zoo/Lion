@@ -1,7 +1,7 @@
 #include "IndexBuffer.h"
 #include "EnumMapping.h"
 
-IndexBuffer::IndexBuffer(IDirect3DIndexBuffer9* indexBuffer, RenderAPI::ResourceUsage usage, RenderAPI::IndexFormat format, bool isManaged, unsigned int count, IInternalLogger& logger)
+IndexBuffer::IndexBuffer(IDirect3DIndexBuffer9* indexBuffer, RenderAPI::ResourceUsage usage, RenderAPI::IndexFormat format, bool isManaged, unsigned int count, RenderAPI::Logger& logger)
 	: m_internalLogger(logger)
 	, m_usage(usage)
 	, m_indexFormat(format)
@@ -79,7 +79,7 @@ void * IndexBuffer::Lock(unsigned int offset, unsigned int lockLength, RenderAPI
 	}
 	else
 	{
-		LOG_FUNCTION_W(m_internalLogger, "failed, error=%X", hr);
+		LOG_FUNCTION_E(m_internalLogger, "failed, error=%X", hr);
 		return NULL;
 	}
 }

@@ -9,13 +9,7 @@ public:
 
 	~FileLogger();
 
-	virtual void LogE(const char*);
-
-	virtual void LogW(const char*);
-
-	virtual void LogD(const char*);
-
-	virtual void LogV(const char*);
+	virtual void Log(RenderAPI::LogLevel, const char*);
 
 private:
 	std::ofstream m_hFile;
@@ -26,11 +20,5 @@ class SilentLogger : public RenderAPI::Logger
 public:
 	static SilentLogger& GetInstance();
 
-	virtual void LogE(const char*) { }
-
-	virtual void LogW(const char*) { }
-
-	virtual void LogD(const char*) { }
-
-	virtual void LogV(const char*) { }
+	virtual void Log(RenderAPI::LogLevel, const char*) { }
 };

@@ -12,7 +12,7 @@ class Texture2D;
 class TextureSurface : public RenderAPI::TextureSurface
 {
 public:
-	TextureSurface(IInternalLogger&, ::Texture2D*, IDirect3DSurface9*);
+	TextureSurface(::Texture2D*, IDirect3DSurface9*, RenderAPI::Logger&);
 
 	~TextureSurface();
 
@@ -30,7 +30,7 @@ public:
 
 private:
 	RefCount m_refCount;
-	IInternalLogger& m_internalLogger;
+	RenderAPI::Logger& m_internalLogger;
 	::Texture2D* m_pParentTexture;
 	IDirect3DSurface9* m_pSurface;
 	HDC m_hDC;
@@ -40,7 +40,7 @@ class Texture2D : public RenderAPI::Texture2D
 {
 public:
 	Texture2D(IDirect3DTexture9*, RenderAPI::TextureFormat, RenderAPI::ResourceUsage, bool isManaged,
-		unsigned int width, unsigned int height, bool autoGenMipmaps, IInternalLogger&);
+		unsigned int width, unsigned int height, bool autoGenMipmaps, RenderAPI::Logger&);
 
 	~Texture2D();
 
@@ -85,7 +85,7 @@ public:
 	unsigned int ClearStamp;
 
 protected:
-	IInternalLogger& m_internalLogger;
+	RenderAPI::Logger& m_internalLogger;
 	IDirect3DTexture9* m_pTexture;
 	const bool m_autoGenMipmaps;
 	const bool m_isManaged;
@@ -102,7 +102,7 @@ private:
 
 class TemporaryTexture
 {
-	IInternalLogger& m_logger;
+	RenderAPI::Logger& m_logger;
 	RenderAPI::TextureFormat m_texFormat;
 	unsigned int m_texLayers;
 	unsigned int m_texWidth;
@@ -112,7 +112,7 @@ class TemporaryTexture
 	void SetLayerLocking(unsigned int layer, bool locked);
 	bool IsLayerLocking(unsigned int layer) const;
 public:
-	TemporaryTexture(IInternalLogger& logger, RenderAPI::TextureFormat f, unsigned int w, unsigned int h, unsigned int layerCount);
+	TemporaryTexture(RenderAPI::TextureFormat f, unsigned int w, unsigned int h, unsigned int layerCount, RenderAPI::Logger&);
 	bool Create(IDirect3DDevice9* pDevice);
 	IDirect3DTexture9* GetTexturePtr() const { return m_pTexture; }
 	bool IsCreated() const { return m_pTexture != NULL; }
@@ -128,7 +128,7 @@ class RenderTexture2D : public Texture2D
 {
 public:
 	RenderTexture2D(IDirect3DTexture9*, RenderAPI::TextureFormat, RenderAPI::ResourceUsage usage,
-		unsigned int width, unsigned int height, IInternalLogger&);
+		unsigned int width, unsigned int height, RenderAPI::Logger&);
 
 	~RenderTexture2D();
 
@@ -155,7 +155,7 @@ class NoLockableTexture2D : public Texture2D
 {
 public:
 	NoLockableTexture2D(IDirect3DTexture9*, RenderAPI::TextureFormat, RenderAPI::ResourceUsage, bool isManaged,
-		unsigned int width, unsigned int height, bool autoGenMipmaps, IInternalLogger&);
+		unsigned int width, unsigned int height, bool autoGenMipmaps, RenderAPI::Logger&);
 
 	~NoLockableTexture2D();
 	
@@ -175,7 +175,7 @@ private:
 class RenderSurface2D : public RenderAPI::Texture2D, public ::TextureSurface
 {
 public:
-	RenderSurface2D(IDirect3DSurface9*, RenderAPI::TextureFormat, unsigned int width, unsigned int height, IInternalLogger&);
+	RenderSurface2D(IDirect3DSurface9*, RenderAPI::TextureFormat, unsigned int width, unsigned int height, RenderAPI::Logger&);
 
 	~RenderSurface2D();
 
@@ -227,7 +227,7 @@ public:
 private:
 	bool CopyToSystemTexture();
 	TemporaryTexture m_pTempTextureForCopy;
-	IInternalLogger& m_internalLogger;
+	RenderAPI::Logger& m_internalLogger;
 	const RenderAPI::TextureFormat m_texFormat;
 	unsigned int m_texWidth;
 	unsigned int m_texHeight;

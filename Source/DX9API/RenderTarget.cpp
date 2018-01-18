@@ -1,7 +1,7 @@
 #include "RenderTarget.h"
 #include "Context.h"
 
-RenderTarget::RenderTarget(IDirect3DSurface9* rtSurface, RenderAPI::RenderTargetFormat format, unsigned int width, unsigned int height, IInternalLogger& logger)
+RenderTarget::RenderTarget(IDirect3DSurface9* rtSurface, RenderAPI::RenderTargetFormat format, unsigned int width, unsigned int height, RenderAPI::Logger& logger)
 	: m_format(format)
 	, m_width(width)
 	, m_height(height)
@@ -12,7 +12,7 @@ RenderTarget::RenderTarget(IDirect3DSurface9* rtSurface, RenderAPI::RenderTarget
 	m_rtTexture = new RenderSurface2D(rtSurface, texFormat, width, height, logger);
 }
 
-RenderTarget::RenderTarget(IDirect3DTexture9* rtTexture, RenderAPI::TextureFormat format, unsigned int width, unsigned int height, IInternalLogger& logger)
+RenderTarget::RenderTarget(IDirect3DTexture9* rtTexture, RenderAPI::TextureFormat format, unsigned int width, unsigned int height, RenderAPI::Logger& logger)
 	: m_format(RenderAPI::RT_RenderTexture)
 	, m_width(width)
 	, m_height(height)

@@ -30,7 +30,7 @@ void APIInstance::LogError(const char* action, const char * detail)
 {
 	char buff[512];
 	_sprintf_p(buff, 512, "%s Failed, %s, ", action, detail);
-	GetCurrentLogger()->LogE(buff);
+	GetCurrentLogger()->Log(RenderAPI::LOG_Error, buff);
 }
 
 void APIInstance::Release()

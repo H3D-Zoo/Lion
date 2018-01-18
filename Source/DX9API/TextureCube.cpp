@@ -17,7 +17,7 @@ namespace
 	};
 }
 
-TextureCube::TextureCube(IDirect3DCubeTexture9* texture, RenderAPI::TextureFormat format, RenderAPI::ResourceUsage usage, bool isManaged, unsigned int edgeLength, bool autoGenMipmaps, IInternalLogger& logger)
+TextureCube::TextureCube(IDirect3DCubeTexture9* texture, RenderAPI::TextureFormat format, RenderAPI::ResourceUsage usage, bool isManaged, unsigned int edgeLength, bool autoGenMipmaps, RenderAPI::Logger& logger)
 	: m_internalLogger(logger)
 	, m_texFormat(format)
 	, m_usage(usage)
@@ -67,7 +67,7 @@ IDirect3DCubeTexture9 * TextureCube::GetD3DTexture()
 
 RenderAPI::MappedResource TextureCube::LockRect(RenderAPI::CubemapFace face, unsigned int layer, RenderAPI::LockOption lockOption)
 {
-	LOG_FUNCTION_D(m_internalLogger, "object=%X, face=%d, layer=%d, lock option=%d", this, face, layer, lockOption);
+	LOG_FUNCTION_V(m_internalLogger, "object=%X, face=%d, layer=%d, lock option=%d", this, face, layer, lockOption);
 
 	RenderAPI::MappedResource ret;
 	
@@ -90,7 +90,7 @@ RenderAPI::MappedResource TextureCube::LockRect(RenderAPI::CubemapFace face, uns
 		else
 		{
 			ret.Success = false;
-			LOG_FUNCTION_W(m_internalLogger, "LockRect Failed", hr);
+			LOG_FUNCTION_E(m_internalLogger, "LockRect Failed", hr);
 		}
 	}
 	else
@@ -103,7 +103,7 @@ RenderAPI::MappedResource TextureCube::LockRect(RenderAPI::CubemapFace face, uns
 
 void TextureCube::UnlockRect(RenderAPI::CubemapFace face, unsigned int layer)
 {
-	LOG_FUNCTION_D(m_internalLogger, "object=%X, face=%d, layer=%d", this, face, layer);
+	LOG_FUNCTION_V(m_internalLogger, "object=%X, face=%d, layer=%d", this, face, layer);
 	m_pTexture->UnlockRect(s_d3dCubeFaces[face], layer);
 }
 
@@ -119,7 +119,7 @@ void TextureCube::SetMipmapGenerateFilter(RenderAPI::SamplerFilter filter)
 
 void TextureCube::GenerateMipmaps()
 {
-	LOG_FUNCTION_CALL(m_internalLogger, LOG_Verbose);
+	LOG_FUNCTION_CALL(m_internalLogger, RenderAPI::LOG_Verbose);
 
 	if (!m_autoGenMipmaps)
 	{

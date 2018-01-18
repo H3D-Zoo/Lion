@@ -11,7 +11,7 @@ class DepthStencil;
 class TextureCube : public RenderAPI::TextureCube
 {
 public:
-	TextureCube(IDirect3DCubeTexture9*, RenderAPI::TextureFormat, RenderAPI::ResourceUsage, bool isManaged, unsigned int edgeLength, bool autoGenMipmaps, IInternalLogger&);
+	TextureCube(IDirect3DCubeTexture9*, RenderAPI::TextureFormat, RenderAPI::ResourceUsage, bool isManaged, unsigned int edgeLength, bool autoGenMipmaps, RenderAPI::Logger&);
 
 	~TextureCube();
 
@@ -45,7 +45,7 @@ public:
 
 private:
 	RefCount m_refCount;
-	IInternalLogger& m_internalLogger;
+	RenderAPI::Logger& m_internalLogger;
 	const RenderAPI::ResourceUsage m_usage;
 	const RenderAPI::TextureFormat m_texFormat;
 	const bool m_autoGenMipmaps;

@@ -1,7 +1,7 @@
 #include "VertexBuffer.h"
 #include "EnumMapping.h"
 
-VertexBuffer::VertexBuffer(IDirect3DVertexBuffer9* vertexBuffer, RenderAPI::ResourceUsage usage, bool isManaged, unsigned int vertexCount, unsigned int vertexSize, IInternalLogger& logger)
+VertexBuffer::VertexBuffer(IDirect3DVertexBuffer9* vertexBuffer, RenderAPI::ResourceUsage usage, bool isManaged, unsigned int vertexCount, unsigned int vertexSize, RenderAPI::Logger& logger)
 	: m_internalLogger(logger)
 	, m_usage(usage)
 	, m_isManaged(isManaged)
@@ -69,7 +69,7 @@ void * VertexBuffer::Lock(unsigned int offset, unsigned int lockLength, RenderAP
 	}
 	else
 	{
-		LOG_FUNCTION_W(m_internalLogger, "failed, error=%X", hr);
+		LOG_FUNCTION_E(m_internalLogger, "failed, error=%X", hr);
 		return NULL;
 	}
 }
@@ -81,7 +81,7 @@ void* VertexBuffer::LockAll(RenderAPI::LockOption lockOption)
 
 void VertexBuffer::Unlock()
 {
-	LOG_FUNCTION_CALL(m_internalLogger, LOG_Verbose);
+	LOG_FUNCTION_CALL(m_internalLogger, RenderAPI::	LOG_Verbose);
 	m_pVertexBuffer->Unlock();
 }
 
