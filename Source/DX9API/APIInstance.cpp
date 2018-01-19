@@ -361,7 +361,10 @@ void APIInstance::AddRef()
 
 void APIInstance::Log(RenderAPI::LogLevel level, const char* desc)
 {
-	GetCurrentLogger()->Log(level, desc);
+	if (GetCurrentLogger() != NULL)
+	{
+		GetCurrentLogger()->Log(level, desc);
+	}
 }
 
 

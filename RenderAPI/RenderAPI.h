@@ -1059,14 +1059,6 @@ namespace RenderAPI
 
 		virtual void SetMaterial(const Material& mat) = 0;
 
-		virtual void GenPerspectiveMatrixRH(float outMatrix[16], float fovRadian, float aspect, float nearZ, float farZ) = 0;
-
-		virtual void GenOrthoCenterMatrixRH(float outMatrix[16], float width, float height, float nearZ, float farZ) = 0;
-
-		virtual void GenOrthoOffCenterMatrixRH(float outMatrix[16], float left, float right, float bottom, float top, float nearZ, float farZ) = 0;
-
-		virtual void GenViewMatrix(float outMatrix[16], const Float3& eye, const Float3& lookAt, const Float3& upward) = 0;
-
 		virtual void ProjectVertexPos(Float3& inoutPos, const float matMV[16], const float matP[16], Viewport viewport) = 0;
 
 		virtual void SaveNXDebugRenderState() = 0;
