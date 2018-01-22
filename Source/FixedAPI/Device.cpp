@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <algorithm>
 #include "Device.h"
 #include "Context.h"
 #include "VertexBuffer.h"
@@ -27,28 +28,22 @@ namespace
 		0,
 		D3DUSAGE_DYNAMIC,
 	};
-
-	struct DeclFormat
+	
+	int s_declTypes[] =
 	{
-		D3DDECLTYPE Type;
-		int Length;
-	};
-
-	DeclFormat s_declTypes[] =
-	{
-		{ D3DDECLTYPE_FLOAT1, sizeof(float) },
-		{ D3DDECLTYPE_FLOAT2, sizeof(float) * 2 },
-		{ D3DDECLTYPE_FLOAT3, sizeof(float) * 3 },
-		{ D3DDECLTYPE_FLOAT4, sizeof(float) * 4 },
-		{ D3DDECLTYPE_D3DCOLOR, sizeof(unsigned char) * 4 },
-		{ D3DDECLTYPE_UBYTE4, sizeof(unsigned char) * 4 },
-		{ D3DDECLTYPE_SHORT2, sizeof(short) * 2 },
-		{ D3DDECLTYPE_SHORT4, sizeof(short) * 4 },
-		{ D3DDECLTYPE_UBYTE4N, sizeof(unsigned char) * 4 },
-		{ D3DDECLTYPE_SHORT2N, sizeof(short) * 2 },
-		{ D3DDECLTYPE_SHORT4N, sizeof(short) * 4 },
-		{ D3DDECLTYPE_USHORT2N, sizeof(unsigned short) * 2 },
-		{ D3DDECLTYPE_USHORT4N, sizeof(unsigned short) * 4 },
+		sizeof(float) ,
+		sizeof(float) * 2 ,
+		sizeof(float) * 3 ,
+		sizeof(float) * 4 ,
+		sizeof(unsigned char) * 4 ,
+		sizeof(unsigned char) * 4,
+		sizeof(short) * 2 ,
+		sizeof(short) * 4 ,
+		sizeof(unsigned char) * 4 ,
+		sizeof(short) * 2 ,
+		sizeof(short) * 4 ,
+		sizeof(unsigned short) * 2 ,
+		sizeof(unsigned short) * 4 ,
 	};
 
 	D3DDECLUSAGE s_declUsages[] =
@@ -306,61 +301,180 @@ RenderAPI::IndexBuffer* Device::CreateIndexBuffer(RenderAPI::ResourceUsage usage
 	}
 }
 
+struct ElementSorter
+{
+	bool operator()(const RenderAPI::VertexElement& l, const RenderAPI::VertexElement& r) const
+	{
+		if (l.SemanticName < r.SemanticName)
+			return true;
+		if (l.SemanticName > r.SemanticName)
+			return false;
+		if (l.SemanticIndex < r.SemanticIndex)
+			return true;
+		if (l.SemanticIndex > r.SemanticIndex)
+			return false;
+		return false;
+	}
+};
+
 RenderAPI::VertexDeclaration* Device::CreateVertexDeclaration(const RenderAPI::VertexElement * elements, unsigned int elementCount)
 {
 	LOG_FUNCTION_CALL(*m_pAPIInstance, RenderAPI::LOG_Debug);
 
 	if (elementCount == 0 || elements == NULL)
 	{
-		LOG_FUNCTION_W(*m_pAPIInstance, "failed. element count cannot be 0.");
+		LOG_FUNCTION_D(*m_pAPIInstance, "failed. element count cannot be 0.");
 		return NULL;
 	}
 
-	//构建 Vertex Element 数组
-	std::vector<int> alignOffsets;
-	std::vector<RenderAPI::VertexElement> elementList(elements, elements + elementCount);
+	std::vector<RenderAPI::VertexElement> elementList;
 
-	std::vector<D3DVERTEXELEMENT9> d3dElements(elementCount + 1);
+	unsigned int customFVF = 0;
+	unsigned int texcoordMask = 0;
 	for (unsigned int i = 0; i < elementCount; i++)
 	{
-		D3DVERTEXELEMENT9& element = d3dElements[i];
-		RenderAPI::VertexElement& ve = elementList[i];
-		DeclFormat& fmt = s_declTypes[ve.Format];
-
-		element.Stream = ve.StreamIndex;
-		while (alignOffsets.size() <= ve.StreamIndex)
+		const RenderAPI::VertexElement& element = elements[i];
+		if (element.StreamIndex != 0)
 		{
-			alignOffsets.push_back(0);
+			LOG_FUNCTION_W(*m_pAPIInstance, "Mutilple Vertices Stream is not supported in Fixed Mode.");
+			return NULL;
 		}
-		int& offset = alignOffsets[ve.StreamIndex];
-		element.Offset = ve.AlignOffset = ve.AlignOffset == 0xFFFFFFFF ? offset : ve.AlignOffset;
-		element.Type = fmt.Type;
-		element.Method = D3DDECLMETHOD_DEFAULT;
-		element.Usage = s_declUsages[ve.SemanticName];
-		element.UsageIndex = ve.SemanticIndex;
 
-		offset += fmt.Length;
+		switch (element.SemanticName)
+		{
+		case RenderAPI::SEMANTIC_Position:
+			if (element.SemanticIndex != 0)
+			{
+				LOG_FUNCTION_W(*m_pAPIInstance, "Semantic Index of Position must be 0.");
+				return NULL;
+			}
+			else if ((customFVF & D3DFVF_XYZ) != 0)
+			{
+				LOG_FUNCTION_W(*m_pAPIInstance, "Semantic Position duplicated.");
+				return NULL;
+			}
+			else
+			{
+				customFVF |= D3DFVF_XYZ;
+				elementList.push_back(element);
+			}
+			break;
+		case RenderAPI::SEMANTIC_Color:
+			// Diffuse Color
+			if (element.SemanticIndex == 0)
+			{
+				if ((customFVF & D3DFVF_DIFFUSE) != 0)
+				{
+					LOG_FUNCTION_W(*m_pAPIInstance, "Semantic DiffuseColor duplicated.");
+					return NULL;
+				}
+				else
+				{
+					customFVF |= D3DFVF_DIFFUSE;
+					elementList.push_back(element);
+				}
+			}
+			//Specular Color
+			else if (element.SemanticIndex == 1)
+			{
+				if ((customFVF & D3DFVF_SPECULAR) != 0)
+				{
+					LOG_FUNCTION_W(*m_pAPIInstance, "Semantic SpecularColor duplicated.");
+					return NULL;
+				}
+				else
+				{
+					customFVF |= D3DFVF_SPECULAR;
+					elementList.push_back(element);
+				}
+			}
+			else
+			{
+				LOG_FUNCTION_W(*m_pAPIInstance, "Semantic Index of Color should be 0 or 1.");
+				return NULL;
+			}
+			break;
+		case RenderAPI::SEMANTIC_Normal:
+			if (element.SemanticIndex != 0)
+			{
+				LOG_FUNCTION_W(*m_pAPIInstance, "Semantic Index of Position must be 0.");
+				return NULL;
+			}
+			else if ((customFVF & D3DFVF_NORMAL) != 0)
+			{
+				LOG_FUNCTION_W(*m_pAPIInstance, "Semantic Position duplicated.");
+				return NULL;
+			}
+			else
+			{
+				customFVF |= D3DFVF_NORMAL;
+				elementList.push_back(element);
+			}
+			break;
+		case RenderAPI::SEMANTIC_Texcoord:
+			if (element.SemanticIndex > 7)
+			{
+				LOG_FUNCTION_W(*m_pAPIInstance, "Semantic Index of Position must be 0.");
+				return NULL;
+			}
+			else
+			{
+				unsigned int mask = 1 << element.SemanticIndex;
+				if ((texcoordMask & mask) != 0)
+				{
+					LOG_FUNCTION_W(*m_pAPIInstance, "Semantic Position duplicated.");
+					return NULL;
+				}
+				else
+				{
+					texcoordMask |= mask;
+					elementList.push_back(element);
+				}
+			}
+			break;
+		case RenderAPI::SEMANTIC_Tangent:
+		case RenderAPI::SEMANTIC_Binormal:
+		case RenderAPI::SEMANTIC_BlendWeight:
+		case RenderAPI::SEMANTIC_BlendIndices:
+			LOG_FUNCTION_W(*m_pAPIInstance, "Mutilple Vertices Stream is not supported in Fixed Mode.");
+			return NULL;
+		}
 	}
 
-	D3DVERTEXELEMENT9& elementEnd = d3dElements[elementCount];
-	elementEnd.Stream = 0xFF;
-	elementEnd.Offset = 0;
-	elementEnd.Type = D3DDECLTYPE_UNUSED;
-	elementEnd.Method = 0;
-	elementEnd.Usage = 0;
-	elementEnd.UsageIndex = 0;
-
-	IDirect3DVertexDeclaration9* pVertexDeclaration = NULL;
-	HRESULT hr = m_pDevice->CreateVertexDeclaration(&(d3dElements[0]), &pVertexDeclaration);
-	if (S_OK == hr)
+	unsigned int numTexcoord = 0;
+	for (int i = 0; i < 7; i++)
 	{
-		return new VertexDeclaration(pVertexDeclaration, elementList);
+		int mask = 1 << i;
+		if ((mask & texcoordMask) != 0)
+		{
+			customFVF |= D3DFVF_TEXCOORDSIZE2(i);
+			++numTexcoord;
+		}
 	}
-	else
+
+	switch (numTexcoord)
 	{
-		LOG_FUNCTION_E(*m_pAPIInstance, "failed, error=%X", hr);
-		return NULL;
+	case 0: customFVF |= D3DFVF_TEX0; break;
+	case 1: customFVF |= D3DFVF_TEX1; break;
+	case 2: customFVF |= D3DFVF_TEX2; break;
+	case 3: customFVF |= D3DFVF_TEX3; break;
+	case 4: customFVF |= D3DFVF_TEX4; break;
+	case 5: customFVF |= D3DFVF_TEX5; break;
+	case 6: customFVF |= D3DFVF_TEX6; break;
+	case 7: customFVF |= D3DFVF_TEX7; break;
 	}
+
+	std::sort(elementList.begin(), elementList.end(), ElementSorter());
+	int offset = 0;
+	for (unsigned int i = 0; i < elementCount; i++)
+	{
+		RenderAPI::VertexElement& ve = elementList[i];
+		const int& length = s_declTypes[ve.Format];
+		ve.AlignOffset = offset;
+		offset += length;
+	}
+
+	return new VertexDeclaration(elementList, customFVF);
 }
 
 void FormatTextureUsage(RenderAPI::ResourceUsage& usage, bool& dynamic, bool& managed)

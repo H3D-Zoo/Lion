@@ -167,8 +167,6 @@ public:
 
 	virtual void DisableCustomShaderUsage();
 
-	virtual void SetCustomFVF(unsigned int fvf);
-
 	virtual void SetWorldMatrix(const float* matrix);
 
 	virtual void SetViewMatrix(const float* matrix);
@@ -186,14 +184,6 @@ public:
 	virtual void DisableLight();
 
 	virtual void SetMaterial(const RenderAPI::Material& mat);
-
-	virtual void GenPerspectiveMatrixRH(float outMatrix[16], float fovRadian, float aspect, float nearZ, float farZ);
-
-	virtual void GenOrthoCenterMatrixRH(float outMatrix[16], float width, float height, float nearZ, float farZ);
-
-	virtual void GenOrthoOffCenterMatrixRH(float outMatrix[16], float left, float right, float bottom, float top, float nearZ, float farZ);
-
-	virtual void GenViewMatrix(float outMatrix[16], const RenderAPI::Float3& eye, const RenderAPI::Float3& lookAt, const RenderAPI::Float3& upward);
 
 	virtual void ProjectVertexPos(RenderAPI::Float3& inoutPos, const float matMV[16], const float matP[16], RenderAPI::Viewport viewport);
 

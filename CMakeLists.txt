@@ -19,6 +19,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
 set(CMAKE_INSTALL_PREFIX ${CMAKE_SOURCE_DIR}/output/${MSVC_VERSION_STR}) 
 
 add_subdirectory(Source/DX9API d3d9renderer)
+add_subdirectory(Source/FixedAPI d3d7renderer)
 add_subdirectory(Source/NullAPI nullrenderer)
 
 if(MSVC_VERSION GREATER 1800)

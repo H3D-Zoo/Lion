@@ -37,9 +37,7 @@ public:
 	void OnSetTexture(RenderAPI::Texture* pTexture);
 
 	void OnSetTextureOnlySize(RenderAPI::Texture* pTexture);
-
-	void OnSetCustomFVF();
-
+	
 	void OnSetVertexShader();
 
 	void OnSetPixelShader();
