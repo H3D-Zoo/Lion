@@ -29,6 +29,10 @@ public:
 
 	virtual bool CheckMultiSampleSupport(RenderAPI::RenderTargetFormat, RenderAPI::DepthStencilFormat, RenderAPI::AAMode, bool fullscreen) const;
 
+	virtual bool CheckFormat(RenderAPI::RenderTargetFormat queryFormat, RenderAPI::RenderTargetFormat backBufferFormat) const;
+
+	virtual bool CheckFormat(RenderAPI::DepthStencilFormat queryFormat, RenderAPI::RenderTargetFormat backBufferFormat) const;
+
 	virtual RenderAPI::DriverVersion GetDriverVersion() const;
 
 	virtual bool IsSupportEx() const;

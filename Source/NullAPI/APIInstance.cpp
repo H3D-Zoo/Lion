@@ -103,6 +103,16 @@ bool APIInstance::CheckMultiSampleSupport(RenderAPI::RenderTargetFormat bb, Rend
 	return true;
 }
 
+bool APIInstance::CheckFormat(RenderAPI::RenderTargetFormat queryFormat, RenderAPI::RenderTargetFormat backBufferFormat) const
+{
+	return true;
+}
+
+bool APIInstance::CheckFormat(RenderAPI::DepthStencilFormat queryFormat, RenderAPI::RenderTargetFormat backBufferFormat) const
+{
+	return true;
+}
+
 RenderAPI::DriverVersion APIInstance::GetDriverVersion() const
 {
 	return m_driverVersion;

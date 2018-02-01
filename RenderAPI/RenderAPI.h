@@ -1202,6 +1202,10 @@ namespace RenderAPI
 
 		virtual bool CheckMultiSampleSupport(RenderTargetFormat, DepthStencilFormat, AAMode, bool fullscreen) const = 0;
 
+		virtual bool CheckFormat(RenderTargetFormat queryFormat, RenderTargetFormat backBufferFormat) const = 0;
+
+		virtual bool CheckFormat(DepthStencilFormat queryFormat, RenderTargetFormat backBufferFormat) const = 0;
+
 		virtual RenderTargetFormat GetDefaultRenderTargetFormat() = 0;
 
 		virtual const char* GetDeviceDriver() const = 0;

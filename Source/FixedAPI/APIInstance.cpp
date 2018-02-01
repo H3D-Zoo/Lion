@@ -521,6 +521,22 @@ bool APIInstance::CheckMultiSampleSupport(RenderAPI::RenderTargetFormat bb, Rend
 	return CheckDeviceMultiSampleType(rtFormat, dsFormat, fullscreen, aaType);
 }
 
+bool APIInstance::CheckFormat(RenderAPI::RenderTargetFormat queryFormat, RenderAPI::RenderTargetFormat backBufferFormat) const
+{
+	D3DFORMAT rtFormat = s_RTFormats[queryFormat];
+	D3DFORMAT bbfmt = s_RTFormats[backBufferFormat];
+	HRESULT hr = m_d3d9Ptr->CheckDeviceFormat(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, rtFormat, D3DUSAGE_RENDERTARGET, D3DRTYPE_SURFACE, bbfmt);
+	return hr == S_OK;
+}
+
+bool APIInstance::CheckFormat(RenderAPI::DepthStencilFormat queryFormat, RenderAPI::RenderTargetFormat backBufferFormat) const
+{
+	D3DFORMAT dsFormat = s_DSFormats[queryFormat];
+	D3DFORMAT bbfmt = s_RTFormats[backBufferFormat];
+	HRESULT hr = m_d3d9Ptr->CheckDeviceFormat(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, dsFormat, D3DUSAGE_RENDERTARGET, D3DRTYPE_SURFACE, bbfmt);
+	return hr == S_OK;
+}
+
 RenderAPI::DriverVersion APIInstance::GetDriverVersion() const
 {
 	return m_driverVersion;
